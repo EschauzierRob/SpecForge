@@ -115,6 +115,26 @@ export interface ComposedNode {
   overlay?: OverlayFacet;
 }
 
+export interface ValidationFinding {
+  ruleId: string;
+  severity: DiagnosticSeverity;
+  message: string;
+  sourcePaths: string[];
+  specId?: string;
+  remediationHint?: string;
+}
+
+export interface ValidationSummary {
+  total: number;
+  bySeverity: Record<DiagnosticSeverity, number>;
+  byRuleId: Record<string, number>;
+}
+
+export interface ValidationResult {
+  findings: ValidationFinding[];
+  summary: ValidationSummary;
+}
+
 export interface IngestResult {
   discovery: RepositoryDiscovery;
   canonicalNodes: CanonicalNode[];

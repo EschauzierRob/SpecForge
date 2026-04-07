@@ -4,6 +4,7 @@ export { parseSpecFile, mapSectionsToCanonical } from "./core/parser/map.ts";
 export { tokenizeSections } from "./core/parser/sections.ts";
 export { buildOverlayIndex, composeNodes } from "./core/overlay/compose.ts";
 export { loadOverlayFile } from "./core/overlay/loader.ts";
+export { validateIngestResult, validateRepository } from "./core/validation/engine.ts";
 export type {
   CanonicalNode,
   ComposedNode,
@@ -19,4 +20,7 @@ export type {
   RepositoryDiscovery,
   SectionMap,
   SpecNodeType,
+  ValidationFinding,
+  ValidationResult,
+  ValidationSummary,
 } from "./core/model/types.ts";
