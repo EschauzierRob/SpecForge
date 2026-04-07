@@ -87,6 +87,16 @@ Use the CLI to inspect each pipeline stage locally:
 
 See `docs/local-developer-workflow.md` for command examples, JSON output options, artifact writing, and exit-code behavior.
 
+## UI Foundation
+
+Slice 5 adds a local UI shell under `ui/` plus a small Node API bridge.
+
+- `npm run ui:server` starts the local bridge used by the browser app
+- `npm run ui:client` starts the Vite development server
+- `npm run ui:build` builds the UI bundle
+
+See `docs/local-developer-workflow.md` for the full two-terminal startup flow and the UI endpoint details.
+
 ## Repository map
 
 - `docs/` — business, product, architecture, model, and roadmap docs
@@ -95,6 +105,8 @@ See `docs/local-developer-workflow.md` for command examples, JSON output options
 - `specforge/indexes/` — placeholder for generated read models/indexes
 - `specforge/adapters/` — placeholder for parser adapters and ecosystem integration
 - `examples/` — sample repo structures for testing and onboarding
+
+- `ui/` - React + Vite workspace for the local read-only UI shell
 
 ---
 

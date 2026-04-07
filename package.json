@@ -11,7 +11,10 @@
     "compose": "node --experimental-strip-types ./src/cli.ts compose .",
     "ingest": "node --experimental-strip-types ./src/cli.ts ingest .",
     "validate": "node --experimental-strip-types ./src/cli.ts validate .",
-    "test": "node --experimental-strip-types --experimental-test-isolation=none --test ./tests/discovery.test.ts ./tests/parser.test.ts ./tests/overlay.test.ts ./tests/validation.test.ts ./tests/ingest.test.ts ./tests/cli.test.ts"
+    "ui:server": "node --experimental-strip-types ./src/server.ts",
+    "ui:client": "npm --prefix ui run dev",
+    "ui:build": "npm --prefix ui run build",
+    "test": "node --experimental-strip-types --experimental-test-isolation=none --test ./tests/discovery.test.ts ./tests/parser.test.ts ./tests/overlay.test.ts ./tests/validation.test.ts ./tests/ingest.test.ts ./tests/cli.test.ts ./tests/api.test.ts ./tests/ui-state.test.ts"
   },
   "engines": {
     "node": ">=22.0.0"

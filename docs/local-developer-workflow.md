@@ -89,4 +89,56 @@ For convenience, the repository exposes:
 - `npm run compose`
 - `npm run ingest`
 - `npm run validate`
+- `npm run ui:server`
+- `npm run ui:client`
+- `npm run ui:build`
 - `npm test`
+
+## UI Foundation Workflow
+
+Slice 5 adds a local API bridge plus a React + Vite workspace under `ui/`.
+
+### One-time setup
+
+Install the UI dependencies:
+
+```powershell
+npm --prefix ui install
+```
+
+### Start the local API bridge
+
+Run the Node API bridge in one terminal:
+
+```powershell
+npm run ui:server
+```
+
+The bridge exposes:
+
+- `GET /api/context`
+- `POST /api/parse`
+- `POST /api/compose`
+- `POST /api/validate`
+
+### Start the UI
+
+Run the Vite client in a second terminal:
+
+```powershell
+npm run ui:client
+```
+
+Open the Vite URL shown in the terminal, then:
+
+1. Confirm the repository path is prefilled from the local API context.
+2. Click `Load workspace`.
+3. Use the `Overview` tab to inspect counts, quick selection state, and the raw payload inspector.
+
+### Build the UI
+
+Use this when you want to confirm the client bundle compiles cleanly:
+
+```powershell
+npm run ui:build
+```
