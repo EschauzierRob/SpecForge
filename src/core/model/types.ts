@@ -135,6 +135,21 @@ export interface ValidationResult {
   summary: ValidationSummary;
 }
 
+export interface ParseRepositoryResult {
+  discovery: RepositoryDiscovery;
+  canonicalNodes: CanonicalNode[];
+  diagnostics: ParserDiagnostic[];
+}
+
+export interface ComposeRepositoryResult {
+  discovery: RepositoryDiscovery;
+  canonicalNodes: CanonicalNode[];
+  overlayFiles: OverlayFile[];
+  composedNodes: ComposedNode[];
+  diagnostics: ParserDiagnostic[];
+  compositionDiagnostics: CompositionDiagnostic[];
+}
+
 export interface IngestResult {
   discovery: RepositoryDiscovery;
   canonicalNodes: CanonicalNode[];

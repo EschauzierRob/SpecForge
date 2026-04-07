@@ -76,6 +76,17 @@ v1.0 focuses on an MVP that can:
 4. Preserve stable IDs. IDs are the integration contract between specs and overlay.
 5. Add acceptance criteria for any new behavior before implementation.
 
+## Developer Workflow
+
+Use the CLI to inspect each pipeline stage locally:
+
+- `parse` for canonical spec output and parser diagnostics
+- `compose` for canonical plus overlay composition
+- `validate` for rule-based findings
+- `ingest` remains available as a compatibility alias for `compose`
+
+See `docs/local-developer-workflow.md` for command examples, JSON output options, artifact writing, and exit-code behavior.
+
 ## Repository map
 
 - `docs/` — business, product, architecture, model, and roadmap docs

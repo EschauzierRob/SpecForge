@@ -7,9 +7,11 @@
     "specforge": "./src/cli.ts"
   },
   "scripts": {
+    "parse": "node --experimental-strip-types ./src/cli.ts parse .",
+    "compose": "node --experimental-strip-types ./src/cli.ts compose .",
     "ingest": "node --experimental-strip-types ./src/cli.ts ingest .",
     "validate": "node --experimental-strip-types ./src/cli.ts validate .",
-    "test": "node --experimental-strip-types --experimental-test-isolation=none --test ./tests/discovery.test.ts ./tests/parser.test.ts ./tests/overlay.test.ts ./tests/validation.test.ts ./tests/ingest.test.ts"
+    "test": "node --experimental-strip-types --experimental-test-isolation=none --test ./tests/discovery.test.ts ./tests/parser.test.ts ./tests/overlay.test.ts ./tests/validation.test.ts ./tests/ingest.test.ts ./tests/cli.test.ts"
   },
   "engines": {
     "node": ">=22.0.0"
