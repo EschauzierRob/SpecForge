@@ -19,14 +19,18 @@ function countDiagnostics(diagnostics: Awaited<ReturnType<typeof ingestRepositor
 }
 
 export function formatIngestSummary(result: Awaited<ReturnType<typeof ingestRepository>>): string[] {
-  const diagnosticCounts = countDiagnostics(result.diagnostics);
+  const parserDiagnosticCounts = countDiagnostics(result.diagnostics);
+  const compositionDiagnosticCounts = countDiagnostics(result.compositionDiagnostics);
 
   return [
     `repo root: ${result.discovery.repoRoot}`,
     `spec files: ${result.discovery.specFileCount}`,
+    `overlay files: ${result.discovery.overlayFileCount}`,
     `parsed nodes: ${result.canonicalNodes.length}`,
+    `composed nodes: ${result.composedNodes.length}`,
     `overlay directory detected: ${result.discovery.hasOverlayDirectory ? "yes" : "no"}`,
-    `diagnostics: errors=${diagnosticCounts.error ?? 0}, warnings=${diagnosticCounts.warning ?? 0}, info=${diagnosticCounts.info ?? 0}`,
+    `parser diagnostics: errors=${parserDiagnosticCounts.error ?? 0}, warnings=${parserDiagnosticCounts.warning ?? 0}, info=${parserDiagnosticCounts.info ?? 0}`,
+    `composition diagnostics: errors=${compositionDiagnosticCounts.error ?? 0}, warnings=${compositionDiagnosticCounts.warning ?? 0}, info=${compositionDiagnosticCounts.info ?? 0}`,
   ];
 }
 

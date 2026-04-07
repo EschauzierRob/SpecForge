@@ -8,7 +8,7 @@
   },
   "scripts": {
     "ingest": "node --experimental-strip-types ./src/cli.ts ingest .",
-    "test": "node --experimental-strip-types --experimental-test-isolation=none --test ./tests/discovery.test.ts ./tests/parser.test.ts ./tests/ingest.test.ts"
+    "test": "node --experimental-strip-types --experimental-test-isolation=none --test ./tests/discovery.test.ts ./tests/parser.test.ts ./tests/overlay.test.ts ./tests/ingest.test.ts"
   },
   "engines": {
     "node": ">=22.0.0"

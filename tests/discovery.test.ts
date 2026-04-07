@@ -22,6 +22,10 @@ test("discoverRepository returns deterministic file order for a valid repo", asy
   await writeFile(path.join(root, "specs", "epic-0001-sample", "feature-0002-zeta.md"), "# Zeta\n");
   await writeFile(path.join(root, "specs", "epic-0001-sample", "feature-0001-alpha.md"), "# Alpha\n");
   await writeFile(path.join(root, "specs", "epic-0001-sample", "epic.md"), "# Epic\n");
+  await writeFile(
+    path.join(root, "specforge", "overlay", "local-dev.overlay.json"),
+    JSON.stringify({ version: "0.1", repositoryId: "temp", entries: [] }),
+  );
 
   const discovery = await discoverRepository(root);
 
@@ -31,6 +35,8 @@ test("discoverRepository returns deterministic file order for a valid repo", asy
     "specs/epic-0001-sample/feature-0001-alpha.md",
     "specs/epic-0001-sample/feature-0002-zeta.md",
   ]);
+  assert.deepEqual(discovery.discoveredOverlayFiles, ["specforge/overlay/local-dev.overlay.json"]);
+  assert.equal(discovery.overlayFileCount, 1);
 });
 
 test("discoverRepository ignores hidden and excluded directories", async () => {
@@ -38,13 +44,36 @@ test("discoverRepository ignores hidden and excluded directories", async () => {
   await mkdir(path.join(root, "specs", ".hidden"), { recursive: true });
   await mkdir(path.join(root, "specs", "node_modules"), { recursive: true });
   await mkdir(path.join(root, "specs", "epic-0001-sample", ".ignored"), { recursive: true });
+  await mkdir(path.join(root, "specforge", "overlay", ".hidden"), { recursive: true });
+  await mkdir(path.join(root, "specforge", "overlay", "schema"), { recursive: true });
+  await mkdir(path.join(root, "specforge", "overlay", "node_modules"), { recursive: true });
   await writeFile(path.join(root, "specs", ".hidden", "feature-0001-hidden.md"), "# Hidden\n");
   await writeFile(path.join(root, "specs", "node_modules", "feature-0002-package.md"), "# Package\n");
   await writeFile(path.join(root, "specs", "epic-0001-sample", "epic.md"), "# Epic\n");
+  await writeFile(
+    path.join(root, "specforge", "overlay", ".hidden", "hidden.overlay.json"),
+    JSON.stringify({ version: "0.1", repositoryId: "temp", entries: [] }),
+  );
+  await writeFile(
+    path.join(root, "specforge", "overlay", "schema", "schema.overlay.json"),
+    JSON.stringify({ version: "0.1", repositoryId: "temp", entries: [] }),
+  );
+  await writeFile(
+    path.join(root, "specforge", "overlay", "node_modules", "module.overlay.json"),
+    JSON.stringify({ version: "0.1", repositoryId: "temp", entries: [] }),
+  );
+  await writeFile(
+    path.join(root, "specforge", "overlay", "local-dev.overlay.json"),
+    JSON.stringify({ version: "0.1", repositoryId: "temp", entries: [] }),
+  );
 
   const discovery = await discoverRepository(root);
 
   assert.deepEqual(discovery.discoveredSpecFiles, ["specs/epic-0001-sample/epic.md"]);
+  assert.deepEqual(discovery.discoveredOverlayFiles, ["specforge/overlay/local-dev.overlay.json"]);
   assert.ok(discovery.ignoredEntries.includes("specs/.hidden"));
   assert.ok(discovery.ignoredEntries.includes("specs/node_modules"));
+  assert.ok(discovery.ignoredEntries.includes("specforge/overlay/.hidden"));
+  assert.ok(discovery.ignoredEntries.includes("specforge/overlay/schema"));
+  assert.ok(discovery.ignoredEntries.includes("specforge/overlay/node_modules"));
 });

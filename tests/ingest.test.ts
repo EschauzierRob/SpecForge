@@ -38,7 +38,15 @@ test("ingestRepository ingests the current repo and sample repo successfully", a
   const sampleRepoResult = await ingestRepository(path.join(repoRoot, "examples", "sample-spec-repo"));
 
   assert.ok(currentRepoResult.canonicalNodes.length > 0);
+  assert.equal(currentRepoResult.overlayFiles.length, 1);
+  assert.equal(currentRepoResult.composedNodes.length, currentRepoResult.canonicalNodes.length);
+  assert.equal(
+    currentRepoResult.composedNodes.find((node) => node.spec.id === "F-0005")?.overlay?.planningStatus,
+    "ready",
+  );
   assert.equal(sampleRepoResult.canonicalNodes.length, 1);
+  assert.equal(sampleRepoResult.overlayFiles.length, 1);
+  assert.equal(sampleRepoResult.composedNodes.length, 1);
   assert.equal(sampleRepoResult.canonicalNodes[0]?.id, "E-9001");
 });
 
@@ -58,6 +66,26 @@ test("CLI --json output is machine-readable and stable enough for snapshots", as
 
   assert.equal(payload.discovery.repoRoot, repoRoot);
   assert.equal(payload.discovery.hasOverlayDirectory, true);
+  assert.equal(payload.discovery.overlayFileCount, 1);
   assert.ok(Array.isArray(payload.canonicalNodes));
+  assert.ok(Array.isArray(payload.overlayFiles));
+  assert.ok(Array.isArray(payload.composedNodes));
   assert.ok(Array.isArray(payload.diagnostics));
+  assert.ok(Array.isArray(payload.compositionDiagnostics));
+});
+
+test("CLI summary reflects overlay and composition counts", async () => {
+  const outputLines: string[] = [];
+  const errorLines: string[] = [];
+  const exitCode = await runCli(
+    ["ingest", repoRoot],
+    (line) => outputLines.push(line),
+    (line) => errorLines.push(line),
+  );
+
+  assert.equal(exitCode, 0);
+  assert.deepEqual(errorLines, []);
+  assert.ok(outputLines.includes("overlay files: 1"));
+  assert.ok(outputLines.includes("composed nodes: 25"));
+  assert.ok(outputLines.some((line) => line.startsWith("composition diagnostics: ")));
 });

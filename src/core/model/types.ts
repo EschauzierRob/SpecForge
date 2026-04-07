@@ -1,4 +1,5 @@
 export type SpecNodeType = "epic" | "feature" | "story" | "task";
+export type PlanningStatus = "backlog" | "ready" | "in_progress" | "blocked" | "done";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
 
@@ -17,7 +18,9 @@ export interface RepositoryDiscovery {
   overlayPath: string;
   hasOverlayDirectory: boolean;
   discoveredSpecFiles: string[];
+  discoveredOverlayFiles: string[];
   specFileCount: number;
+  overlayFileCount: number;
   ignoredEntries: string[];
   missingExpectedDirectories: string[];
 }
@@ -76,8 +79,47 @@ export interface ParseSpecFileResult {
   diagnostics: ParserDiagnostic[];
 }
 
+export interface CompositionDiagnostic {
+  severity: DiagnosticSeverity;
+  code: string;
+  message: string;
+  sourcePath: string;
+  specId?: string;
+  sectionName?: string;
+}
+
+export interface OverlayEntry {
+  specId: string;
+  planningStatus?: PlanningStatus;
+  rank?: number;
+  blocked?: boolean;
+  dependencies?: string[];
+  notes?: string;
+  tags?: string[];
+}
+
+export interface OverlayFile {
+  sourcePath: string;
+  version: string;
+  repositoryId: string;
+  entries: OverlayEntry[];
+}
+
+export interface OverlayFacet extends OverlayEntry {
+  sourcePath: string;
+  repositoryId: string;
+}
+
+export interface ComposedNode {
+  spec: CanonicalNode;
+  overlay?: OverlayFacet;
+}
+
 export interface IngestResult {
   discovery: RepositoryDiscovery;
   canonicalNodes: CanonicalNode[];
+  overlayFiles: OverlayFile[];
+  composedNodes: ComposedNode[];
   diagnostics: ParserDiagnostic[];
+  compositionDiagnostics: CompositionDiagnostic[];
 }
