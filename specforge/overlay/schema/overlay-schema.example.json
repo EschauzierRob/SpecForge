@@ -1,0 +1,40 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specforge.local/schema/overlay-schema.example.json",
+  "title": "SpecForge Overlay Schema (Example)",
+  "type": "object",
+  "required": ["version", "repositoryId", "entries"],
+  "properties": {
+    "version": { "type": "string", "const": "0.1" },
+    "repositoryId": { "type": "string", "minLength": 1 },
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["specId"],
+        "properties": {
+          "specId": { "type": "string", "pattern": "^[EFST]-\\d{4}$" },
+          "planningStatus": {
+            "type": "string",
+            "enum": ["backlog", "ready", "in_progress", "blocked", "done"]
+          },
+          "rank": { "type": "integer", "minimum": 1 },
+          "blocked": { "type": "boolean" },
+          "dependencies": {
+            "type": "array",
+            "items": { "type": "string", "pattern": "^[EFST]-\\d{4}$" },
+            "uniqueItems": true
+          },
+          "notes": { "type": "string" },
+          "tags": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

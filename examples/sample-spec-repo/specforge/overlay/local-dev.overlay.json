@@ -1,0 +1,15 @@
+{
+  "version": "0.1",
+  "repositoryId": "sample-spec-repo",
+  "entries": [
+    {
+      "specId": "E-9001",
+      "planningStatus": "backlog",
+      "rank": 1,
+      "blocked": false,
+      "dependencies": [],
+      "notes": "Sample external repo entry",
+      "tags": ["example"]
+    }
+  ]
+}
