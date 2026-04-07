@@ -1,0 +1,16 @@
+{
+  "name": "specforge",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "specforge": "./src/cli.ts"
+  },
+  "scripts": {
+    "ingest": "node --experimental-strip-types ./src/cli.ts ingest .",
+    "test": "node --experimental-strip-types --experimental-test-isolation=none --test ./tests/discovery.test.ts ./tests/parser.test.ts ./tests/ingest.test.ts"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}
