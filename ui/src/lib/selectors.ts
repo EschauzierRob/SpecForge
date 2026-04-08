@@ -26,6 +26,21 @@ export interface OverviewCounts {
   validationFindings: Record<"error" | "warning" | "info", number> & { total: number };
 }
 
+export const PLANNING_STATUS_LANE_ORDER: Array<PlanningStatus | "unplanned"> = [
+  "backlog",
+  "ready",
+  "in_progress",
+  "blocked",
+  "done",
+  "unplanned",
+];
+
+export interface BoardLane {
+  status: PlanningStatus | "unplanned";
+  nodes: ComposedNode[];
+  count: number;
+}
+
 export function countSeverities(
   entries: Array<{ severity: "error" | "warning" | "info" }>,
 ): Record<"error" | "warning" | "info", number> {
@@ -75,6 +90,29 @@ export function getPlanningStatusCounts(
   }
 
   return counts;
+}
+
+export function getBoardLanes(composeResult?: ComposeRepositoryResult): BoardLane[] {
+  const counts = getPlanningStatusCounts(composeResult);
+  const nodesByStatus: Record<PlanningStatus | "unplanned", ComposedNode[]> = {
+    backlog: [],
+    ready: [],
+    in_progress: [],
+    blocked: [],
+    done: [],
+    unplanned: [],
+  };
+
+  for (const node of composeResult?.composedNodes ?? []) {
+    const status = node.overlay?.planningStatus ?? "unplanned";
+    nodesByStatus[status].push(node);
+  }
+
+  return PLANNING_STATUS_LANE_ORDER.map((status) => ({
+    status,
+    nodes: nodesByStatus[status].sort((left, right) => left.spec.id.localeCompare(right.spec.id)),
+    count: counts[status],
+  }));
 }
 
 export function getSelectedComposedNode(
