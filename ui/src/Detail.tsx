@@ -123,6 +123,7 @@ export function Detail(props: {
           <OverlayField label="Status" value={selectedNode.overlay?.planningStatus} />
           <OverlayField label="Rank" value={selectedNode.overlay?.rank} />
           <OverlayField label="Blocked" value={selectedNode.overlay?.blocked} />
+          <OverlayField label="Blocked reason" value={selectedNode.overlay?.blockedReason} />
           <OverlayField label="Tags" value={selectedNode.overlay?.tags} />
           <OverlayField label="Notes" value={selectedNode.overlay?.notes} />
         </dl>

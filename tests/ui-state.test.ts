@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  getBlockedReason,
   getOverviewCounts,
   getPlanningStatusCounts,
   getSelectedComposedNode,
@@ -289,6 +290,40 @@ test("planning status selector keeps blocked as card urgency while counting stat
   assert.equal(counts.in_progress, 1);
   assert.equal(counts.blocked, 0);
   assert.equal(counts.unplanned, 1);
+});
+
+test("blocked reason selector prefers explicit reason, then notes, then default fallback", () => {
+  const explicit = getBlockedReason({
+    spec: composeFixture.composedNodes[2].spec,
+    overlay: {
+      ...composeFixture.composedNodes[2].overlay,
+      blocked: true,
+      blockedReason: "Blocked by dependency freeze",
+      notes: "Legacy fallback note",
+    },
+  });
+  assert.equal(explicit, "Blocked by dependency freeze");
+
+  const fromNotes = getBlockedReason({
+    spec: composeFixture.composedNodes[2].spec,
+    overlay: {
+      ...composeFixture.composedNodes[2].overlay,
+      blocked: true,
+      notes: "Waiting for QA environment",
+    },
+  });
+  assert.equal(fromNotes, "Waiting for QA environment");
+
+  const fallback = getBlockedReason({
+    spec: composeFixture.composedNodes[2].spec,
+    overlay: {
+      ...composeFixture.composedNodes[2].overlay,
+      blocked: true,
+      notes: "   ",
+      blockedReason: " ",
+    },
+  });
+  assert.equal(fallback, "No blocker reason provided.");
 });
 
 test("selected node lookup resolves the currently selected composed node", () => {

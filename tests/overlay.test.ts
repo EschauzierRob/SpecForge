@@ -132,6 +132,41 @@ test("loadOverlayFile reports invalid entry fields without aborting the whole fi
   assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === "invalid-overlay-entry"));
 });
 
+test("loadOverlayFile validates blockedReason when present", async () => {
+  const root = await createTempRepo();
+  const filePath = path.join(root, "specforge", "overlay", "local-dev.overlay.json");
+  await writeFile(
+    filePath,
+    JSON.stringify({
+      version: "0.1",
+      repositoryId: "specforge-local",
+      entries: [
+        {
+          specId: "F-0005",
+          blocked: true,
+          blockedReason: "Waiting on API contract sign-off",
+        },
+        {
+          specId: "F-0006",
+          blocked: true,
+          blockedReason: "   ",
+        },
+      ],
+    }),
+  );
+
+  const result = await loadOverlayFile(filePath, root);
+
+  assert.equal(result.overlayFile?.entries.length, 1);
+  assert.equal(result.overlayFile?.entries[0]?.blockedReason, "Waiting on API contract sign-off");
+  assert.ok(
+    result.diagnostics.some(
+      (diagnostic) =>
+        diagnostic.code === "invalid-overlay-entry" && diagnostic.sectionName === "blockedReason",
+    ),
+  );
+});
+
 test("buildOverlayIndex uses first-wins and emits duplicate diagnostics", () => {
   const first = {
     sourcePath: "specforge/overlay/a.overlay.json",
