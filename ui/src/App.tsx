@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useMemo, useReducer, useState } from "react";
 
 import { Board } from "./Board";
+import { Detail } from "./Detail";
 import { fetchCompose, fetchContext, fetchValidate } from "./lib/api";
 import type {
   ComposeRepositoryResult,
@@ -322,6 +323,13 @@ export default function App(): JSX.Element {
   const selectedTitle = selectedNode?.spec.title ?? "No item selected";
   const selectedSummary = selectedNode?.spec.summary ?? "Select a node to keep later detail views grounded in real runtime data.";
 
+  function handleItemSelected(specId: string, switchToDetail = false): void {
+    dispatch({ type: "itemSelected", specId });
+    if (switchToDetail) {
+      dispatch({ type: "screenChanged", screen: "Detail" });
+    }
+  }
+
   const activePanel = (() => {
     if (state.activeScreen === "Overview") {
       return (
@@ -332,7 +340,7 @@ export default function App(): JSX.Element {
             selectedTitle={selectedTitle}
             selectedSummary={selectedSummary}
             selectedItemId={state.selectedItemId}
-            onSelect={(specId) => dispatch({ type: "itemSelected", specId })}
+            onSelect={(specId) => handleItemSelected(specId)}
           />
           <DebugPanel
             selectedNodeJson={JSON.stringify(selectedNode ?? null, null, 2)}
@@ -348,7 +356,7 @@ export default function App(): JSX.Element {
         <TreePanel
           composeResult={state.composeResult}
           selectedItemId={state.selectedItemId}
-          onSelect={(specId) => dispatch({ type: "itemSelected", specId })}
+          onSelect={(specId) => handleItemSelected(specId)}
         />
       );
     }
@@ -365,7 +373,7 @@ export default function App(): JSX.Element {
           <Board
             composeResult={state.composeResult}
             selectedItemId={state.selectedItemId}
-            onSelect={(specId) => dispatch({ type: "itemSelected", specId })}
+            onSelect={(specId) => handleItemSelected(specId)}
           />
         </section>
       );
@@ -373,9 +381,10 @@ export default function App(): JSX.Element {
 
     if (state.activeScreen === "Detail") {
       return (
-        <PlaceholderPanel
-          title="Detail foundation"
-          detail={`Current selection: ${selectedTitle}. The detailed item panel will attach here in the next slice.`}
+        <Detail
+          composeResult={state.composeResult}
+          selectedItemId={state.selectedItemId}
+          onNavigate={(specId) => handleItemSelected(specId, true)}
         />
       );
     }
