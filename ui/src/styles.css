@@ -193,6 +193,62 @@ button {
   white-space: nowrap;
 }
 
+.context-header-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.context-header-content {
+  display: grid;
+  gap: 4px;
+}
+
+.context-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #607d99;
+}
+
+.context-breadcrumbs {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px;
+}
+
+.context-crumb {
+  display: inline-flex;
+  align-items: center;
+}
+
+.context-link,
+.context-current {
+  font-size: 0.98rem;
+}
+
+.context-link {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #0f5c7b;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.context-current {
+  font-weight: 700;
+  color: #10243a;
+}
+
+.context-separator {
+  padding: 0 4px;
+  color: #607d99;
+}
+
 .metric-grid,
 .detail-grid,
 .split-panel {
