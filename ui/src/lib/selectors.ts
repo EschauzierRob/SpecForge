@@ -30,7 +30,6 @@ export const PLANNING_STATUS_LANE_ORDER: Array<PlanningStatus | "unplanned"> = [
   "backlog",
   "ready",
   "in_progress",
-  "blocked",
   "done",
   "unplanned",
 ];
@@ -84,8 +83,16 @@ export function getPlanningStatusCounts(
     unplanned: 0,
   };
 
+  function toLaneStatus(status: PlanningStatus | undefined): PlanningStatus | "unplanned" {
+    if (!status) {
+      return "unplanned";
+    }
+
+    return status === "blocked" ? "in_progress" : status;
+  }
+
   for (const node of composeResult?.composedNodes ?? []) {
-    const status = node.overlay?.planningStatus ?? "unplanned";
+    const status = toLaneStatus(node.overlay?.planningStatus);
     counts[status] += 1;
   }
 
@@ -103,8 +110,16 @@ export function getBoardLanes(composeResult?: ComposeRepositoryResult): BoardLan
     unplanned: [],
   };
 
+  function toLaneStatus(status: PlanningStatus | undefined): PlanningStatus | "unplanned" {
+    if (!status) {
+      return "unplanned";
+    }
+
+    return status === "blocked" ? "in_progress" : status;
+  }
+
   for (const node of composeResult?.composedNodes ?? []) {
-    const status = node.overlay?.planningStatus ?? "unplanned";
+    const status = toLaneStatus(node.overlay?.planningStatus);
     nodesByStatus[status].push(node);
   }
 
