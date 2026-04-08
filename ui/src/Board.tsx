@@ -4,11 +4,11 @@ import type { ComposeRepositoryResult } from "./lib/contracts";
 import { filterBoardNodes, getBoardLanes, getTriageBadges } from "./lib/selectors";
 
 const laneLabels: Record<string, string> = {
+  unplanned: "Unplanned",
   backlog: "Backlog",
   ready: "Ready",
   in_progress: "In Progress",
   done: "Done",
-  unplanned: "Unplanned",
 };
 
 export function Board(props: {

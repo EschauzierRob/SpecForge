@@ -27,11 +27,11 @@ export interface OverviewCounts {
 }
 
 export const PLANNING_STATUS_LANE_ORDER: Array<PlanningStatus | "unplanned"> = [
+  "unplanned",
   "backlog",
   "ready",
   "in_progress",
   "done",
-  "unplanned",
 ];
 
 export interface BoardLane {
