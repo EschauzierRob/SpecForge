@@ -21,6 +21,7 @@ const overlayEntryKeys = new Set([
   "planningStatus",
   "rank",
   "blocked",
+  "blockedReason",
   "dependencies",
   "notes",
   "tags",
@@ -164,6 +165,26 @@ function validateEntry(
     return { diagnostics };
   }
 
+  const blockedReason = entry.blockedReason;
+  if (
+    blockedReason !== undefined &&
+    (typeof blockedReason !== "string" || blockedReason.trim().length === 0)
+  ) {
+    diagnostics.push(
+      createDiagnostic(
+        {
+          severity: "warning",
+          code: "invalid-overlay-entry",
+          message: `Overlay entry for ${specId} has invalid blockedReason.`,
+          specId,
+          sectionName: "blockedReason",
+        },
+        sourcePath,
+      ),
+    );
+    return { diagnostics };
+  }
+
   const dependencies = entry.dependencies;
   if (
     dependencies !== undefined &&
@@ -227,6 +248,7 @@ function validateEntry(
       planningStatus: planningStatus as PlanningStatus | undefined,
       rank,
       blocked,
+      blockedReason,
       dependencies: dependencies ? [...dependencies] : undefined,
       notes,
       tags: tags ? [...tags] : undefined,

@@ -13,8 +13,10 @@ import {
   getOverviewCounts,
   getComposedTreeModel,
   getPlanningStatusCounts,
+  getTriageBadges,
   getSelectedComposedNode,
   getSelectedLineageToEpic,
+  PLANNING_STATUS_LANE_ORDER,
 } from "./lib/selectors";
 import {
   initialWorkspaceState,
@@ -94,7 +96,7 @@ function TreePanel(props: {
     const { node, children, depth } = entry;
     const isExpanded = expandedIds[nodeId] ?? true;
     const planningStatus = node.overlay?.planningStatus;
-    const isBlocked = node.overlay?.blocked;
+    const triageBadges = getTriageBadges(node);
 
     return (
       <li key={nodeId}>
@@ -123,7 +125,15 @@ function TreePanel(props: {
 
           <div className="tree-badges">
             {planningStatus ? <span className="tree-badge">{planningStatus}</span> : null}
-            {isBlocked ? <span className="tree-badge tree-badge--blocked">blocked</span> : null}
+            {triageBadges.map((badge) => (
+              <span
+                key={badge.kind}
+                className={badge.kind === "blocked" ? "tree-badge tree-badge--blocked" : "tree-badge tree-badge--dependencies"}
+                title={badge.title}
+              >
+                {badge.label}
+              </span>
+            ))}
           </div>
         </div>
 
@@ -187,13 +197,14 @@ function OverviewPanel(props: {
 }): JSX.Element {
   const counts = getOverviewCounts(props.composeResult, props.validationResult);
   const planningStatusCounts = getPlanningStatusCounts(props.composeResult);
+  const blockedCount = props.composeResult?.composedNodes.filter((node) => node.overlay?.blocked).length ?? 0;
 
   return (
     <section className="panel">
       <div className="panel-header">
         <div>
           <h2>Workspace overview</h2>
-          <p>Read-only counts from the compose and validate pipeline, ready for the next UI slices.</p>
+          <p>Status lanes track planning progress, while the blocked flag is a separate urgency signal.</p>
         </div>
         <div className="panel-pill">Selected: {props.selectedTitle}</div>
       </div>
@@ -219,12 +230,16 @@ function OverviewPanel(props: {
       </div>
 
       <div className="status-strip">
-        {Object.entries(planningStatusCounts).map(([status, value]) => (
+        {PLANNING_STATUS_LANE_ORDER.map((status) => (
           <div className="status-pill" key={status}>
             <span>{status}</span>
-            <strong>{value}</strong>
+            <strong>{planningStatusCounts[status]}</strong>
           </div>
         ))}
+        <div className="status-pill">
+          <span>blocked flag</span>
+          <strong>{blockedCount}</strong>
+        </div>
       </div>
 
       <div className="split-panel">
@@ -412,7 +427,7 @@ export default function App(): JSX.Element {
           <div className="panel-header">
             <div>
               <h2>Planning board</h2>
-              <p>Grouped by planning status from overlays, with unplanned as the fallback lane.</p>
+              <p>Lanes show planning status only; blocked remains a card-level urgency flag in every lane.</p>
             </div>
           </div>
           <Board

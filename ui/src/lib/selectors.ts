@@ -30,7 +30,6 @@ export const PLANNING_STATUS_LANE_ORDER: Array<PlanningStatus | "unplanned"> = [
   "backlog",
   "ready",
   "in_progress",
-  "blocked",
   "done",
   "unplanned",
 ];
@@ -39,6 +38,17 @@ export interface BoardLane {
   status: PlanningStatus | "unplanned";
   nodes: ComposedNode[];
   count: number;
+}
+
+export interface BoardFilters {
+  blockedOnly: boolean;
+  hasDependencies: boolean;
+}
+
+export interface TriageBadge {
+  kind: "blocked" | "dependencies";
+  label: string;
+  title?: string;
 }
 
 export function countSeverities(
@@ -84,8 +94,16 @@ export function getPlanningStatusCounts(
     unplanned: 0,
   };
 
+  function toLaneStatus(status: PlanningStatus | undefined): PlanningStatus | "unplanned" {
+    if (!status) {
+      return "unplanned";
+    }
+
+    return status === "blocked" ? "in_progress" : status;
+  }
+
   for (const node of composeResult?.composedNodes ?? []) {
-    const status = node.overlay?.planningStatus ?? "unplanned";
+    const status = toLaneStatus(node.overlay?.planningStatus);
     counts[status] += 1;
   }
 
@@ -103,8 +121,16 @@ export function getBoardLanes(composeResult?: ComposeRepositoryResult): BoardLan
     unplanned: [],
   };
 
+  function toLaneStatus(status: PlanningStatus | undefined): PlanningStatus | "unplanned" {
+    if (!status) {
+      return "unplanned";
+    }
+
+    return status === "blocked" ? "in_progress" : status;
+  }
+
   for (const node of composeResult?.composedNodes ?? []) {
-    const status = node.overlay?.planningStatus ?? "unplanned";
+    const status = toLaneStatus(node.overlay?.planningStatus);
     nodesByStatus[status].push(node);
   }
 
@@ -113,6 +139,61 @@ export function getBoardLanes(composeResult?: ComposeRepositoryResult): BoardLan
     nodes: nodesByStatus[status].sort((left, right) => left.spec.id.localeCompare(right.spec.id)),
     count: counts[status],
   }));
+}
+
+export function filterBoardNodes(nodes: ComposedNode[], filters: BoardFilters): ComposedNode[] {
+  return nodes.filter((node) => {
+    if (filters.blockedOnly && !node.overlay?.blocked) {
+      return false;
+    }
+
+    if (filters.hasDependencies && getDependencyCount(node) === 0) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+export function getDependencyCount(node: ComposedNode): number {
+  return node.overlay?.dependencies?.length ?? 0;
+}
+
+export function getTriageBadges(node: ComposedNode): TriageBadge[] {
+  const badges: TriageBadge[] = [];
+  const dependencyCount = getDependencyCount(node);
+
+  if (node.overlay?.blocked) {
+    badges.push({
+      kind: "blocked",
+      label: "Blocked",
+      title: getBlockedReason(node),
+    });
+  }
+
+  if (dependencyCount > 0) {
+    badges.push({
+      kind: "dependencies",
+      label: `Deps: ${dependencyCount}`,
+      title: `${dependencyCount} dependency reference${dependencyCount === 1 ? "" : "s"}`,
+    });
+  }
+
+  return badges;
+}
+
+export function getBlockedReason(node: ComposedNode): string {
+  const blockedReason = node.overlay?.blockedReason?.trim();
+  if (blockedReason) {
+    return blockedReason;
+  }
+
+  const notes = node.overlay?.notes?.trim();
+  if (notes) {
+    return notes;
+  }
+
+  return "No blocker reason provided.";
 }
 
 export function getSelectedComposedNode(
