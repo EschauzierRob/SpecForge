@@ -3,40 +3,77 @@
   "repositoryId": "specforge-local",
   "entries": [
     {
+      "specId": "E-0001",
+      "planningStatus": "done",
+      "blocked": false,
+      "notes": "Foundation specs/docs/templates delivered and in active use.",
+      "tags": [
+        "completed"
+      ]
+    },
+    {
+      "specId": "E-0002",
+      "planningStatus": "done",
+      "blocked": false,
+      "notes": "Ingestion/composition pipeline, parser, and overlay runtime are implemented.",
+      "tags": [
+        "completed"
+      ]
+    },
+    {
       "specId": "F-0005",
       "planningStatus": "ready",
       "rank": 10,
       "blocked": false,
-      "dependencies": ["F-0004"],
+      "dependencies": [
+        "F-0004"
+      ],
       "notes": "Parser extraction is MVP critical.",
-      "tags": ["mvp", "ingestion"]
+      "tags": [
+        "mvp",
+        "ingestion"
+      ]
     },
     {
       "specId": "F-0006",
       "planningStatus": "backlog",
       "rank": 20,
       "blocked": false,
-      "dependencies": ["F-0005"],
+      "dependencies": [
+        "F-0005"
+      ],
       "notes": "Composition follows parser stabilization.",
-      "tags": ["mvp", "composition"]
+      "tags": [
+        "mvp",
+        "composition"
+      ]
     },
     {
       "specId": "F-0007",
       "planningStatus": "backlog",
       "rank": 30,
       "blocked": true,
-      "dependencies": ["F-0006"],
+      "dependencies": [
+        "F-0006"
+      ],
       "notes": "UI work waits for composed model contract.",
-      "tags": ["ui"]
+      "tags": [
+        "ui"
+      ]
     },
     {
       "specId": "F-0012",
       "planningStatus": "ready",
       "rank": 25,
       "blocked": false,
-      "dependencies": ["F-0010"],
+      "dependencies": [
+        "F-0010"
+      ],
       "notes": "Requires validation findings format agreement.",
-      "tags": ["recommendation", "planning"]
+      "tags": [
+        "recommendation",
+        "planning"
+      ]
     }
   ]
 }
