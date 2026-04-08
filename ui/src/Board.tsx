@@ -7,7 +7,6 @@ const laneLabels: Record<string, string> = {
   backlog: "Backlog",
   ready: "Ready",
   in_progress: "In Progress",
-  blocked: "Blocked",
   done: "Done",
   unplanned: "Unplanned",
 };

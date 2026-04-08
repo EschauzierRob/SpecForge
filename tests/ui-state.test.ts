@@ -51,6 +51,16 @@ const composeFixture: ComposeRepositoryResult = {
       childrenIds: [],
       requirements: ["Parse markdown"],
     },
+    {
+      id: "story-0001",
+      type: "story",
+      title: "Display board urgency pill",
+      summary: "Keep blocked as card-level urgency state.",
+      sourcePath: "specs/epic-0001-foundation/story-0001-display-board-urgency-pill.md",
+      parentId: "feature-0001",
+      childrenIds: [],
+      acceptanceCriteria: ["Show blocked marker on board cards"],
+    },
   ],
   overlayFiles: [
     {
@@ -62,6 +72,12 @@ const composeFixture: ComposeRepositoryResult = {
           specId: "feature-0001",
           planningStatus: "ready",
           rank: 1,
+        },
+        {
+          specId: "story-0001",
+          planningStatus: "blocked",
+          blocked: true,
+          rank: 2,
         },
       ],
     },
@@ -94,6 +110,26 @@ const composeFixture: ComposeRepositoryResult = {
         specId: "feature-0001",
         planningStatus: "ready",
         rank: 1,
+        sourcePath: "specforge/overlay/local.overlay.json",
+        repositoryId: "local-dev",
+      },
+    },
+    {
+      spec: {
+        id: "story-0001",
+        type: "story",
+        title: "Display board urgency pill",
+        summary: "Keep blocked as card-level urgency state.",
+        sourcePath: "specs/epic-0001-foundation/story-0001-display-board-urgency-pill.md",
+        parentId: "feature-0001",
+        childrenIds: [],
+        acceptanceCriteria: ["Show blocked marker on board cards"],
+      },
+      overlay: {
+        specId: "story-0001",
+        planningStatus: "blocked",
+        blocked: true,
+        rank: 2,
         sourcePath: "specforge/overlay/local.overlay.json",
         repositoryId: "local-dev",
       },
@@ -173,7 +209,7 @@ test("load success stores compose and validation payloads and selects the first 
 
   assert.equal(state.loadState, "success");
   assert.equal(state.selectedItemId, "epic-0001");
-  assert.equal(state.composeResult?.composedNodes.length, 2);
+  assert.equal(state.composeResult?.composedNodes.length, 3);
   assert.equal(state.validationResult?.summary.total, 1);
 });
 
@@ -238,18 +274,20 @@ test("load failure keeps the shell stable and exposes the error message", () => 
 test("overview selectors summarize compose and validation data", () => {
   const counts = getOverviewCounts(composeFixture, validationFixture);
 
-  assert.equal(counts.specCount, 2);
+  assert.equal(counts.specCount, 3);
   assert.equal(counts.overlayFileCount, 1);
-  assert.equal(counts.composedNodeCount, 2);
+  assert.equal(counts.composedNodeCount, 3);
   assert.equal(counts.parserDiagnostics.warning, 1);
   assert.equal(counts.compositionDiagnostics.info, 1);
   assert.equal(counts.validationFindings.total, 1);
 });
 
-test("planning status selector counts both planned and unplanned nodes", () => {
+test("planning status selector keeps blocked as card urgency while counting status lanes", () => {
   const counts = getPlanningStatusCounts(composeFixture);
 
   assert.equal(counts.ready, 1);
+  assert.equal(counts.in_progress, 1);
+  assert.equal(counts.blocked, 0);
   assert.equal(counts.unplanned, 1);
 });
 
