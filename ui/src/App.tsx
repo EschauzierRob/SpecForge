@@ -12,8 +12,8 @@ import type {
 import {
   getOverviewCounts,
   getComposedTreeModel,
-  getBlockedReason,
   getPlanningStatusCounts,
+  getTriageBadges,
   getSelectedComposedNode,
   getSelectedLineageToEpic,
   PLANNING_STATUS_LANE_ORDER,
@@ -96,8 +96,7 @@ function TreePanel(props: {
     const { node, children, depth } = entry;
     const isExpanded = expandedIds[nodeId] ?? true;
     const planningStatus = node.overlay?.planningStatus;
-    const isBlocked = node.overlay?.blocked;
-    const blockedReason = getBlockedReason(node);
+    const triageBadges = getTriageBadges(node);
 
     return (
       <li key={nodeId}>
@@ -126,11 +125,15 @@ function TreePanel(props: {
 
           <div className="tree-badges">
             {planningStatus ? <span className="tree-badge">{planningStatus}</span> : null}
-            {isBlocked ? (
-              <span className="tree-badge tree-badge--blocked" title={blockedReason} aria-label={`Blocked: ${blockedReason}`}>
-                blocked
+            {triageBadges.map((badge) => (
+              <span
+                key={badge.kind}
+                className={badge.kind === "blocked" ? "tree-badge tree-badge--blocked" : "tree-badge tree-badge--dependencies"}
+                title={badge.title}
+              >
+                {badge.label}
               </span>
-            ) : null}
+            ))}
           </div>
         </div>
 

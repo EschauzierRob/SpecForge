@@ -387,6 +387,21 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
+.board-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.board-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #315070;
+}
+
 .board-lane {
   border: 1px solid #dce7ef;
   border-radius: 16px;
@@ -436,6 +451,11 @@ button {
   color: #123456;
 }
 
+.board-card--blocked {
+  border-color: #efc3c3;
+  background: #fffaf9;
+}
+
 .board-card--active {
   border-color: #123456;
   background: #123456;
@@ -452,15 +472,30 @@ button {
   opacity: 0.8;
 }
 
-.board-card-blocked {
+.board-card-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.board-card-badge {
   font-size: 0.75rem;
   padding: 2px 6px;
   border-radius: 999px;
+}
+
+.board-card-badge--blocked {
   background: #fff1f1;
   color: #8d1f1f;
 }
 
-.board-card--active .board-card-blocked {
+.board-card-badge--dependencies {
+  background: #edf4ff;
+  color: #1f4d7d;
+}
+
+.board-card--active .board-card-badge {
   background: rgba(255, 255, 255, 0.2);
   color: #ffffff;
 }
@@ -555,6 +590,13 @@ button {
   color: #8d1f1f;
 }
 
+.tree-badge--dependencies {
+  border-color: #bfd2e6;
+  background: #ecf4fc;
+  color: #28537a;
+  text-transform: none;
+}
+
 @media (max-width: 720px) {
   .app-shell {
     width: min(100vw - 20px, 1200px);
@@ -636,4 +678,26 @@ button {
 .detail-link span {
   font-size: 0.8rem;
   opacity: 0.72;
+}
+
+.detail-triage-badges {
+  display: inline-flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.detail-triage-badge {
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+}
+
+.detail-triage-badge--blocked {
+  background: #fff1f1;
+  color: #8d1f1f;
+}
+
+.detail-triage-badge--dependencies {
+  background: #ecf4fc;
+  color: #28537a;
 }
