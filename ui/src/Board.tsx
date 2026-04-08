@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import type { ComposeRepositoryResult } from "./lib/contracts";
-import { getBoardLanes } from "./lib/selectors";
+import { getBlockedReason, getBoardLanes } from "./lib/selectors";
 
 const laneLabels: Record<string, string> = {
   backlog: "Backlog",
@@ -32,19 +32,26 @@ export function Board(props: {
           </header>
 
           <div className="board-lane-items">
-            {lane.nodes.map((node) => (
-              <button
-                key={node.spec.id}
-                type="button"
-                onClick={() => props.onSelect(node.spec.id)}
-                className={node.spec.id === props.selectedItemId ? "board-card board-card--active" : "board-card"}
-              >
-                <span className="board-card-id">{node.spec.id}</span>
-                <strong>{node.spec.title}</strong>
-                <span className="board-card-type">{node.spec.type}</span>
-                {node.overlay?.blocked ? <span className="board-card-blocked">Blocked</span> : null}
-              </button>
-            ))}
+            {lane.nodes.map((node) => {
+              const blockedReason = getBlockedReason(node);
+              return (
+                <button
+                  key={node.spec.id}
+                  type="button"
+                  onClick={() => props.onSelect(node.spec.id)}
+                  className={node.spec.id === props.selectedItemId ? "board-card board-card--active" : "board-card"}
+                >
+                  <span className="board-card-id">{node.spec.id}</span>
+                  <strong>{node.spec.title}</strong>
+                  <span className="board-card-type">{node.spec.type}</span>
+                  {node.overlay?.blocked ? (
+                    <span className="board-card-blocked" title={blockedReason} aria-label={`Blocked: ${blockedReason}`}>
+                      Blocked
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
           </div>
         </section>
       ))}

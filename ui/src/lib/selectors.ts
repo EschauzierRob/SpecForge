@@ -130,6 +130,20 @@ export function getBoardLanes(composeResult?: ComposeRepositoryResult): BoardLan
   }));
 }
 
+export function getBlockedReason(node: ComposedNode): string {
+  const blockedReason = node.overlay?.blockedReason?.trim();
+  if (blockedReason) {
+    return blockedReason;
+  }
+
+  const notes = node.overlay?.notes?.trim();
+  if (notes) {
+    return notes;
+  }
+
+  return "No blocker reason provided.";
+}
+
 export function getSelectedComposedNode(
   composeResult: ComposeRepositoryResult | undefined,
   selectedItemId: string | undefined,

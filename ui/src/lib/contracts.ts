@@ -62,6 +62,7 @@ export interface OverlayEntry {
   planningStatus?: PlanningStatus;
   rank?: number;
   blocked?: boolean;
+  blockedReason?: string;
   dependencies?: string[];
   notes?: string;
   tags?: string[];

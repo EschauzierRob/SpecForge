@@ -12,6 +12,7 @@ import type {
 import {
   getOverviewCounts,
   getComposedTreeModel,
+  getBlockedReason,
   getPlanningStatusCounts,
   getSelectedComposedNode,
   getSelectedLineageToEpic,
@@ -96,6 +97,7 @@ function TreePanel(props: {
     const isExpanded = expandedIds[nodeId] ?? true;
     const planningStatus = node.overlay?.planningStatus;
     const isBlocked = node.overlay?.blocked;
+    const blockedReason = getBlockedReason(node);
 
     return (
       <li key={nodeId}>
@@ -124,7 +126,11 @@ function TreePanel(props: {
 
           <div className="tree-badges">
             {planningStatus ? <span className="tree-badge">{planningStatus}</span> : null}
-            {isBlocked ? <span className="tree-badge tree-badge--blocked">blocked</span> : null}
+            {isBlocked ? (
+              <span className="tree-badge tree-badge--blocked" title={blockedReason} aria-label={`Blocked: ${blockedReason}`}>
+                blocked
+              </span>
+            ) : null}
           </div>
         </div>
 
