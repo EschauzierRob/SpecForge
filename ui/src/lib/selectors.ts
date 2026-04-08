@@ -126,6 +126,30 @@ export function getSelectedComposedNode(
   return composeResult.composedNodes.find((node) => node.spec.id === selectedItemId);
 }
 
+export function getSelectedLineageToEpic(
+  composeResult: ComposeRepositoryResult | undefined,
+  selectedItemId: string | undefined,
+): ComposedNode[] {
+  if (!composeResult || !selectedItemId) {
+    return [];
+  }
+
+  const byId = Object.fromEntries(composeResult.composedNodes.map((node) => [node.spec.id, node]));
+  const lineage: ComposedNode[] = [];
+  const visited = new Set<string>();
+  let currentNode = byId[selectedItemId];
+
+  while (currentNode && !visited.has(currentNode.spec.id)) {
+    lineage.push(currentNode);
+    visited.add(currentNode.spec.id);
+
+    const parentId = currentNode.spec.parentId;
+    currentNode = parentId ? byId[parentId] : undefined;
+  }
+
+  return lineage.reverse();
+}
+
 export function getSelectedTitle(state: UiWorkspaceState): string {
   return getSelectedComposedNode(state.composeResult, state.selectedItemId)?.spec.title ?? "No item selected";
 }

@@ -14,6 +14,7 @@ import {
   getComposedTreeModel,
   getPlanningStatusCounts,
   getSelectedComposedNode,
+  getSelectedLineageToEpic,
 } from "./lib/selectors";
 import {
   initialWorkspaceState,
@@ -276,6 +277,45 @@ function DebugPanel(props: {
   );
 }
 
+function SelectionContextHeader(props: {
+  lineage: ComposeRepositoryResult["composedNodes"];
+  onSelect(specId: string): void;
+}): JSX.Element | null {
+  if (props.lineage.length === 0) {
+    return null;
+  }
+
+  const selectedNode = props.lineage[props.lineage.length - 1];
+
+  return (
+    <section className="panel context-header-panel" aria-label="Selection context">
+      <div className="context-header-content">
+        <span className="context-label">Selection context</span>
+        <nav aria-label="Selected node lineage" className="context-breadcrumbs">
+          {props.lineage.map((node, index) => {
+            const isLast = index === props.lineage.length - 1;
+            return (
+              <span key={node.spec.id} className="context-crumb">
+                {isLast ? (
+                  <span className="context-current">{node.spec.title}</span>
+                ) : (
+                  <button type="button" className="context-link" onClick={() => props.onSelect(node.spec.id)}>
+                    {node.spec.title}
+                  </button>
+                )}
+                {!isLast ? <span className="context-separator"> &gt; </span> : null}
+              </span>
+            );
+          })}
+        </nav>
+      </div>
+      <div className="panel-pill">
+        {selectedNode.spec.id} · {selectedNode.spec.type}
+      </div>
+    </section>
+  );
+}
+
 export default function App(): JSX.Element {
   const [state, dispatch] = useReducer(workspaceReducer, initialWorkspaceState);
 
@@ -320,6 +360,7 @@ export default function App(): JSX.Element {
   }
 
   const selectedNode = getSelectedComposedNode(state.composeResult, state.selectedItemId);
+  const selectedLineage = getSelectedLineageToEpic(state.composeResult, state.selectedItemId);
   const selectedTitle = selectedNode?.spec.title ?? "No item selected";
   const selectedSummary = selectedNode?.spec.summary ?? "Select a node to keep later detail views grounded in real runtime data.";
 
@@ -334,6 +375,7 @@ export default function App(): JSX.Element {
     if (state.activeScreen === "Overview") {
       return (
         <div className="stack">
+          <SelectionContextHeader lineage={selectedLineage} onSelect={(specId) => handleItemSelected(specId)} />
           <OverviewPanel
             composeResult={state.composeResult}
             validationResult={state.validationResult}
@@ -353,11 +395,14 @@ export default function App(): JSX.Element {
 
     if (state.activeScreen === "Tree") {
       return (
-        <TreePanel
-          composeResult={state.composeResult}
-          selectedItemId={state.selectedItemId}
-          onSelect={(specId) => handleItemSelected(specId)}
-        />
+        <div className="stack">
+          <SelectionContextHeader lineage={selectedLineage} onSelect={(specId) => handleItemSelected(specId)} />
+          <TreePanel
+            composeResult={state.composeResult}
+            selectedItemId={state.selectedItemId}
+            onSelect={(specId) => handleItemSelected(specId)}
+          />
+        </div>
       );
     }
 
@@ -381,11 +426,14 @@ export default function App(): JSX.Element {
 
     if (state.activeScreen === "Detail") {
       return (
-        <Detail
-          composeResult={state.composeResult}
-          selectedItemId={state.selectedItemId}
-          onNavigate={(specId) => handleItemSelected(specId, true)}
-        />
+        <div className="stack">
+          <SelectionContextHeader lineage={selectedLineage} onSelect={(specId) => handleItemSelected(specId)} />
+          <Detail
+            composeResult={state.composeResult}
+            selectedItemId={state.selectedItemId}
+            onNavigate={(specId) => handleItemSelected(specId, true)}
+          />
+        </div>
       );
     }
 
