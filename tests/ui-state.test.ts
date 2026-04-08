@@ -2,10 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  filterBoardNodes,
   getBlockedReason,
+  getDependencyCount,
   getOverviewCounts,
   getPlanningStatusCounts,
   getSelectedComposedNode,
+  getTriageBadges,
 } from "../ui/src/lib/selectors.ts";
 import type {
   ComposeRepositoryResult,
@@ -331,4 +334,51 @@ test("selected node lookup resolves the currently selected composed node", () =>
 
   assert.equal(selectedNode?.spec.title, "Canonical spec model");
   assert.equal(selectedNode?.overlay?.planningStatus, "ready");
+});
+
+test("board filters can isolate blocked items, dependency items, or both", () => {
+  const nodes = [
+    composeFixture.composedNodes[0],
+    {
+      ...composeFixture.composedNodes[1],
+      overlay: {
+        ...composeFixture.composedNodes[1].overlay,
+        dependencies: ["story-0001"],
+      },
+    },
+    composeFixture.composedNodes[2],
+  ];
+
+  assert.equal(filterBoardNodes(nodes, { blockedOnly: true, hasDependencies: false }).length, 1);
+  assert.equal(filterBoardNodes(nodes, { blockedOnly: false, hasDependencies: true }).length, 1);
+  assert.equal(filterBoardNodes(nodes, { blockedOnly: true, hasDependencies: true }).length, 0);
+  assert.equal(filterBoardNodes(nodes, { blockedOnly: false, hasDependencies: false }).length, 3);
+});
+
+test("triage badge selectors expose blocked and dependency states for compact badges", () => {
+  const blockedWithDependencies = {
+    ...composeFixture.composedNodes[2],
+    overlay: {
+      ...composeFixture.composedNodes[2].overlay,
+      blocked: true,
+      blockedReason: "Waiting for contract update",
+      dependencies: ["feature-0001", "story-0002"],
+    },
+  };
+
+  assert.equal(getDependencyCount(blockedWithDependencies), 2);
+  assert.deepEqual(getTriageBadges(blockedWithDependencies), [
+    {
+      kind: "blocked",
+      label: "Blocked",
+      title: "Waiting for contract update",
+    },
+    {
+      kind: "dependencies",
+      label: "Deps: 2",
+      title: "2 dependency references",
+    },
+  ]);
+
+  assert.deepEqual(getTriageBadges(composeFixture.composedNodes[0]), []);
 });

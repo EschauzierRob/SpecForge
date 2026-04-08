@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 
 import type { ComposeRepositoryResult, ComposedNode } from "./lib/contracts";
+import { getTriageBadges } from "./lib/selectors";
 
 function FieldList(props: { title: string; items: string[] }): JSX.Element {
   return (
@@ -89,6 +90,7 @@ export function Detail(props: {
   }
 
   const parentIds = selectedNode.spec.parentId ? [selectedNode.spec.parentId] : [];
+  const triageBadges = getTriageBadges(selectedNode);
 
   return (
     <section className="panel">
@@ -105,6 +107,23 @@ export function Detail(props: {
       <section className="detail-section">
         <h3>Summary</h3>
         <p>{selectedNode.spec.summary || "not set"}</p>
+        {triageBadges.length > 0 ? (
+          <div className="detail-triage-badges" aria-label="Triage indicators">
+            {triageBadges.map((badge) => (
+              <span
+                key={badge.kind}
+                className={
+                  badge.kind === "blocked"
+                    ? "detail-triage-badge detail-triage-badge--blocked"
+                    : "detail-triage-badge detail-triage-badge--dependencies"
+                }
+                title={badge.title}
+              >
+                {badge.label}
+              </span>
+            ))}
+          </div>
+        ) : null}
       </section>
 
       <FieldList title="Goals" items={selectedNode.spec.goals ?? []} />
@@ -124,6 +143,7 @@ export function Detail(props: {
           <OverlayField label="Rank" value={selectedNode.overlay?.rank} />
           <OverlayField label="Blocked" value={selectedNode.overlay?.blocked} />
           <OverlayField label="Blocked reason" value={selectedNode.overlay?.blockedReason} />
+          <OverlayField label="Dependency refs" value={selectedNode.overlay?.dependencies?.length ?? 0} />
           <OverlayField label="Tags" value={selectedNode.overlay?.tags} />
           <OverlayField label="Notes" value={selectedNode.overlay?.notes} />
         </dl>
