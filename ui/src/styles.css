@@ -318,6 +318,96 @@ button {
   min-height: 180px;
 }
 
+.tree-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+
+.tree-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+  border: 1px solid #d9e4ee;
+  border-radius: 12px;
+  background: #f9fcff;
+  padding: 8px 10px;
+}
+
+.tree-row--active {
+  border-color: #123456;
+  background: #edf4ff;
+}
+
+.tree-toggle {
+  width: 26px;
+  height: 26px;
+  border: 1px solid #cad8e6;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1c4768;
+  padding: 0;
+}
+
+.tree-toggle--placeholder {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  border-color: transparent;
+  background: transparent;
+}
+
+.tree-item {
+  display: inline-flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #10243a;
+  padding: 0;
+  text-align: left;
+}
+
+.tree-item-id {
+  font-size: 0.79rem;
+  font-weight: 600;
+  color: #46617d;
+}
+
+.tree-item-type {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  color: #607d99;
+}
+
+.tree-badges {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tree-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 8px;
+  border-radius: 999px;
+  border: 1px solid #bfd2e6;
+  background: #ecf4fc;
+  color: #28537a;
+  font-size: 0.76rem;
+  text-transform: lowercase;
+}
+
+.tree-badge--blocked {
+  border-color: #e0b5b5;
+  background: #fff1f1;
+  color: #8d1f1f;
+}
+
 @media (max-width: 720px) {
   .app-shell {
     width: min(100vw - 20px, 1200px);

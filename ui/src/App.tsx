@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useReducer } from "react";
+import { FormEvent, useEffect, useMemo, useReducer, useState } from "react";
 
 import { fetchCompose, fetchContext, fetchValidate } from "./lib/api";
 import type {
@@ -9,6 +9,7 @@ import type {
 } from "./lib/contracts";
 import {
   getOverviewCounts,
+  getComposedTreeModel,
   getPlanningStatusCounts,
   getSelectedComposedNode,
 } from "./lib/selectors";
@@ -45,6 +46,98 @@ function PlaceholderPanel(props: { title: string; detail: string }): JSX.Element
     <section className="panel placeholder-panel">
       <h2>{props.title}</h2>
       <p>{props.detail}</p>
+    </section>
+  );
+}
+
+function TreePanel(props: {
+  composeResult?: ComposeRepositoryResult;
+  selectedItemId?: string;
+  onSelect(specId: string): void;
+}): JSX.Element {
+  const tree = useMemo(() => getComposedTreeModel(props.composeResult), [props.composeResult]);
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    const nextExpandedIds: Record<string, boolean> = {};
+    for (const nodeId of Object.keys(tree.byId)) {
+      if (tree.byId[nodeId].children.length > 0) {
+        nextExpandedIds[nodeId] = true;
+      }
+    }
+    setExpandedIds(nextExpandedIds);
+  }, [tree]);
+
+  if (tree.roots.length === 0) {
+    return (
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <h2>Canonical hierarchy</h2>
+            <p>Load a workspace to inspect parent-child relationships and planning overlays.</p>
+          </div>
+        </div>
+        <div className="quick-pick-empty">No hierarchy data loaded yet.</div>
+      </section>
+    );
+  }
+
+  const toggleNode = (nodeId: string): void => {
+    setExpandedIds((current) => ({ ...current, [nodeId]: !current[nodeId] }));
+  };
+
+  function renderNode(nodeId: string): JSX.Element {
+    const entry = tree.byId[nodeId];
+    const { node, children, depth } = entry;
+    const isExpanded = expandedIds[nodeId] ?? true;
+    const planningStatus = node.overlay?.planningStatus;
+    const isBlocked = node.overlay?.blocked;
+
+    return (
+      <li key={nodeId}>
+        <div
+          className={node.spec.id === props.selectedItemId ? "tree-row tree-row--active" : "tree-row"}
+          style={{ paddingLeft: `${12 + depth * 18}px` }}
+        >
+          {children.length > 0 ? (
+            <button
+              type="button"
+              className="tree-toggle"
+              onClick={() => toggleNode(nodeId)}
+              aria-label={isExpanded ? `Collapse ${node.spec.id}` : `Expand ${node.spec.id}`}
+            >
+              {isExpanded ? "▾" : "▸"}
+            </button>
+          ) : (
+            <span className="tree-toggle tree-toggle--placeholder">•</span>
+          )}
+
+          <button type="button" className="tree-item" onClick={() => props.onSelect(node.spec.id)}>
+            <span className="tree-item-id">{node.spec.id}</span>
+            <strong>{node.spec.title}</strong>
+            <span className="tree-item-type">{node.spec.type}</span>
+          </button>
+
+          <div className="tree-badges">
+            {planningStatus ? <span className="tree-badge">{planningStatus}</span> : null}
+            {isBlocked ? <span className="tree-badge tree-badge--blocked">blocked</span> : null}
+          </div>
+        </div>
+
+        {children.length > 0 && isExpanded ? <ul className="tree-list">{children.map(renderNode)}</ul> : null}
+      </li>
+    );
+  }
+
+  return (
+    <section className="panel">
+      <div className="panel-header">
+        <div>
+          <h2>Canonical hierarchy</h2>
+          <p>Tree order is derived from canonical parent/child relationships with overlay status badges.</p>
+        </div>
+      </div>
+      <ul className="tree-list">{tree.roots.map(renderNode)}</ul>
     </section>
   );
 }
@@ -251,9 +344,10 @@ export default function App(): JSX.Element {
 
     if (state.activeScreen === "Tree") {
       return (
-        <PlaceholderPanel
-          title="Tree foundation"
-          detail="Hierarchy rendering lands in Slice 6. The load flow and shared selection state are already ready."
+        <TreePanel
+          composeResult={state.composeResult}
+          selectedItemId={state.selectedItemId}
+          onSelect={(specId) => dispatch({ type: "itemSelected", specId })}
         />
       );
     }
