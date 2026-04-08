@@ -318,6 +318,97 @@ button {
   min-height: 180px;
 }
 
+.board-empty {
+  padding: 14px;
+  border-radius: 14px;
+  background: #f8fbfd;
+  color: #51697f;
+}
+
+.board-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+}
+
+.board-lane {
+  border: 1px solid #dce7ef;
+  border-radius: 16px;
+  background: #f8fbfd;
+  padding: 10px;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+}
+
+.board-lane-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.board-lane-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.board-lane-count {
+  min-width: 28px;
+  text-align: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #e5eff8;
+  color: #123456;
+  font-weight: 700;
+}
+
+.board-lane-items {
+  display: grid;
+  gap: 8px;
+}
+
+.board-card {
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #d5e0ea;
+  background: #ffffff;
+  display: grid;
+  justify-items: start;
+  gap: 4px;
+  text-align: left;
+  color: #123456;
+}
+
+.board-card--active {
+  border-color: #123456;
+  background: #123456;
+  color: #ffffff;
+}
+
+.board-card-id {
+  font-size: 0.78rem;
+  opacity: 0.72;
+}
+
+.board-card-type {
+  font-size: 0.82rem;
+  opacity: 0.8;
+}
+
+.board-card-blocked {
+  font-size: 0.75rem;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fff1f1;
+  color: #8d1f1f;
+}
+
+.board-card--active .board-card-blocked {
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+}
+
 .tree-list {
   list-style: none;
   margin: 0;

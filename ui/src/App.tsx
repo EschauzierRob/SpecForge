@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useMemo, useReducer, useState } from "react";
 
+import { Board } from "./Board";
 import { fetchCompose, fetchContext, fetchValidate } from "./lib/api";
 import type {
   ComposeRepositoryResult,
@@ -354,10 +355,19 @@ export default function App(): JSX.Element {
 
     if (state.activeScreen === "Board") {
       return (
-        <PlaceholderPanel
-          title="Board foundation"
-          detail="Planning status data is already loaded, so the grouped board view can plug into this state next."
-        />
+        <section className="panel">
+          <div className="panel-header">
+            <div>
+              <h2>Planning board</h2>
+              <p>Grouped by planning status from overlays, with unplanned as the fallback lane.</p>
+            </div>
+          </div>
+          <Board
+            composeResult={state.composeResult}
+            selectedItemId={state.selectedItemId}
+            onSelect={(specId) => dispatch({ type: "itemSelected", specId })}
+          />
+        </section>
       );
     }
 
