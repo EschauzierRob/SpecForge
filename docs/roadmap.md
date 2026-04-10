@@ -87,3 +87,10 @@ Scope lock:
 
 - safe overlay editing flows
 - optional guided spec update proposals (not direct mutation by default)
+
+## v1.4 — Canonical Spec Authoring
+
+- create Epic/Feature/Story/Task artifacts from the UI using canonical templates
+- enforce hierarchy, required fields, and duplicate-safe ID generation
+- support lightweight editing of canonical spec sections without overlay metadata changes
+
