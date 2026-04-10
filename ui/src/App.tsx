@@ -14,7 +14,7 @@ import type {
 import {
   getOverviewCounts,
   getComposedTreeModel,
-  DEFAULT_WARNINGS_FILTERS,
+  createWarningsFilters,
   getPlanningStatusCounts,
   getTriageBadges,
   getSelectedComposedNode,
@@ -376,7 +376,7 @@ function SelectionContextHeader(props: {
 export default function App(): JSX.Element {
   const [state, dispatch] = useReducer(workspaceReducer, initialWorkspaceState);
   const [isBoardDetailOpen, setIsBoardDetailOpen] = useState(false);
-  const [warningsFilters, setWarningsFilters] = useState<WarningsFilters>(DEFAULT_WARNINGS_FILTERS);
+  const [warningsFilters, setWarningsFilters] = useState<WarningsFilters>(() => createWarningsFilters());
 
   useEffect(() => {
     let cancelled = false;
