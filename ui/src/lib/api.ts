@@ -2,6 +2,7 @@ import type {
   ApiContext,
   ComposeRepositoryResult,
   ParseRepositoryResult,
+  RecommendationResult,
   ValidationResult,
 } from "./contracts";
 
@@ -56,4 +57,8 @@ export function fetchCompose(repoPath: string): Promise<ComposeRepositoryResult>
 
 export function fetchValidate(repoPath: string): Promise<ValidationResult> {
   return postRepoPath<ValidationResult>("/api/validate", repoPath);
+}
+
+export function fetchRecommend(repoPath: string): Promise<RecommendationResult> {
+  return postRepoPath<RecommendationResult>("/api/recommend", repoPath);
 }

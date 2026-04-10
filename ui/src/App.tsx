@@ -3,10 +3,11 @@ import { FormEvent, useEffect, useMemo, useReducer, useState } from "react";
 import { Board } from "./Board";
 import { Detail } from "./Detail";
 import { WarningsPanel } from "./WarningsPanel";
-import { fetchCompose, fetchContext, fetchValidate } from "./lib/api";
+import { fetchCompose, fetchContext, fetchRecommend, fetchValidate } from "./lib/api";
 import type {
   ComposeRepositoryResult,
   DiagnosticSeverity,
+  RecommendationResult,
   UiScreen,
   ValidationResult,
 } from "./lib/contracts";
@@ -19,7 +20,6 @@ import {
   getSelectedComposedNode,
   getSelectedLineageToEpic,
   PLANNING_STATUS_LANE_ORDER,
-  getRecommendedNextWork,
   type WarningsFilters,
 } from "./lib/selectors";
 import {
@@ -297,15 +297,10 @@ function DebugPanel(props: {
 }
 
 function NextWorkPanel(props: {
-  composeResult?: ComposeRepositoryResult;
-  validationResult?: ValidationResult;
+  recommendationResult?: RecommendationResult;
   onSelect(specId: string): void;
 }): JSX.Element {
-  const result = useMemo(
-    () => getRecommendedNextWork(props.composeResult, props.validationResult),
-    [props.composeResult, props.validationResult],
-  );
-  const recommendedItems = result.recommendations.slice(0, 12);
+  const recommendedItems = props.recommendationResult?.recommendations.slice(0, 12) ?? [];
 
   return (
     <section className="panel">
@@ -409,6 +404,7 @@ export default function App(): JSX.Element {
     try {
       const composeResult = await fetchCompose(state.repoPath);
       const validationResult = await fetchValidate(state.repoPath);
+      const recommendationResult = await fetchRecommend(state.repoPath);
 
       dispatch({
         type: "loadSucceeded",
@@ -416,6 +412,7 @@ export default function App(): JSX.Element {
         parseResult: toParseResult(composeResult),
         composeResult,
         validationResult,
+        recommendationResult,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -547,8 +544,7 @@ export default function App(): JSX.Element {
 
     return (
       <NextWorkPanel
-        composeResult={state.composeResult}
-        validationResult={state.validationResult}
+        recommendationResult={state.recommendationResult}
         onSelect={(specId) => handleItemSelected(specId, true)}
       />
     );

@@ -177,6 +177,7 @@ export interface UiWorkspaceState {
   parseResult?: ParseRepositoryResult;
   composeResult?: ComposeRepositoryResult;
   validationResult?: ValidationResult;
+  recommendationResult?: RecommendationResult;
   loadState: UiLoadState;
   errorMessage?: string;
 }

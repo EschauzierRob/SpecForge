@@ -63,16 +63,42 @@
     },
     {
       "specId": "F-0012",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "rank": 25,
       "blocked": false,
       "dependencies": [
         "F-0010"
       ],
-      "notes": "Requires validation findings format agreement.",
+      "notes": "Recommendation engine and UI panel are implemented.",
       "tags": [
         "recommendation",
         "planning"
+      ]
+    },
+    {
+      "specId": "S-0302",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0012"
+      ],
+      "notes": "Ranked actionable next-work list is now surfaced in the UI.",
+      "tags": [
+        "recommendation",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0301",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0302"
+      ],
+      "notes": "Deterministic actionable ranking is produced by the shared recommendation engine.",
+      "tags": [
+        "recommendation",
+        "task"
       ]
     },
     {

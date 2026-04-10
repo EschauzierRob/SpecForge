@@ -7,12 +7,13 @@ import { fileURLToPath } from "node:url";
 
 import { composeRepository } from "./core/ingest/compose.ts";
 import { parseRepository } from "./core/ingest/parse.ts";
+import { rankRecommendedNextWork } from "./core/recommendation/engine.ts";
 import { validateRepository } from "./core/validation/engine.ts";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 4311;
 
-type ApiCommand = "parse" | "compose" | "validate";
+type ApiCommand = "parse" | "compose" | "validate" | "recommend";
 type ApiHandler = (repoPath: string) => Promise<unknown>;
 
 export interface ApiServerOptions {
@@ -122,6 +123,14 @@ function getHandler(command: ApiCommand): ApiHandler {
     return composeRepository;
   }
 
+  if (command === "recommend") {
+    return async (repoPath: string) => {
+      const composeResult = await composeRepository(repoPath);
+      const validationResult = await validateRepository(repoPath);
+      return rankRecommendedNextWork(composeResult.composedNodes, validationResult.findings);
+    };
+  }
+
   return validateRepository;
 }
 
@@ -200,6 +209,11 @@ export function createSpecForgeApiServer(options: ApiServerOptions = {}): Server
 
     if (requestUrl.pathname === "/api/validate") {
       await handleCommandRequest(request, response, "validate");
+      return;
+    }
+
+    if (requestUrl.pathname === "/api/recommend") {
+      await handleCommandRequest(request, response, "recommend");
       return;
     }
 

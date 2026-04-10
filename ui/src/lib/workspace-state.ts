@@ -1,6 +1,7 @@
 import type {
   ComposeRepositoryResult,
   ParseRepositoryResult,
+  RecommendationResult,
   UiScreen,
   UiWorkspaceState,
   ValidationResult,
@@ -18,6 +19,7 @@ export type UiWorkspaceAction =
     parseResult: ParseRepositoryResult;
     composeResult: ComposeRepositoryResult;
     validationResult: ValidationResult;
+    recommendationResult: RecommendationResult;
   }
   | { type: "loadFailed"; message: string };
 
@@ -97,6 +99,7 @@ export function workspaceReducer(
       parseResult: action.parseResult,
       composeResult: action.composeResult,
       validationResult: action.validationResult,
+      recommendationResult: action.recommendationResult,
       loadState: "success",
       errorMessage: undefined,
       selectedItemId: getNextSelectedItemId(state.selectedItemId, action.composeResult),
