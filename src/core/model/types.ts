@@ -174,6 +174,7 @@ export interface RecommendationRationale {
 
 export interface RecommendationEvaluation {
   specId: string;
+  specTitle: string;
   specType: SpecNodeType;
   eligible: boolean;
   score: number;

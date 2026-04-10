@@ -318,7 +318,7 @@ function NextWorkPanel(props: {
         {recommendedItems.map((item) => (
           <article key={item.specId} className="warnings-item">
             <header className="warnings-item-header">
-              <strong>{item.specId}</strong>
+              <strong>{item.specId} - {item.specTitle}</strong>
               <span className="tree-badge">{item.specType}</span>
               <span className="tree-badge">{item.planningStatus}</span>
               <span className="tree-badge">rank {item.rankValue === Number.MAX_SAFE_INTEGER ? "default" : item.rankValue}</span>

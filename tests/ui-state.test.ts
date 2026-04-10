@@ -196,6 +196,7 @@ const recommendationFixture: RecommendationResult = {
   recommendations: [
     {
       specId: "feature-0001",
+      specTitle: "Canonical spec model",
       specType: "feature",
       eligible: true,
       score: 1,

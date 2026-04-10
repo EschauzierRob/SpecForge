@@ -87,6 +87,10 @@ test("rankRecommendedNextWork returns deterministic output", () => {
     runA.recommendations.map((item) => item.specId),
     ["T-0001", "T-0002"],
   );
+  assert.deepEqual(
+    runA.recommendations.map((item) => item.specTitle),
+    ["Task", "Task"],
+  );
 });
 
 test("rankRecommendedNextWork applies exclusion rules", () => {

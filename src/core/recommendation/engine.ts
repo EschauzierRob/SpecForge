@@ -249,6 +249,7 @@ function buildEvaluation(
 
   return {
     specId: node.spec.id,
+    specTitle: node.spec.title,
     specType: node.spec.type,
     eligible,
     score: planningPriority[planningStatus] * 1_000_000 + rankValue,
