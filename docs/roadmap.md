@@ -78,8 +78,10 @@ Scope lock:
 
 ## v1.2 — Drift Compensation
 
+- deliver epic E-0005: Spec Format Drift Compensation
 - resilient matching when IDs/paths shift
 - heuristics with explicit confidence and warnings
+- canonical projection for non-standard repositories
 
 ## v1.3 — Controlled Write Capabilities
 
