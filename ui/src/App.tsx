@@ -333,6 +333,7 @@ function SelectionContextHeader(props: {
 
 export default function App(): JSX.Element {
   const [state, dispatch] = useReducer(workspaceReducer, initialWorkspaceState);
+  const [isBoardDetailOpen, setIsBoardDetailOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -379,6 +380,12 @@ export default function App(): JSX.Element {
   const selectedTitle = selectedNode?.spec.title ?? "No item selected";
   const selectedSummary = selectedNode?.spec.summary ?? "Select a node to keep later detail views grounded in real runtime data.";
 
+  useEffect(() => {
+    if (state.activeScreen !== "Board") {
+      setIsBoardDetailOpen(false);
+    }
+  }, [state.activeScreen]);
+
   function handleItemSelected(specId: string, switchToDetail = false): void {
     dispatch({ type: "itemSelected", specId });
     if (switchToDetail) {
@@ -423,19 +430,45 @@ export default function App(): JSX.Element {
 
     if (state.activeScreen === "Board") {
       return (
-        <section className="panel">
-          <div className="panel-header">
-            <div>
-              <h2>Planning board</h2>
-              <p>Lanes show planning status only; blocked remains a card-level urgency flag in every lane.</p>
+        <>
+          <section className="panel">
+            <div className="panel-header">
+              <div>
+                <h2>Planning board</h2>
+                <p>Lanes show planning status only; blocked remains a card-level urgency flag in every lane.</p>
+              </div>
             </div>
-          </div>
-          <Board
-            composeResult={state.composeResult}
-            selectedItemId={state.selectedItemId}
-            onSelect={(specId) => handleItemSelected(specId)}
-          />
-        </section>
+            <Board
+              composeResult={state.composeResult}
+              selectedItemId={state.selectedItemId}
+              onSelect={(specId) => {
+                handleItemSelected(specId);
+                setIsBoardDetailOpen(true);
+              }}
+            />
+          </section>
+
+          <aside
+            className={isBoardDetailOpen ? "board-detail-drawer board-detail-drawer--open" : "board-detail-drawer"}
+            aria-label="Selected card detail"
+            aria-hidden={!isBoardDetailOpen}
+          >
+            <div className="board-detail-drawer__header">
+              <strong>Card detail</strong>
+              <button type="button" className="board-detail-drawer__close" onClick={() => setIsBoardDetailOpen(false)}>
+                Close
+              </button>
+            </div>
+            <Detail
+              composeResult={state.composeResult}
+              selectedItemId={state.selectedItemId}
+              onNavigate={(specId) => {
+                handleItemSelected(specId);
+                setIsBoardDetailOpen(true);
+              }}
+            />
+          </aside>
+        </>
       );
     }
 
