@@ -74,7 +74,8 @@ v1.0 focuses on an MVP that can:
 2. Use `specs/README.md` and templates in `specs/templates/` when adding or modifying specs.
 3. Keep planning metadata out of spec files; use overlay JSON in `specforge/overlay/`.
 4. Preserve stable IDs. IDs are the integration contract between specs and overlay.
-5. Add acceptance criteria for any new behavior before implementation.
+5. Follow `docs/ai-overlay-sync-workflow.md` for any AI-assisted implementation so `specforge/overlay/local-dev.overlay.json` stays aligned with changed spec IDs.
+6. Add acceptance criteria for any new behavior before implementation.
 
 ## Developer Workflow
 
@@ -86,6 +87,8 @@ Use the CLI to inspect each pipeline stage locally:
 - `ingest` remains available as a compatibility alias for `compose`
 
 See `docs/local-developer-workflow.md` for command examples, JSON output options, artifact writing, and exit-code behavior.
+
+When an implementation slice is AI-assisted, also follow `docs/ai-overlay-sync-workflow.md` before and after code changes so overlay entries stay in sync with progress.
 
 ## UI Foundation
 

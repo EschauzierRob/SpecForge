@@ -90,7 +90,7 @@ test("rankRecommendedNextWork applies exclusion rules", () => {
     overlay: {
       ...createComposedNode().overlay,
       specId: "T-0004",
-      dependencies: ["T-0002"],
+      dependencies: ["T-0003"],
     },
   });
 

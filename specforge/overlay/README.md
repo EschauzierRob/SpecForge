@@ -10,9 +10,11 @@ Overlay files store planning and execution metadata independent of product specs
 
 ## Recommended File Strategy
 
-- keep one base overlay for local development (`examples/local-dev.overlay.json`)
+- keep one base overlay for local development (`local-dev.overlay.json`)
 - optionally support layered overlays in future versions (team/sprint/personal)
 
 ## Important
 
 Do not copy overlay fields into `/specs` markdown files.
+
+For AI-assisted implementation, follow `docs/ai-overlay-sync-workflow.md` to validate, add, or repair entries in `specforge/overlay/local-dev.overlay.json` before and after changes.

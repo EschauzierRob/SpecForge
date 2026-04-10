@@ -5,7 +5,11 @@
 - Node.js 22 or newer
 - A local repository that follows the SpecForge `specs/` and `specforge/overlay/` layout
 
+For AI-assisted implementation work, follow `docs/ai-overlay-sync-workflow.md` before and after making changes. That workflow is the required path for validating and repairing `specforge/overlay/local-dev.overlay.json`.
+
 ## Commands
+
+Use `compose` and `validate` after overlay edits to confirm the local overlay file still composes cleanly and does not introduce validation findings.
 
 ### Parse
 

@@ -42,7 +42,7 @@ test("ingestRepository ingests the current repo and sample repo successfully", a
   assert.equal(currentRepoResult.composedNodes.length, currentRepoResult.canonicalNodes.length);
   assert.equal(
     currentRepoResult.composedNodes.find((node) => node.spec.id === "F-0005")?.overlay?.planningStatus,
-    "ready",
+    "done",
   );
   assert.equal(sampleRepoResult.canonicalNodes.length, 1);
   assert.equal(sampleRepoResult.overlayFiles.length, 1);
@@ -75,6 +75,7 @@ test("CLI --json output is machine-readable and stable enough for snapshots", as
 });
 
 test("CLI summary reflects overlay and composition counts", async () => {
+  const currentRepoResult = await ingestRepository(repoRoot);
   const outputLines: string[] = [];
   const errorLines: string[] = [];
   const exitCode = await runCli(
@@ -86,6 +87,6 @@ test("CLI summary reflects overlay and composition counts", async () => {
   assert.equal(exitCode, 0);
   assert.deepEqual(errorLines, []);
   assert.ok(outputLines.includes("overlay files: 1"));
-  assert.ok(outputLines.includes("composed nodes: 25"));
+  assert.ok(outputLines.includes(`composed nodes: ${currentRepoResult.composedNodes.length}`));
   assert.ok(outputLines.some((line) => line.startsWith("composition diagnostics: ")));
 });

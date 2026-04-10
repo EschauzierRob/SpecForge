@@ -76,6 +76,61 @@
       ]
     },
     {
+      "specId": "F-0013",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0002",
+        "F-0006"
+      ],
+      "notes": "AI contributor guidance now requires overlay validation and sync for implementation slices.",
+      "tags": [
+        "docs",
+        "workflow"
+      ]
+    },
+    {
+      "specId": "S-0401",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0013"
+      ],
+      "notes": "AI workflow instructions now require overlay entry lifecycle checks for changed spec IDs.",
+      "tags": [
+        "docs",
+        "workflow",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0401",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0401"
+      ],
+      "notes": "Added the dedicated AI overlay sync workflow document.",
+      "tags": [
+        "docs",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0402",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0401",
+        "T-0401"
+      ],
+      "notes": "Linked overlay sync guidance from README and workflow-oriented docs.",
+      "tags": [
+        "docs",
+        "task"
+      ]
+    },
+    {
       "specId": "S-0302",
       "planningStatus": "done",
       "blocked": false,
