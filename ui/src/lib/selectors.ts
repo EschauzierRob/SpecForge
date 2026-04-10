@@ -60,14 +60,23 @@ export interface WarningsFilters {
 
 export type WarningsEmptyState = "no-findings" | "no-matches";
 
-export const DEFAULT_WARNINGS_FILTERS: WarningsFilters = {
+export const DEFAULT_WARNINGS_FILTERS: Readonly<WarningsFilters> = Object.freeze({
   severity: {
     error: true,
     warning: true,
     info: true,
   },
   ruleIdQuery: "",
-};
+});
+
+export function createWarningsFilters(): WarningsFilters {
+  return {
+    severity: {
+      ...DEFAULT_WARNINGS_FILTERS.severity,
+    },
+    ruleIdQuery: DEFAULT_WARNINGS_FILTERS.ruleIdQuery,
+  };
+}
 
 export function countSeverities(
   entries: Array<{ severity: "error" | "warning" | "info" }>,
@@ -268,18 +277,13 @@ export function filterValidationFindings(
   filters: WarningsFilters,
 ): ValidationFinding[] {
   const normalizedRuleFilter = filters.ruleIdQuery.trim().toLowerCase();
+  const severityFilteredFindings = findings.filter((finding) => filters.severity[finding.severity]);
 
-  return findings.filter((finding) => {
-    if (!filters.severity[finding.severity]) {
-      return false;
-    }
+  if (normalizedRuleFilter.length === 0) {
+    return severityFilteredFindings;
+  }
 
-    if (normalizedRuleFilter.length > 0 && !finding.ruleId.toLowerCase().includes(normalizedRuleFilter)) {
-      return false;
-    }
-
-    return true;
-  });
+  return severityFilteredFindings.filter((finding) => finding.ruleId.toLowerCase().includes(normalizedRuleFilter));
 }
 
 export function getWarningsEmptyState(
