@@ -216,6 +216,233 @@
       ]
     },
     {
+      "specId": "E-0006",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "E-0001",
+        "E-0002",
+        "E-0003",
+        "E-0004"
+      ],
+      "notes": "Epic decomposition now covers seed authoring, direct canonical creation, editing, and save guardrails.",
+      "tags": [
+        "authoring",
+        "planning"
+      ]
+    },
+    {
+      "specId": "F-0019",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0001",
+        "F-0004",
+        "F-0014"
+      ],
+      "notes": "Direct canonical create flow for Epic, Feature, Story, and Task artifacts.",
+      "tags": [
+        "authoring",
+        "create"
+      ]
+    },
+    {
+      "specId": "F-0020",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0005",
+        "F-0009",
+        "F-0019"
+      ],
+      "notes": "Structured canonical edit and post-save refresh behavior.",
+      "tags": [
+        "authoring",
+        "edit"
+      ]
+    },
+    {
+      "specId": "F-0021",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0010",
+        "F-0019",
+        "F-0020"
+      ],
+      "notes": "Pre-save validation, hierarchy enforcement, and write-preview guardrails.",
+      "tags": [
+        "authoring",
+        "guardrails"
+      ]
+    },
+    {
+      "specId": "S-0603",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0019"
+      ],
+      "notes": "Template-backed create flow for canonical artifacts.",
+      "tags": [
+        "authoring",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0604",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0019",
+        "S-0603"
+      ],
+      "notes": "Parent selection, ID allocation, and file placement rules during creation.",
+      "tags": [
+        "authoring",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0605",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0020"
+      ],
+      "notes": "Edit supported canonical fields without leaving SpecForge.",
+      "tags": [
+        "authoring",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0606",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0020",
+        "S-0605"
+      ],
+      "notes": "Refresh workspace state after canonical create or edit saves.",
+      "tags": [
+        "authoring",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0607",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0021",
+        "F-0019",
+        "F-0020"
+      ],
+      "notes": "Block invalid authoring states before canonical writes.",
+      "tags": [
+        "authoring",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0608",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0021",
+        "S-0604",
+        "S-0606"
+      ],
+      "notes": "Review write impact before persisting source-of-truth spec changes.",
+      "tags": [
+        "authoring",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0603",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0603"
+      ],
+      "notes": "Map authoring form fields onto canonical templates.",
+      "tags": [
+        "authoring",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0604",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0604",
+        "T-0603"
+      ],
+      "notes": "Define ID allocation and collision-prevention rules for canonical creation.",
+      "tags": [
+        "authoring",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0605",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0605"
+      ],
+      "notes": "Define editable field boundaries and safe markdown round-tripping.",
+      "tags": [
+        "authoring",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0606",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0606",
+        "T-0605"
+      ],
+      "notes": "Specify save transaction stages and post-save refresh behavior.",
+      "tags": [
+        "authoring",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0607",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0607"
+      ],
+      "notes": "Define authoring-time validation rules and blocking error presentation.",
+      "tags": [
+        "authoring",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0608",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0608",
+        "T-0604",
+        "T-0606"
+      ],
+      "notes": "Define write preview and parent-reassignment safeguards before save.",
+      "tags": [
+        "authoring",
+        "task"
+      ]
+    },
+    {
       "specId": "S-0302",
       "planningStatus": "done",
       "blocked": false,

@@ -54,3 +54,4 @@ Currently:
 
 ## Notes
 This epic introduces controlled write capabilities for canonical spec artifacts while explicitly keeping planning overlay mutation out of scope.
+Decomposition spans AI-assisted seed authoring (`F-0018`), direct canonical creation (`F-0019`), canonical edit/save flows (`F-0020`), and authoring guardrails (`F-0021`).
