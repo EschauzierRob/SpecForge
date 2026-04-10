@@ -24,14 +24,14 @@ Even with parsed and composed data, teams need confidence signals and prioritiza
 - Predictive scheduling or team capacity optimization.
 
 ## Requirements
-- [ ] R1: Validation engine runs canonical and overlay rules.
-- [ ] R2: Warnings panel displays findings with source references.
-- [ ] R3: Next-work engine ranks actionable items by defined factors.
+- [x] R1: Validation engine runs canonical and overlay rules.
+- [x] R2: Warnings panel displays findings with source references.
+- [x] R3: Next-work engine ranks actionable items by defined factors.
 
 ## Acceptance Criteria
-- [ ] AC1: Validation catches duplicate IDs, missing parents, and malformed hierarchy.
-- [ ] AC2: Warning panel supports filtering by severity.
-- [ ] AC3: Next-work panel explains why items are ranked as shown.
+- [x] AC1: Validation catches duplicate IDs, missing parents, and malformed hierarchy.
+- [x] AC2: Warning panel supports filtering by severity.
+- [x] AC3: Next-work panel explains why items are ranked as shown.
 
 ## Dependencies
 - E-0002
