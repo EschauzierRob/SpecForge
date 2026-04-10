@@ -22,7 +22,7 @@
     },
     {
       "specId": "F-0005",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "rank": 10,
       "blocked": false,
       "dependencies": [
@@ -36,7 +36,7 @@
     },
     {
       "specId": "F-0006",
-      "planningStatus": "backlog",
+      "planningStatus": "done",
       "rank": 20,
       "blocked": false,
       "dependencies": [
@@ -50,7 +50,7 @@
     },
     {
       "specId": "F-0007",
-      "planningStatus": "backlog",
+      "planningStatus": "done",
       "rank": 30,
       "blocked": true,
       "dependencies": [
@@ -74,6 +74,66 @@
         "recommendation",
         "planning"
       ]
+    },
+    {
+      "specId": "F-0001",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0002",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0003",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0004",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "S-0101",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "S-0102",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "T-0101",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "T-0102",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "E-0003",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0008",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0009",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "S-0201",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "T-0201",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "E-0004",
+      "planningStatus": "in_progress"
+    },
+    {
+      "specId": "F-0010",
+      "planningStatus": "done"
     }
   ]
 }
