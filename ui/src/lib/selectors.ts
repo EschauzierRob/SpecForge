@@ -1,8 +1,10 @@
 import type {
   ComposeRepositoryResult,
   ComposedNode,
+  DiagnosticSeverity,
   PlanningStatus,
   UiWorkspaceState,
+  ValidationFinding,
   ValidationResult,
 } from "./contracts";
 
@@ -50,6 +52,22 @@ export interface TriageBadge {
   label: string;
   title?: string;
 }
+
+export interface WarningsFilters {
+  severity: Record<DiagnosticSeverity, boolean>;
+  ruleIdQuery: string;
+}
+
+export type WarningsEmptyState = "no-findings" | "no-matches";
+
+export const DEFAULT_WARNINGS_FILTERS: WarningsFilters = {
+  severity: {
+    error: true,
+    warning: true,
+    info: true,
+  },
+  ruleIdQuery: "",
+};
 
 export function countSeverities(
   entries: Array<{ severity: "error" | "warning" | "info" }>,
@@ -233,6 +251,77 @@ export function getSelectedLineageToEpic(
 
 export function getSelectedTitle(state: UiWorkspaceState): string {
   return getSelectedComposedNode(state.composeResult, state.selectedItemId)?.spec.title ?? "No item selected";
+}
+
+export function getFindingRuleIds(validationResult?: ValidationResult): string[] {
+  if (!validationResult) {
+    return [];
+  }
+
+  return Object.keys(validationResult.summary.byRuleId).sort((left, right) => left.localeCompare(right));
+}
+
+export function filterValidationFindings(
+  findings: ValidationFinding[],
+  filters: WarningsFilters,
+): ValidationFinding[] {
+  const normalizedRuleFilter = filters.ruleIdQuery.trim().toLowerCase();
+
+  return findings.filter((finding) => {
+    if (!filters.severity[finding.severity]) {
+      return false;
+    }
+
+    if (normalizedRuleFilter.length > 0 && !finding.ruleId.toLowerCase().includes(normalizedRuleFilter)) {
+      return false;
+    }
+
+    return true;
+  });
+}
+
+export function getWarningsEmptyState(
+  totalFindings: number,
+  filteredFindings: number,
+): WarningsEmptyState | undefined {
+  if (totalFindings === 0) {
+    return "no-findings";
+  }
+
+  if (filteredFindings === 0) {
+    return "no-matches";
+  }
+
+  return undefined;
+}
+
+export function groupFindingsBySeverity(findings: ValidationFinding[]): Record<DiagnosticSeverity, ValidationFinding[]> {
+  const groups: Record<DiagnosticSeverity, ValidationFinding[]> = {
+    error: [],
+    warning: [],
+    info: [],
+  };
+
+  for (const finding of findings) {
+    groups[finding.severity].push(finding);
+  }
+
+  return groups;
+}
+
+export function getFindingNavigationSpecId(
+  finding: ValidationFinding,
+  composeResult?: ComposeRepositoryResult,
+): string | undefined {
+  if (!finding.specId) {
+    return undefined;
+  }
+
+  if (!composeResult) {
+    return finding.specId;
+  }
+
+  return composeResult.composedNodes.some((node) => node.spec.id === finding.specId) ? finding.specId : undefined;
 }
 
 export function getComposedTreeModel(composeResult?: ComposeRepositoryResult): ComposedTreeModel {
