@@ -3,6 +3,7 @@ import path from "node:path";
 import { constants } from "node:fs";
 
 import type { RepositoryDiscovery } from "../model/types.ts";
+import { bootstrapWorkspace } from "./bootstrap.ts";
 
 const ignoredDirectoryNames = new Set([".git", "node_modules", "dist"]);
 const specFilePattern = /^(epic\.md|feature-\d{4}-.+\.md|story-\d{4}-.+\.md|task-\d{4}-.+\.md)$/i;
@@ -18,6 +19,10 @@ function shouldIgnore(name: string): boolean {
 
 function shouldIgnoreOverlay(name: string): boolean {
   return shouldIgnore(name) || name === "schema";
+}
+
+function shouldIgnoreOverlayFile(relativePath: string): boolean {
+  return relativePath === "specforge/overlay/examples/local-dev.overlay.json";
 }
 
 async function walkSpecFiles(
@@ -82,6 +87,11 @@ async function walkOverlayFiles(
       continue;
     }
 
+    if (shouldIgnoreOverlayFile(relativePath)) {
+      ignoredEntries.push(relativePath);
+      continue;
+    }
+
     if (!overlayFilePattern.test(entry.name)) {
       continue;
     }
@@ -124,6 +134,8 @@ export async function discoverRepository(repoPath: string): Promise<RepositoryDi
     throw new Error(`Missing expected directory: ${missingExpectedDirectories.join(", ")}`);
   }
 
+  const bootstrap = await bootstrapWorkspace(repoRoot);
+
   let hasOverlayDirectory = true;
   try {
     await access(overlayPath, constants.R_OK);
@@ -155,5 +167,6 @@ export async function discoverRepository(repoPath: string): Promise<RepositoryDi
     overlayFileCount: discoveredOverlayFiles.length,
     ignoredEntries,
     missingExpectedDirectories,
+    bootstrap,
   };
 }

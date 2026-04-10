@@ -1,5 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -8,6 +10,37 @@ import { runCli } from "../src/cli.ts";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(currentDirectory, "..");
+
+async function createBootstrapCandidate(includeOverlayDirectory: boolean): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-bootstrap-ingest-"));
+  await mkdir(path.join(root, "specs", "epic-0001-sample"), { recursive: true });
+  if (includeOverlayDirectory) {
+    await mkdir(path.join(root, "specforge", "overlay"), { recursive: true });
+  }
+
+  await writeFile(
+    path.join(root, "specs", "epic-0001-sample", "epic.md"),
+    `# Bootstrap Epic
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Bootstrap coverage epic.
+
+## Goals
+- Keep loading resilient.
+
+## Non-goals
+- Writing project-specific content automatically.
+`,
+  );
+
+  return root;
+}
 
 test("parseSpecFile extracts canonical fields from a real repository spec", async () => {
   const filePath = path.join(
@@ -48,6 +81,24 @@ test("ingestRepository ingests the current repo and sample repo successfully", a
   assert.equal(sampleRepoResult.overlayFiles.length, 1);
   assert.equal(sampleRepoResult.composedNodes.length, 1);
   assert.equal(sampleRepoResult.canonicalNodes[0]?.id, "E-9001");
+});
+
+test("ingestRepository bootstraps missing overlay essentials before composition", async () => {
+  const bootstrapRepoRoot = await createBootstrapCandidate(false);
+
+  const result = await ingestRepository(bootstrapRepoRoot);
+
+  assert.equal(result.discovery.bootstrap.createdCount, 3);
+  assert.deepEqual(
+    result.discovery.bootstrap.actions.map((action) => action.path),
+    ["specforge", "specforge/overlay", "specforge/overlay/local-dev.overlay.json"],
+  );
+  assert.equal(result.overlayFiles.length, 1);
+  assert.equal(result.overlayFiles[0]?.sourcePath, "specforge/overlay/local-dev.overlay.json");
+  assert.equal(result.overlayFiles[0]?.version, "0.1");
+  assert.equal(result.overlayFiles[0]?.entries.length, 0);
+  assert.equal(result.composedNodes.length, 1);
+  assert.equal(result.composedNodes[0]?.spec.id, "E-0001");
 });
 
 test("CLI --json output is machine-readable and stable enough for snapshots", async () => {

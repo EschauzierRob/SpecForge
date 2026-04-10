@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import test, { type TestContext } from "node:test";
 import { fileURLToPath } from "node:url";
@@ -13,6 +15,33 @@ import {
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(currentDirectory, "..");
+
+async function createBootstrapCandidate(): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-bootstrap-api-"));
+  await mkdir(path.join(root, "specs", "epic-0001-sample"), { recursive: true });
+  await writeFile(
+    path.join(root, "specs", "epic-0001-sample", "epic.md"),
+    `# Bootstrap Epic
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Bootstrap coverage epic.
+
+## Goals
+- Keep loading resilient.
+
+## Non-goals
+- Writing project-specific content automatically.
+`,
+  );
+
+  return root;
+}
 
 async function withApiServer(t: TestContext) {
   const handle = await startSpecForgeApiServer({
@@ -140,4 +169,35 @@ test("API returns a structured error for an invalid repo path", async (t) => {
   assert.equal(payload.error.status, 400);
   assert.equal(payload.error.code, "invalid-repository");
   assert.match(payload.error.message, /repo|specs|ENOENT/i);
+});
+
+test("API compose endpoint exposes bootstrap actions for partially initialized repositories", async (t) => {
+  const handle = await withApiServer(t);
+  const bootstrapRepoRoot = await createBootstrapCandidate();
+
+  const response = await fetch(`${handle.url}/api/compose`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ repoPath: bootstrapRepoRoot }),
+  });
+
+  assert.equal(response.status, 200);
+
+  const payload = await response.json() as {
+    discovery: {
+      bootstrap: {
+        createdCount: number;
+        actions: Array<{ kind: string; path: string }>;
+      };
+    };
+  };
+
+  assert.equal(payload.discovery.bootstrap.createdCount, 3);
+  assert.deepEqual(payload.discovery.bootstrap.actions, [
+    { kind: "directory", path: "specforge" },
+    { kind: "directory", path: "specforge/overlay" },
+    { kind: "file", path: "specforge/overlay/local-dev.overlay.json" },
+  ]);
 });

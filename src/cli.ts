@@ -10,6 +10,7 @@ import {
   parseRepository,
   validateRepository,
 } from "./index.ts";
+import type { WorkspaceBootstrapSummary } from "./core/model/types.ts";
 
 type Writer = (message: string) => void;
 
@@ -26,12 +27,24 @@ function countDiagnostics(
   }, {});
 }
 
+function formatBootstrapSummary(bootstrap: WorkspaceBootstrapSummary): string[] {
+  if (bootstrap.createdCount === 0) {
+    return [];
+  }
+
+  return [
+    `bootstrap created artifacts: ${bootstrap.createdCount}`,
+    ...bootstrap.actions.map((action) => `bootstrap created ${action.kind}: ${action.path}`),
+  ];
+}
+
 export function formatIngestSummary(result: Awaited<ReturnType<typeof ingestRepository>>): string[] {
   const parserDiagnosticCounts = countDiagnostics(result.diagnostics);
   const compositionDiagnosticCounts = countDiagnostics(result.compositionDiagnostics);
 
   return [
     `repo root: ${result.discovery.repoRoot}`,
+    ...formatBootstrapSummary(result.discovery.bootstrap),
     `spec files: ${result.discovery.specFileCount}`,
     `overlay files: ${result.discovery.overlayFileCount}`,
     `parsed nodes: ${result.canonicalNodes.length}`,
@@ -47,6 +60,7 @@ export function formatParseSummary(result: Awaited<ReturnType<typeof parseReposi
 
   return [
     `repo root: ${result.discovery.repoRoot}`,
+    ...formatBootstrapSummary(result.discovery.bootstrap),
     `spec files: ${result.discovery.specFileCount}`,
     `parsed nodes: ${result.canonicalNodes.length}`,
     `overlay directory detected: ${result.discovery.hasOverlayDirectory ? "yes" : "no"}`,
@@ -60,6 +74,7 @@ export function formatComposeSummary(result: Awaited<ReturnType<typeof composeRe
 
   return [
     `repo root: ${result.discovery.repoRoot}`,
+    ...formatBootstrapSummary(result.discovery.bootstrap),
     `spec files: ${result.discovery.specFileCount}`,
     `overlay files: ${result.discovery.overlayFileCount}`,
     `parsed nodes: ${result.canonicalNodes.length}`,
@@ -73,6 +88,7 @@ export function formatComposeSummary(result: Awaited<ReturnType<typeof composeRe
 export function formatValidationSummary(result: Awaited<ReturnType<typeof validateRepository>>): string[] {
   const severityCounts = result.summary.bySeverity;
   const lines = [
+    ...formatBootstrapSummary(result.bootstrap),
     `validation findings: total=${result.summary.total}, errors=${severityCounts.error}, warnings=${severityCounts.warning}, info=${severityCounts.info}`,
   ];
 

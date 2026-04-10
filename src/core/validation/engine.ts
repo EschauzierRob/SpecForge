@@ -399,6 +399,7 @@ export function validateIngestResult(result: IngestResult): ValidationResult {
   return {
     findings: sortedFindings,
     summary: summarizeFindings(sortedFindings),
+    bootstrap: result.discovery.bootstrap,
   };
 }
 

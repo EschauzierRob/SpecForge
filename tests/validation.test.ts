@@ -68,6 +68,10 @@ function createIngestResult(overrides: Partial<IngestResult> = {}): IngestResult
       overlayFileCount: 0,
       ignoredEntries: [],
       missingExpectedDirectories: [],
+      bootstrap: {
+        actions: [],
+        createdCount: 0,
+      },
     },
     canonicalNodes,
     overlayFiles,
@@ -320,6 +324,7 @@ test("validate CLI returns JSON for a clean repo and exit code 0", async () => {
   const payload = JSON.parse(outputLines.join("\n"));
   assert.ok(Array.isArray(payload.findings));
   assert.ok(payload.summary);
+  assert.ok(payload.bootstrap);
   assert.equal(payload.summary.total, 0);
 });
 

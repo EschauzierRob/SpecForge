@@ -23,6 +23,17 @@ export interface RepositoryDiscovery {
   overlayFileCount: number;
   ignoredEntries: string[];
   missingExpectedDirectories: string[];
+  bootstrap: WorkspaceBootstrapSummary;
+}
+
+export interface WorkspaceBootstrapAction {
+  kind: "directory" | "file";
+  path: string;
+}
+
+export interface WorkspaceBootstrapSummary {
+  actions: WorkspaceBootstrapAction[];
+  createdCount: number;
 }
 
 export interface SectionToken {
@@ -134,6 +145,7 @@ export interface ValidationSummary {
 export interface ValidationResult {
   findings: ValidationFinding[];
   summary: ValidationSummary;
+  bootstrap: WorkspaceBootstrapSummary;
 }
 
 export type RecommendationReasonCode =

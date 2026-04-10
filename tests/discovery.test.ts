@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
@@ -10,6 +10,37 @@ async function createTempRepo(): Promise<string> {
   const root = await mkdtemp(path.join(os.tmpdir(), "specforge-discovery-"));
   await mkdir(path.join(root, "specs", "epic-0001-sample"), { recursive: true });
   await mkdir(path.join(root, "specforge", "overlay"), { recursive: true });
+  return root;
+}
+
+async function createBootstrapCandidate(includeOverlayDirectory: boolean): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-bootstrap-discovery-"));
+  await mkdir(path.join(root, "specs", "epic-0001-sample"), { recursive: true });
+  if (includeOverlayDirectory) {
+    await mkdir(path.join(root, "specforge", "overlay"), { recursive: true });
+  }
+
+  await writeFile(
+    path.join(root, "specs", "epic-0001-sample", "epic.md"),
+    `# Bootstrap Epic
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Bootstrap coverage epic.
+
+## Goals
+- Keep loading resilient.
+
+## Non-goals
+- Writing project-specific content automatically.
+`,
+  );
+
   return root;
 }
 
@@ -76,4 +107,46 @@ test("discoverRepository ignores hidden and excluded directories", async () => {
   assert.ok(discovery.ignoredEntries.includes("specforge/overlay/.hidden"));
   assert.ok(discovery.ignoredEntries.includes("specforge/overlay/schema"));
   assert.ok(discovery.ignoredEntries.includes("specforge/overlay/node_modules"));
+});
+
+test("discoverRepository bootstraps the overlay directory and seeded local overlay file when missing", async () => {
+  const root = await createBootstrapCandidate(false);
+
+  const discovery = await discoverRepository(root);
+
+  assert.equal(discovery.hasOverlayDirectory, true);
+  assert.deepEqual(
+    discovery.bootstrap.actions,
+    [
+      { kind: "directory", path: "specforge" },
+      { kind: "directory", path: "specforge/overlay" },
+      { kind: "file", path: "specforge/overlay/local-dev.overlay.json" },
+    ],
+  );
+  assert.equal(discovery.bootstrap.createdCount, 3);
+  assert.deepEqual(discovery.discoveredOverlayFiles, ["specforge/overlay/local-dev.overlay.json"]);
+
+  const overlayPayload = JSON.parse(
+    await readFile(path.join(root, "specforge", "overlay", "local-dev.overlay.json"), "utf8"),
+  ) as {
+    version: string;
+    repositoryId: string;
+    entries: unknown[];
+  };
+
+  assert.equal(overlayPayload.version, "0.1");
+  assert.equal(overlayPayload.repositoryId, path.basename(root));
+  assert.deepEqual(overlayPayload.entries, []);
+});
+
+test("discoverRepository bootstraps only the local overlay file when the directory already exists", async () => {
+  const root = await createBootstrapCandidate(true);
+
+  const discovery = await discoverRepository(root);
+
+  assert.deepEqual(discovery.bootstrap.actions, [
+    { kind: "file", path: "specforge/overlay/local-dev.overlay.json" },
+  ]);
+  assert.equal(discovery.bootstrap.createdCount, 1);
+  assert.deepEqual(discovery.discoveredOverlayFiles, ["specforge/overlay/local-dev.overlay.json"]);
 });

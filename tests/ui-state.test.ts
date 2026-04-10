@@ -37,6 +37,10 @@ const composeFixture: ComposeRepositoryResult = {
     overlayFileCount: 1,
     ignoredEntries: [],
     missingExpectedDirectories: [],
+    bootstrap: {
+      actions: [],
+      createdCount: 0,
+    },
   },
   canonicalNodes: [
     {
@@ -181,6 +185,10 @@ const validationFixture: ValidationResult = {
     byRuleId: {
       "V-101": 1,
     },
+  },
+  bootstrap: {
+    actions: [],
+    createdCount: 0,
   },
 };
 

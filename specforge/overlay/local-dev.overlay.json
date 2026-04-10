@@ -1,0 +1,313 @@
+{
+  "version": "0.1",
+  "repositoryId": "specforge-local",
+  "entries": [
+    {
+      "specId": "E-0001",
+      "planningStatus": "done",
+      "blocked": false,
+      "notes": "Foundation specs/docs/templates delivered and in active use.",
+      "tags": [
+        "completed"
+      ]
+    },
+    {
+      "specId": "E-0002",
+      "planningStatus": "done",
+      "blocked": false,
+      "notes": "Ingestion/composition pipeline, parser, and overlay runtime are implemented.",
+      "tags": [
+        "completed"
+      ]
+    },
+    {
+      "specId": "F-0005",
+      "planningStatus": "done",
+      "rank": 10,
+      "blocked": false,
+      "dependencies": [
+        "F-0004"
+      ],
+      "notes": "Parser extraction is MVP critical.",
+      "tags": [
+        "mvp",
+        "ingestion"
+      ]
+    },
+    {
+      "specId": "F-0006",
+      "planningStatus": "done",
+      "rank": 20,
+      "blocked": false,
+      "dependencies": [
+        "F-0005"
+      ],
+      "notes": "Composition follows parser stabilization.",
+      "tags": [
+        "mvp",
+        "composition"
+      ]
+    },
+    {
+      "specId": "F-0007",
+      "planningStatus": "done",
+      "rank": 30,
+      "blocked": true,
+      "dependencies": [
+        "F-0006"
+      ],
+      "notes": "UI work waits for composed model contract.",
+      "tags": [
+        "ui"
+      ]
+    },
+    {
+      "specId": "F-0012",
+      "planningStatus": "done",
+      "rank": 25,
+      "blocked": false,
+      "dependencies": [
+        "F-0010"
+      ],
+      "notes": "Recommendation engine and UI panel are implemented.",
+      "tags": [
+        "recommendation",
+        "planning"
+      ]
+    },
+    {
+      "specId": "F-0013",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0002",
+        "F-0006"
+      ],
+      "notes": "AI contributor guidance now requires overlay validation and sync for implementation slices.",
+      "tags": [
+        "docs",
+        "workflow"
+      ]
+    },
+    {
+      "specId": "S-0401",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0013"
+      ],
+      "notes": "AI workflow instructions now require overlay entry lifecycle checks for changed spec IDs.",
+      "tags": [
+        "docs",
+        "workflow",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0401",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0401"
+      ],
+      "notes": "Added the dedicated AI overlay sync workflow document.",
+      "tags": [
+        "docs",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0402",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0401",
+        "T-0401"
+      ],
+      "notes": "Linked overlay sync guidance from README and workflow-oriented docs.",
+      "tags": [
+        "docs",
+        "task"
+      ]
+    },
+    {
+      "specId": "F-0014",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0004",
+        "F-0006"
+      ],
+      "notes": "Workspace load now bootstraps missing overlay essentials and reports created artifacts.",
+      "tags": [
+        "bootstrap",
+        "ingestion"
+      ]
+    },
+    {
+      "specId": "S-0402",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0014"
+      ],
+      "notes": "Partially initialized repos now seed missing SpecForge overlay artifacts during load.",
+      "tags": [
+        "bootstrap",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0403",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0402"
+      ],
+      "notes": "Added a standalone bootstrap phase before discovery and composition.",
+      "tags": [
+        "bootstrap",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0404",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0402",
+        "F-0002"
+      ],
+      "notes": "Missing local-dev.overlay.json files are now seeded with a valid minimal contract.",
+      "tags": [
+        "bootstrap",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0405",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0402",
+        "T-0403"
+      ],
+      "notes": "CLI and API load results now report which bootstrap artifacts were created.",
+      "tags": [
+        "bootstrap",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0406",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0402",
+        "T-0403",
+        "T-0404",
+        "T-0405"
+      ],
+      "notes": "Regression coverage now verifies bootstrap behavior across discovery, ingest, CLI, and API flows.",
+      "tags": [
+        "bootstrap",
+        "task",
+        "tests"
+      ]
+    },
+    {
+      "specId": "S-0302",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0012"
+      ],
+      "notes": "Ranked actionable next-work list is now surfaced in the UI.",
+      "tags": [
+        "recommendation",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0301",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0302"
+      ],
+      "notes": "Deterministic actionable ranking is produced by the shared recommendation engine.",
+      "tags": [
+        "recommendation",
+        "task"
+      ]
+    },
+    {
+      "specId": "F-0001",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0002",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0003",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0004",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "S-0101",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "S-0102",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "T-0101",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "T-0102",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "E-0003",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0008",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0009",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "S-0201",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "T-0201",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "E-0004",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0010",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0011",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "S-0301",
+      "planningStatus": "done"
+    }
+  ]
+}

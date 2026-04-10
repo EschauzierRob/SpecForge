@@ -1,4 +1,5 @@
 export { composeRepository } from "./core/ingest/compose.ts";
+export { bootstrapWorkspace } from "./core/ingest/bootstrap.ts";
 export { discoverOverlayFiles, discoverRepository } from "./core/ingest/discovery.ts";
 export { ingestRepository } from "./core/ingest/ingest.ts";
 export { parseRepository } from "./core/ingest/parse.ts";
@@ -36,4 +37,6 @@ export type {
   ValidationFinding,
   ValidationResult,
   ValidationSummary,
+  WorkspaceBootstrapAction,
+  WorkspaceBootstrapSummary,
 } from "./core/model/types.ts";

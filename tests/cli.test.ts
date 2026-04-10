@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, readFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -14,6 +14,33 @@ import { runCli } from "../src/cli.ts";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(currentDirectory, "..");
+
+async function createBootstrapCandidate(): Promise<string> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-bootstrap-cli-"));
+  await mkdir(path.join(root, "specs", "epic-0001-sample"), { recursive: true });
+  await writeFile(
+    path.join(root, "specs", "epic-0001-sample", "epic.md"),
+    `# Bootstrap Epic
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Bootstrap coverage epic.
+
+## Goals
+- Keep loading resilient.
+
+## Non-goals
+- Writing project-specific content automatically.
+`,
+  );
+
+  return root;
+}
 
 test("parseRepository returns canonical-only payload", async () => {
   const result = await parseRepository(repoRoot);
@@ -101,6 +128,26 @@ test("CLI supports --json together with --output deterministically", async () =>
   const stdoutPayload = JSON.parse(outputLines.join("\n"));
   const filePayload = JSON.parse(await readFile(outputPath, "utf8"));
   assert.deepEqual(stdoutPayload, filePayload);
+});
+
+test("compose CLI reports bootstrap actions when required artifacts are created", async () => {
+  const bootstrapRepoRoot = await createBootstrapCandidate();
+  const outputLines: string[] = [];
+  const errorLines: string[] = [];
+
+  const exitCode = await runCli(
+    ["compose", bootstrapRepoRoot],
+    (line) => outputLines.push(line),
+    (line) => errorLines.push(line),
+  );
+
+  assert.equal(exitCode, 0);
+  assert.deepEqual(errorLines, []);
+  assert.ok(outputLines.includes("bootstrap created artifacts: 3"));
+  assert.ok(outputLines.includes("bootstrap created directory: specforge"));
+  assert.ok(outputLines.includes("bootstrap created directory: specforge/overlay"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/overlay/local-dev.overlay.json"));
+  assert.ok(outputLines.includes("overlay files: 1"));
 });
 
 test("CLI usage errors still return exit code 1", async () => {
