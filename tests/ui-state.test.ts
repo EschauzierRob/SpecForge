@@ -450,6 +450,15 @@ test("warnings empty state distinguishes between missing findings and filter mis
 });
 
 test("finding selection helper enables spec navigation only for known composed nodes", () => {
+  const withoutCompose = getFindingNavigationSpecId({
+    ruleId: "V-400",
+    severity: "error",
+    message: "Missing required section.",
+    sourcePaths: ["specs/epic-0001-foundation/epic.md"],
+    specId: "epic-0001",
+  });
+  assert.equal(withoutCompose, undefined);
+
   const validSpecId = getFindingNavigationSpecId(
     {
       ruleId: "V-400",

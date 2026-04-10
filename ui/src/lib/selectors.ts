@@ -324,7 +324,7 @@ export function getFindingNavigationSpecId(
   }
 
   if (!composeResult) {
-    return finding.specId;
+    return undefined;
   }
 
   return composeResult.composedNodes.some((node) => node.spec.id === finding.specId) ? finding.specId : undefined;

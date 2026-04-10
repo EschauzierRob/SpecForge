@@ -23,14 +23,14 @@ Raw findings are difficult to act on without clear UI organization.
 - Automated fix suggestions in MVP.
 
 ## Requirements
-- [ ] R1: Render list of findings with severity indicator and message.
-- [ ] R2: Provide filters for severity and rule ID.
-- [ ] R3: Selecting a finding navigates to impacted item when available.
+- [x] R1: Render list of findings with severity indicator and message.
+- [x] R2: Provide filters for severity and rule ID.
+- [x] R3: Selecting a finding navigates to impacted item when available.
 
 ## Acceptance Criteria
-- [ ] AC1: Users can isolate Errors vs Warnings quickly.
-- [ ] AC2: Empty state is clear when no findings exist.
-- [ ] AC3: Navigation from finding to detail view succeeds for linked spec IDs.
+- [x] AC1: Users can isolate Errors vs Warnings quickly.
+- [x] AC2: Empty state is clear when no findings exist.
+- [x] AC3: Navigation from finding to detail view succeeds for linked spec IDs.
 
 ## Dependencies
 - F-0009
