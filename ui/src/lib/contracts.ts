@@ -114,6 +114,26 @@ export interface ValidationResult {
   summary: ValidationSummary;
 }
 
+export interface RecommendationItem {
+  specId: string;
+  type: SpecNodeType;
+  title: string;
+  summary: string;
+  sourcePath: string;
+  planningStatus: PlanningStatus | "unplanned";
+  rank?: number;
+  rationale: string[];
+}
+
+export interface RecommendationResult {
+  recommendations: RecommendationItem[];
+  excluded: {
+    done: string[];
+    blocked: string[];
+    unresolvedDependencies: string[];
+  };
+}
+
 export interface ParseRepositoryResult {
   discovery: RepositoryDiscovery;
   canonicalNodes: CanonicalNode[];
@@ -140,6 +160,7 @@ export interface UiWorkspaceState {
   parseResult?: ParseRepositoryResult;
   composeResult?: ComposeRepositoryResult;
   validationResult?: ValidationResult;
+  recommendationResult?: RecommendationResult;
   loadState: UiLoadState;
   errorMessage?: string;
 }

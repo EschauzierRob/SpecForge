@@ -8,13 +8,14 @@ import {
   composeRepository,
   ingestRepository,
   parseRepository,
+  recommendRepository,
   validateRepository,
 } from "./index.ts";
 
 type Writer = (message: string) => void;
 
 function printUsage(writeError: Writer): void {
-  writeError("Usage: specforge <parse|compose|ingest|validate> <repoPath> [--json] [--output <path>]");
+  writeError("Usage: specforge <parse|compose|ingest|validate|recommend> <repoPath> [--json] [--output <path>]");
 }
 
 function countDiagnostics(
@@ -91,6 +92,23 @@ export function formatValidationSummary(result: Awaited<ReturnType<typeof valida
   return lines;
 }
 
+export function formatRecommendationSummary(result: Awaited<ReturnType<typeof recommendRepository>>): string[] {
+  const lines = [
+    `recommendations: ${result.recommendations.length}`,
+    `excluded done: ${result.excluded.done.length}`,
+    `excluded blocked: ${result.excluded.blocked.length}`,
+    `excluded unresolved dependencies: ${result.excluded.unresolvedDependencies.length}`,
+  ];
+
+  for (const recommendation of result.recommendations.slice(0, 5)) {
+    lines.push(
+      `- ${recommendation.specId} (${recommendation.planningStatus})${recommendation.rank ? ` rank=${recommendation.rank}` : ""}: ${recommendation.rationale.join("; ")}`,
+    );
+  }
+
+  return lines;
+}
+
 async function writeJsonArtifact(outputPath: string, payload: unknown): Promise<void> {
   const resolvedPath = path.resolve(outputPath);
   await mkdir(path.dirname(resolvedPath), { recursive: true });
@@ -102,7 +120,7 @@ export async function runCli(
   writeOutput: Writer = console.log,
   writeError: Writer = console.error,
 ): Promise<number> {
-  if (args.length === 0 || !["parse", "compose", "ingest", "validate"].includes(args[0])) {
+  if (args.length === 0 || !["parse", "compose", "ingest", "validate", "recommend"].includes(args[0])) {
     printUsage(writeError);
     return 1;
   }
@@ -120,8 +138,9 @@ export async function runCli(
       !argument.startsWith("--") &&
       argument !== "parse" &&
       argument !== "compose" &&
-      argument !== "ingest" &&
-      argument !== "validate" &&
+        argument !== "ingest" &&
+        argument !== "recommend" &&
+        argument !== "validate" &&
       (outputFlagIndex < 0 || index !== outputFlagIndex + 1),
   );
   const emitJson = args.includes("--json");
@@ -166,6 +185,25 @@ export async function runCli(
 
     const summaryLines = command === "compose" ? formatComposeSummary(result) : formatIngestSummary(result);
     for (const line of summaryLines) {
+      writeOutput(line);
+    }
+
+    return 0;
+  }
+
+  if (command === "recommend") {
+    const result = await recommendRepository(path.resolve(repoPathArg));
+
+    if (outputPathArg) {
+      await writeJsonArtifact(outputPathArg, result);
+    }
+
+    if (emitJson) {
+      writeOutput(JSON.stringify(result, null, 2));
+      return 0;
+    }
+
+    for (const line of formatRecommendationSummary(result)) {
       writeOutput(line);
     }
 

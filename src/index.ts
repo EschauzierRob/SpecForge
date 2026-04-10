@@ -6,6 +6,7 @@ export { parseSpecFile, mapSectionsToCanonical } from "./core/parser/map.ts";
 export { tokenizeSections } from "./core/parser/sections.ts";
 export { buildOverlayIndex, composeNodes } from "./core/overlay/compose.ts";
 export { loadOverlayFile } from "./core/overlay/loader.ts";
+export { rankNextWork, recommendRepository } from "./core/recommend/engine.ts";
 export { createSpecForgeApiServer, startSpecForgeApiServer } from "./server.ts";
 export { validateIngestResult, validateRepository } from "./core/validation/engine.ts";
 export type {
@@ -24,6 +25,8 @@ export type {
   ParsedSpecFile,
   PlanningStatus,
   ParserDiagnostic,
+  RecommendationItem,
+  RecommendationResult,
   RepositoryDiscovery,
   SectionMap,
   SpecNodeType,

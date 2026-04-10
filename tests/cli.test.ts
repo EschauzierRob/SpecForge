@@ -9,6 +9,7 @@ import {
   composeRepository,
   ingestRepository,
   parseRepository,
+  recommendRepository,
 } from "../src/index.ts";
 import { runCli } from "../src/cli.ts";
 
@@ -113,4 +114,21 @@ test("CLI usage errors still return exit code 1", async () => {
 
   assert.equal(exitCode, 1);
   assert.ok(errorLines.some((line) => line.startsWith("Usage: specforge")));
+});
+
+test("recommend CLI returns JSON payload", async () => {
+  const outputLines: string[] = [];
+  const errorLines: string[] = [];
+  const directResult = await recommendRepository(repoRoot);
+  const exitCode = await runCli(
+    ["recommend", repoRoot, "--json"],
+    (line) => outputLines.push(line),
+    (line) => errorLines.push(line),
+  );
+
+  assert.equal(exitCode, 0);
+  assert.deepEqual(errorLines, []);
+
+  const payload = JSON.parse(outputLines.join("\n"));
+  assert.equal(payload.recommendations.length, directResult.recommendations.length);
 });

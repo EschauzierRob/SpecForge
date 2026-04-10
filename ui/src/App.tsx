@@ -2,10 +2,11 @@ import { FormEvent, useEffect, useMemo, useReducer, useState } from "react";
 
 import { Board } from "./Board";
 import { Detail } from "./Detail";
-import { fetchCompose, fetchContext, fetchValidate } from "./lib/api";
+import { fetchCompose, fetchContext, fetchRecommendations, fetchValidate } from "./lib/api";
 import type {
   ComposeRepositoryResult,
   DiagnosticSeverity,
+  RecommendationResult,
   UiScreen,
   ValidationResult,
 } from "./lib/contracts";
@@ -264,6 +265,7 @@ function DebugPanel(props: {
   selectedNodeJson: string;
   composeJson: string;
   validationJson: string;
+  recommendationJson: string;
 }): JSX.Element {
   return (
     <section className="panel">
@@ -288,6 +290,67 @@ function DebugPanel(props: {
         <summary>Validation payload</summary>
         <pre>{props.validationJson}</pre>
       </details>
+
+      <details className="debug-block">
+        <summary>Recommendation payload</summary>
+        <pre>{props.recommendationJson}</pre>
+      </details>
+    </section>
+  );
+}
+
+function NextWorkPanel(props: {
+  recommendationResult?: RecommendationResult;
+  onSelect(specId: string): void;
+  onOpenDetail(specId: string): void;
+}): JSX.Element {
+  const recommendations = props.recommendationResult?.recommendations ?? [];
+  if (recommendations.length === 0) {
+    return (
+      <section className="panel">
+        <div className="panel-header">
+          <div>
+            <h2>Next work recommendations</h2>
+            <p>Load a workspace to rank actionable items from overlay and dependency signals.</p>
+          </div>
+        </div>
+        <div className="quick-pick-empty">No recommendations available yet.</div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="panel">
+      <div className="panel-header">
+        <div>
+          <h2>Next work recommendations</h2>
+          <p>Ordered by rank, planning status, and dependency readiness with rationale.</p>
+        </div>
+      </div>
+      <ol className="next-work-list">
+        {recommendations.map((item, index) => (
+          <li key={item.specId} className="next-work-item">
+            <div className="next-work-item__header">
+              <span className="next-work-rank">#{index + 1}</span>
+              <button type="button" className="next-work-link" onClick={() => props.onSelect(item.specId)}>
+                {item.specId}: {item.title}
+              </button>
+              <button type="button" className="next-work-open-detail" onClick={() => props.onOpenDetail(item.specId)}>
+                Open detail
+              </button>
+            </div>
+            <p className="next-work-summary">{item.summary}</p>
+            <p className="next-work-meta">
+              status: {item.planningStatus} {item.rank !== undefined ? `· rank ${item.rank}` : "· unranked"}
+            </p>
+            <ul className="next-work-rationale">
+              {item.rationale.map((reason) => (
+                <li key={reason}>{reason}</li>
+              ))}
+            </ul>
+          </li>
+        ))}
+      </ol>
     </section>
   );
 }
@@ -361,6 +424,7 @@ export default function App(): JSX.Element {
     try {
       const composeResult = await fetchCompose(state.repoPath);
       const validationResult = await fetchValidate(state.repoPath);
+      const recommendationResult = await fetchRecommendations(state.repoPath);
 
       dispatch({
         type: "loadSucceeded",
@@ -368,6 +432,7 @@ export default function App(): JSX.Element {
         parseResult: toParseResult(composeResult),
         composeResult,
         validationResult,
+        recommendationResult,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -410,6 +475,7 @@ export default function App(): JSX.Element {
             selectedNodeJson={JSON.stringify(selectedNode ?? null, null, 2)}
             composeJson={JSON.stringify(state.composeResult ?? null, null, 2)}
             validationJson={JSON.stringify(state.validationResult ?? null, null, 2)}
+            recommendationJson={JSON.stringify(state.recommendationResult ?? null, null, 2)}
           />
         </div>
       );
@@ -495,9 +561,10 @@ export default function App(): JSX.Element {
     }
 
     return (
-      <PlaceholderPanel
-        title="Next Work foundation"
-        detail="The recommendation engine arrives later. This shell keeps the route and payload wiring stable in the meantime."
+      <NextWorkPanel
+        recommendationResult={state.recommendationResult}
+        onSelect={(specId) => handleItemSelected(specId)}
+        onOpenDetail={(specId) => handleItemSelected(specId, true)}
       />
     );
   })();

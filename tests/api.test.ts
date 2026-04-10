@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import {
   composeRepository,
   parseRepository,
+  recommendRepository,
   startSpecForgeApiServer,
   validateRepository,
 } from "../src/index.ts";
@@ -93,6 +94,26 @@ test("API validate endpoint returns the validation payload shape", async (t) => 
   assert.equal(payload.summary.total, directResult.summary.total);
   assert.equal(payload.summary.bySeverity.error, directResult.summary.bySeverity.error);
   assert.equal(payload.findings.length, directResult.findings.length);
+});
+
+test("API recommend endpoint returns the recommendation payload shape", async (t) => {
+  const handle = await withApiServer(t);
+  const directResult = await recommendRepository(repoRoot);
+
+  const response = await fetch(`${handle.url}/api/recommend`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ repoPath: repoRoot }),
+  });
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.recommendations.length, directResult.recommendations.length);
+  assert.equal(payload.excluded.done.length, directResult.excluded.done.length);
+  assert.equal(payload.excluded.blocked.length, directResult.excluded.blocked.length);
+  assert.equal(payload.excluded.unresolvedDependencies.length, directResult.excluded.unresolvedDependencies.length);
 });
 
 test("API returns a structured error for an invalid repo path", async (t) => {
