@@ -3,10 +3,11 @@ import { FormEvent, useEffect, useMemo, useReducer, useState } from "react";
 import { Board } from "./Board";
 import { Detail } from "./Detail";
 import { WarningsPanel } from "./WarningsPanel";
-import { fetchCompose, fetchContext, fetchValidate } from "./lib/api";
+import { fetchCompose, fetchContext, fetchRecommend, fetchValidate } from "./lib/api";
 import type {
   ComposeRepositoryResult,
   DiagnosticSeverity,
+  RecommendationResult,
   UiScreen,
   ValidationResult,
 } from "./lib/contracts";
@@ -295,6 +296,44 @@ function DebugPanel(props: {
   );
 }
 
+function NextWorkPanel(props: {
+  recommendationResult?: RecommendationResult;
+  onSelect(specId: string): void;
+}): JSX.Element {
+  const recommendedItems = props.recommendationResult?.recommendations.slice(0, 12) ?? [];
+
+  return (
+    <section className="panel">
+      <div className="panel-header">
+        <div>
+          <h2>Recommended next work</h2>
+          <p>Actionable items only: done, blocked, and unresolved dependency items are automatically excluded.</p>
+        </div>
+        <div className="panel-pill">{recommendedItems.length} actionable</div>
+      </div>
+
+      {recommendedItems.length === 0 ? <div className="quick-pick-empty">No actionable work found for this workspace.</div> : null}
+
+      <div className="warnings-list">
+        {recommendedItems.map((item) => (
+          <article key={item.specId} className="warnings-item">
+            <header className="warnings-item-header">
+              <strong>{item.specId}</strong>
+              <span className="tree-badge">{item.planningStatus}</span>
+              <span className="tree-badge">rank {item.rankValue === Number.MAX_SAFE_INTEGER ? "default" : item.rankValue}</span>
+              <button type="button" className="warnings-link" onClick={() => props.onSelect(item.specId)}>
+                Open detail
+              </button>
+            </header>
+            <p className="warnings-message">{item.rationale.summary}</p>
+            <p className="warnings-source-paths">Top factors: {item.rationale.topScoreFactors.join(", ") || "none"}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function SelectionContextHeader(props: {
   lineage: ComposeRepositoryResult["composedNodes"];
   onSelect(specId: string): void;
@@ -365,6 +404,7 @@ export default function App(): JSX.Element {
     try {
       const composeResult = await fetchCompose(state.repoPath);
       const validationResult = await fetchValidate(state.repoPath);
+      const recommendationResult = await fetchRecommend(state.repoPath);
 
       dispatch({
         type: "loadSucceeded",
@@ -372,6 +412,7 @@ export default function App(): JSX.Element {
         parseResult: toParseResult(composeResult),
         composeResult,
         validationResult,
+        recommendationResult,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -502,9 +543,9 @@ export default function App(): JSX.Element {
     }
 
     return (
-      <PlaceholderPanel
-        title="Next Work foundation"
-        detail="The recommendation engine arrives later. This shell keeps the route and payload wiring stable in the meantime."
+      <NextWorkPanel
+        recommendationResult={state.recommendationResult}
+        onSelect={(specId) => handleItemSelected(specId, true)}
       />
     );
   })();

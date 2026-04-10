@@ -15,6 +15,7 @@ import {
 } from "../ui/src/lib/selectors.ts";
 import type {
   ComposeRepositoryResult,
+  RecommendationResult,
   UiWorkspaceState,
   ValidationResult,
 } from "../ui/src/lib/contracts.ts";
@@ -183,6 +184,25 @@ const validationFixture: ValidationResult = {
   },
 };
 
+const recommendationFixture: RecommendationResult = {
+  recommendations: [
+    {
+      specId: "feature-0001",
+      eligible: true,
+      score: 1,
+      rankValue: 1,
+      planningStatus: "ready",
+      unresolvedDependencies: [],
+      rationale: {
+        reasonCodes: ["included_ready_status", "included_rank_present"],
+        summary: "Included feature-0001 based on status (ready) and rank (1).",
+        topScoreFactors: ["ready status", "rank=1"],
+      },
+    },
+  ],
+  evaluations: [],
+};
+
 test("context loading prefills the repo path only when empty", () => {
   const firstState = workspaceReducer(initialWorkspaceState, {
     type: "contextLoaded",
@@ -212,12 +232,14 @@ test("load success stores compose and validation payloads and selects the first 
     parseResult: toParseResult(composeFixture),
     composeResult: composeFixture,
     validationResult: validationFixture,
+    recommendationResult: recommendationFixture,
   });
 
   assert.equal(state.loadState, "success");
   assert.equal(state.selectedItemId, "epic-0001");
   assert.equal(state.composeResult?.composedNodes.length, 3);
   assert.equal(state.validationResult?.summary.total, 1);
+  assert.equal(state.recommendationResult?.recommendations.length, 1);
 });
 
 test("screen changes persist across successful reloads when data stays in memory", () => {
@@ -238,6 +260,7 @@ test("screen changes persist across successful reloads when data stays in memory
     parseResult: toParseResult(composeFixture),
     composeResult: composeFixture,
     validationResult: validationFixture,
+    recommendationResult: recommendationFixture,
   });
 
   assert.equal(finalState.activeScreen, "Warnings");
@@ -255,6 +278,7 @@ test("selected item is preserved across reloads when it still exists", () => {
     parseResult: toParseResult(composeFixture),
     composeResult: composeFixture,
     validationResult: validationFixture,
+    recommendationResult: recommendationFixture,
   });
 
   assert.equal(nextState.selectedItemId, "feature-0001");

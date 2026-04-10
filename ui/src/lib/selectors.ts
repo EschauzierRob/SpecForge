@@ -233,7 +233,9 @@ export function getSelectedLineageToEpic(
     return [];
   }
 
-  const byId = Object.fromEntries(composeResult.composedNodes.map((node) => [node.spec.id, node]));
+  const byId: Record<string, ComposedNode | undefined> = Object.fromEntries(
+    composeResult.composedNodes.map((node) => [node.spec.id, node]),
+  );
   const lineage: ComposedNode[] = [];
   const visited = new Set<string>();
   let currentNode = byId[selectedItemId];
