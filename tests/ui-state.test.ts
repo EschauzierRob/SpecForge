@@ -2,7 +2,10 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import {
+  filterValidationFindings,
   filterBoardNodes,
+  getFindingNavigationSpecId,
+  getWarningsEmptyState,
   getBlockedReason,
   getDependencyCount,
   getOverviewCounts,
@@ -381,4 +384,75 @@ test("triage badge selectors expose blocked and dependency states for compact ba
   ]);
 
   assert.deepEqual(getTriageBadges(composeFixture.composedNodes[0]), []);
+});
+
+test("warnings filters can narrow findings by severity and rule id", () => {
+  const findings: ValidationResult["findings"] = [
+    {
+      ruleId: "V-101",
+      severity: "warning",
+      message: "Unknown overlay spec ID.",
+      sourcePaths: ["specforge/overlay/local.overlay.json"],
+      specId: "feature-9999",
+    },
+    {
+      ruleId: "V-400",
+      severity: "error",
+      message: "Missing required section.",
+      sourcePaths: ["specs/epic-0001-foundation/epic.md"],
+      specId: "epic-0001",
+    },
+  ];
+
+  const severityFiltered = filterValidationFindings(findings, {
+    severity: { error: true, warning: false, info: false },
+    ruleIdQuery: "",
+  });
+  assert.equal(severityFiltered.length, 1);
+  assert.equal(severityFiltered[0]?.ruleId, "V-400");
+
+  const ruleFiltered = filterValidationFindings(findings, {
+    severity: { error: true, warning: true, info: true },
+    ruleIdQuery: "101",
+  });
+  assert.equal(ruleFiltered.length, 1);
+  assert.equal(ruleFiltered[0]?.ruleId, "V-101");
+});
+
+test("warnings empty state distinguishes between missing findings and filter misses", () => {
+  assert.equal(getWarningsEmptyState(0, 0), "no-findings");
+  assert.equal(getWarningsEmptyState(2, 0), "no-matches");
+  assert.equal(getWarningsEmptyState(2, 1), undefined);
+});
+
+test("finding selection helper enables spec navigation only for known composed nodes", () => {
+  const validSpecId = getFindingNavigationSpecId(
+    {
+      ruleId: "V-400",
+      severity: "error",
+      message: "Missing required section.",
+      sourcePaths: ["specs/epic-0001-foundation/epic.md"],
+      specId: "epic-0001",
+    },
+    composeFixture,
+  );
+  assert.equal(validSpecId, "epic-0001");
+
+  const unknownSpecId = getFindingNavigationSpecId(
+    {
+      ruleId: "V-101",
+      severity: "warning",
+      message: "Unknown overlay spec ID.",
+      sourcePaths: ["specforge/overlay/local.overlay.json"],
+      specId: "feature-9999",
+    },
+    composeFixture,
+  );
+  assert.equal(unknownSpecId, undefined);
+
+  const navigatedState = workspaceReducer(initialWorkspaceState, {
+    type: "itemSelected",
+    specId: validSpecId,
+  });
+  assert.equal(navigatedState.selectedItemId, "epic-0001");
 });

@@ -751,3 +751,110 @@ button {
   background: #ecf4fc;
   color: #28537a;
 }
+
+.warnings-toolbar {
+  display: grid;
+  grid-template-columns: 1fr minmax(220px, 280px);
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.warnings-severity-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.warnings-toggle {
+  border: 1px solid #c8d7e6;
+  background: #f7fbff;
+  color: #1f405d;
+  border-radius: 999px;
+  padding: 8px 12px;
+  text-transform: capitalize;
+}
+
+.warnings-toggle--active {
+  background: #123456;
+  border-color: #123456;
+  color: #ffffff;
+}
+
+.warnings-rule-filter {
+  display: grid;
+  gap: 6px;
+}
+
+.warnings-rule-filter span {
+  color: #315070;
+  font-size: 0.9rem;
+}
+
+.warnings-rule-filter input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #c6d3df;
+  border-radius: 12px;
+  background: #fbfdff;
+}
+
+.warnings-list {
+  display: grid;
+  gap: 12px;
+}
+
+.warnings-item {
+  border: 1px solid #dde7ef;
+  border-radius: 14px;
+  padding: 14px;
+  background: #fcfdff;
+}
+
+.warnings-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.severity-badge {
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.severity-badge--error {
+  background: #ffe8e8;
+  color: #912a2a;
+}
+
+.severity-badge--warning {
+  background: #fff3df;
+  color: #8a5b12;
+}
+
+.severity-badge--info {
+  background: #e8f3ff;
+  color: #1f557f;
+}
+
+.warnings-link {
+  margin-left: auto;
+  border: 0;
+  background: transparent;
+  color: #0f5c7b;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  padding: 0;
+}
+
+.warnings-message,
+.warnings-source-paths {
+  margin: 8px 0 0;
+}
+
+.warnings-source-paths {
+  color: #4e6882;
+  font-size: 0.92rem;
+}

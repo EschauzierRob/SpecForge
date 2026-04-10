@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useReducer, useState } from "react";
 
 import { Board } from "./Board";
 import { Detail } from "./Detail";
+import { WarningsPanel } from "./WarningsPanel";
 import { fetchCompose, fetchContext, fetchValidate } from "./lib/api";
 import type {
   ComposeRepositoryResult,
@@ -12,11 +13,13 @@ import type {
 import {
   getOverviewCounts,
   getComposedTreeModel,
+  DEFAULT_WARNINGS_FILTERS,
   getPlanningStatusCounts,
   getTriageBadges,
   getSelectedComposedNode,
   getSelectedLineageToEpic,
   PLANNING_STATUS_LANE_ORDER,
+  type WarningsFilters,
 } from "./lib/selectors";
 import {
   initialWorkspaceState,
@@ -334,6 +337,7 @@ function SelectionContextHeader(props: {
 export default function App(): JSX.Element {
   const [state, dispatch] = useReducer(workspaceReducer, initialWorkspaceState);
   const [isBoardDetailOpen, setIsBoardDetailOpen] = useState(false);
+  const [warningsFilters, setWarningsFilters] = useState<WarningsFilters>(DEFAULT_WARNINGS_FILTERS);
 
   useEffect(() => {
     let cancelled = false;
@@ -487,9 +491,12 @@ export default function App(): JSX.Element {
 
     if (state.activeScreen === "Warnings") {
       return (
-        <PlaceholderPanel
-          title="Warnings foundation"
-          detail="Validation findings are loaded and preserved in state, ready for a filterable warnings panel."
+        <WarningsPanel
+          validationResult={state.validationResult}
+          composeResult={state.composeResult}
+          filters={warningsFilters}
+          onFiltersChanged={setWarningsFilters}
+          onFindingSelected={(specId) => handleItemSelected(specId, true)}
         />
       );
     }
