@@ -136,6 +136,43 @@ export interface ValidationResult {
   summary: ValidationSummary;
 }
 
+export type RecommendationReasonCode =
+  | "included_ready_status"
+  | "included_rank_present"
+  | "included_default_rank"
+  | "included_no_dependencies"
+  | "included_all_dependencies_resolved"
+  | "excluded_planning_status_done"
+  | "excluded_blocked"
+  | "excluded_unresolved_dependencies"
+  | "excluded_missing_dependency_node"
+  | "excluded_validation_dependency_warning";
+
+export interface RecommendationRationale {
+  reasonCodes: RecommendationReasonCode[];
+  summary: string;
+  topScoreFactors: string[];
+}
+
+export interface RecommendationEvaluation {
+  specId: string;
+  eligible: boolean;
+  score: number;
+  rankValue: number;
+  planningStatus: PlanningStatus | "unspecified";
+  unresolvedDependencies: string[];
+  rationale: RecommendationRationale;
+}
+
+export interface RecommendationItem extends RecommendationEvaluation {
+  eligible: true;
+}
+
+export interface RecommendationResult {
+  recommendations: RecommendationItem[];
+  evaluations: RecommendationEvaluation[];
+}
+
 export interface ParseRepositoryResult {
   discovery: RepositoryDiscovery;
   canonicalNodes: CanonicalNode[];
