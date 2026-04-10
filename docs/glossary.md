@@ -26,7 +26,7 @@ Rule-based analysis that identifies structural and metadata problems and emits a
 
 ## Next Work
 
-Ranked list of actionable items produced from overlay signals (status, rank, block state, dependencies) and hierarchy context.
+Ranked list of actionable story-sized items produced from overlay signals (status, rank, block state, dependencies) and inherited epic/feature hierarchy context.
 
 ## Drift Compensation
 

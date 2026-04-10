@@ -69,7 +69,7 @@
       "dependencies": [
         "F-0010"
       ],
-      "notes": "Recommendation engine and UI panel are implemented.",
+      "notes": "Recommendation engine now ranks story-sized work units with inherited epic/feature priority context.",
       "tags": [
         "recommendation",
         "planning"
@@ -814,7 +814,7 @@
       "dependencies": [
         "F-0012"
       ],
-      "notes": "Ranked actionable next-work list is now surfaced in the UI.",
+      "notes": "Next-work list now surfaces story-sized implementation slices instead of parent containers.",
       "tags": [
         "recommendation",
         "story"
@@ -827,7 +827,7 @@
       "dependencies": [
         "S-0302"
       ],
-      "notes": "Deterministic actionable ranking is produced by the shared recommendation engine.",
+      "notes": "Deterministic ranking now suppresses parent containers, suppresses tasks under unfinished stories, and reports priority paths.",
       "tags": [
         "recommendation",
         "task"

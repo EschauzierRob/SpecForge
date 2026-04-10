@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import type { ComposedNode, ValidationFinding } from "../src/index.ts";
+import type { ComposedNode, SpecNodeType, ValidationFinding } from "../src/index.ts";
 import { rankRecommendedNextWork } from "../src/index.ts";
 
 function createComposedNode(overrides: Partial<ComposedNode> = {}): ComposedNode {
@@ -26,6 +26,41 @@ function createComposedNode(overrides: Partial<ComposedNode> = {}): ComposedNode
       dependencies: [],
     },
     ...overrides,
+  };
+}
+
+function createHierarchyNode(
+  id: string,
+  type: SpecNodeType,
+  options: {
+    parentId?: string;
+    childrenIds?: string[];
+    planningStatus?: "backlog" | "ready" | "in_progress" | "blocked" | "done";
+    rank?: number;
+    dependencies?: string[];
+    blocked?: boolean;
+  } = {},
+): ComposedNode {
+  return {
+    spec: {
+      id,
+      type,
+      title: id,
+      summary: `${id} summary`,
+      sourcePath: `specs/${id}.md`,
+      parentId: options.parentId,
+      childrenIds: options.childrenIds ?? [],
+      dependencies: [],
+    },
+    overlay: {
+      specId: id,
+      sourcePath: "specforge/overlay/local-dev.overlay.json",
+      repositoryId: "local",
+      planningStatus: options.planningStatus ?? "backlog",
+      rank: options.rank,
+      blocked: options.blocked ?? false,
+      dependencies: options.dependencies ?? [],
+    },
   };
 }
 
@@ -106,6 +141,68 @@ test("rankRecommendedNextWork applies exclusion rules", () => {
 
   const dependencyEvaluation = result.evaluations.find((item) => item.specId === "T-0004");
   assert.ok(dependencyEvaluation?.rationale.reasonCodes.includes("excluded_unresolved_dependencies"));
+});
+
+test("rankRecommendedNextWork recommends story work units before parent containers and child tasks", () => {
+  const epic = createHierarchyNode("E-1000", "epic", {
+    childrenIds: ["F-1000"],
+    rank: 1,
+  });
+  const feature = createHierarchyNode("F-1000", "feature", {
+    parentId: "E-1000",
+    childrenIds: ["S-1000"],
+  });
+  const story = createHierarchyNode("S-1000", "story", {
+    parentId: "F-1000",
+    childrenIds: ["T-1000"],
+  });
+  const task = createHierarchyNode("T-1000", "task", {
+    parentId: "S-1000",
+  });
+
+  const result = rankRecommendedNextWork([task, story, feature, epic]);
+
+  assert.deepEqual(result.recommendations.map((item) => item.specId), ["S-1000"]);
+  assert.deepEqual(result.recommendations[0]?.priorityPath, ["E-1000", "F-1000", "S-1000"]);
+  assert.ok(result.recommendations[0]?.rationale.reasonCodes.includes("included_story_work_unit"));
+
+  const epicEvaluation = result.evaluations.find((item) => item.specId === "E-1000");
+  assert.ok(epicEvaluation?.rationale.reasonCodes.includes("excluded_container_with_unfinished_descendants"));
+
+  const taskEvaluation = result.evaluations.find((item) => item.specId === "T-1000");
+  assert.ok(taskEvaluation?.rationale.reasonCodes.includes("excluded_task_under_unfinished_story"));
+});
+
+test("rankRecommendedNextWork ignores hierarchy dependencies and inherits ancestor blockers", () => {
+  const epic = createHierarchyNode("E-2000", "epic", {
+    childrenIds: ["F-2000", "F-2001"],
+  });
+  const firstFeature = createHierarchyNode("F-2000", "feature", {
+    parentId: "E-2000",
+    childrenIds: ["S-2000"],
+  });
+  const firstStory = createHierarchyNode("S-2000", "story", {
+    parentId: "F-2000",
+    dependencies: ["F-2000"],
+  });
+  const secondFeature = createHierarchyNode("F-2001", "feature", {
+    parentId: "E-2000",
+    childrenIds: ["S-2001"],
+    dependencies: ["F-2000"],
+  });
+  const secondStory = createHierarchyNode("S-2001", "story", {
+    parentId: "F-2001",
+  });
+
+  const result = rankRecommendedNextWork([epic, firstFeature, firstStory, secondFeature, secondStory]);
+
+  assert.deepEqual(result.recommendations.map((item) => item.specId), ["S-2000"]);
+  assert.deepEqual(result.recommendations[0]?.ignoredAncestorDependencies, ["F-2000"]);
+  assert.ok(result.recommendations[0]?.rationale.reasonCodes.includes("included_ancestor_dependency_ignored"));
+
+  const blockedByAncestor = result.evaluations.find((item) => item.specId === "S-2001");
+  assert.deepEqual(blockedByAncestor?.unresolvedDependencies, ["F-2000"]);
+  assert.ok(blockedByAncestor?.rationale.reasonCodes.includes("excluded_unresolved_dependencies"));
 });
 
 test("rankRecommendedNextWork handles missing optional overlay fields", () => {

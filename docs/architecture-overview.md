@@ -72,8 +72,9 @@ Output model:
 ### 6) Next-Work Engine
 
 Responsibilities:
-- filter to actionable work
-- score by rank/status/blockers/dependencies
+- filter to actionable story-sized work by default
+- score by rank/status/blockers/dependencies plus inherited epic/feature priority path
+- suppress parent containers when unfinished descendants are available
 - output sorted recommendation list with rationale
 
 Initial scoring inputs:

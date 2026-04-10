@@ -132,11 +132,17 @@ export type RecommendationReasonCode =
   | "included_default_rank"
   | "included_no_dependencies"
   | "included_all_dependencies_resolved"
+  | "included_story_work_unit"
+  | "included_fallback_work_unit"
+  | "included_priority_path"
+  | "included_ancestor_dependency_ignored"
   | "excluded_planning_status_done"
   | "excluded_blocked"
   | "excluded_unresolved_dependencies"
   | "excluded_missing_dependency_node"
-  | "excluded_validation_dependency_warning";
+  | "excluded_validation_dependency_warning"
+  | "excluded_container_with_unfinished_descendants"
+  | "excluded_task_under_unfinished_story";
 
 export interface RecommendationRationale {
   reasonCodes: RecommendationReasonCode[];
@@ -146,11 +152,15 @@ export interface RecommendationRationale {
 
 export interface RecommendationEvaluation {
   specId: string;
+  specType: SpecNodeType;
   eligible: boolean;
   score: number;
   rankValue: number;
   planningStatus: PlanningStatus | "unspecified";
   unresolvedDependencies: string[];
+  priorityPath: string[];
+  ignoredAncestorDependencies: string[];
+  unfinishedDescendantIds: string[];
   rationale: RecommendationRationale;
 }
 

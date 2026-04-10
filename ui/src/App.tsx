@@ -307,7 +307,7 @@ function NextWorkPanel(props: {
       <div className="panel-header">
         <div>
           <h2>Recommended next work</h2>
-          <p>Actionable items only: done, blocked, and unresolved dependency items are automatically excluded.</p>
+          <p>Story-sized work is recommended first, with epic and feature priority inherited as context.</p>
         </div>
         <div className="panel-pill">{recommendedItems.length} actionable</div>
       </div>
@@ -319,6 +319,7 @@ function NextWorkPanel(props: {
           <article key={item.specId} className="warnings-item">
             <header className="warnings-item-header">
               <strong>{item.specId}</strong>
+              <span className="tree-badge">{item.specType}</span>
               <span className="tree-badge">{item.planningStatus}</span>
               <span className="tree-badge">rank {item.rankValue === Number.MAX_SAFE_INTEGER ? "default" : item.rankValue}</span>
               <button type="button" className="warnings-link" onClick={() => props.onSelect(item.specId)}>
@@ -326,6 +327,9 @@ function NextWorkPanel(props: {
               </button>
             </header>
             <p className="warnings-message">{item.rationale.summary}</p>
+            {item.priorityPath.length > 1 ? (
+              <p className="warnings-source-paths">Priority path: {item.priorityPath.join(" > ")}</p>
+            ) : null}
             <p className="warnings-source-paths">Top factors: {item.rationale.topScoreFactors.join(", ") || "none"}</p>
           </article>
         ))}

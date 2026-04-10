@@ -196,15 +196,19 @@ const recommendationFixture: RecommendationResult = {
   recommendations: [
     {
       specId: "feature-0001",
+      specType: "feature",
       eligible: true,
       score: 1,
       rankValue: 1,
       planningStatus: "ready",
       unresolvedDependencies: [],
+      priorityPath: ["epic-0001", "feature-0001"],
+      ignoredAncestorDependencies: [],
+      unfinishedDescendantIds: [],
       rationale: {
-        reasonCodes: ["included_ready_status", "included_rank_present"],
-        summary: "Included feature-0001 based on status (ready) and rank (1).",
-        topScoreFactors: ["ready status", "rank=1"],
+        reasonCodes: ["included_fallback_work_unit", "included_priority_path", "included_ready_status", "included_rank_present"],
+        summary: "Included feature-0001 as a feature work unit based on status (ready), rank (1), and priority path (epic-0001 > feature-0001).",
+        topScoreFactors: ["feature fallback work unit", "priority path epic-0001 > feature-0001", "ready status", "rank=1"],
       },
     },
   ],
