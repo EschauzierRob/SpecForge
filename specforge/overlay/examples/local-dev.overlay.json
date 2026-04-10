@@ -155,10 +155,18 @@
     },
     {
       "specId": "E-0004",
-      "planningStatus": "in_progress"
+      "planningStatus": "done"
     },
     {
       "specId": "F-0010",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "F-0011",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "S-0301",
       "planningStatus": "done"
     }
   ]
