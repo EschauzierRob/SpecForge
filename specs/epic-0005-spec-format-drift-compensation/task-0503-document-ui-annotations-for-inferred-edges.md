@@ -25,10 +25,13 @@ UI implementation needs explicit guidelines for representing inferred structure 
 ## Requirements
 - [ ] R1: Documentation covers annotation states for explicit edge, inferred edge, and low-confidence inferred edge.
 - [ ] R2: Documentation defines how warnings deep-link to affected hierarchy nodes.
+- [ ] R3: Documentation covers virtual or synthesized node annotations when projection needs hierarchy placeholders.
+- [ ] R4: Annotation guidance includes non-color visual or textual cues for accessibility.
 
 ## Acceptance Criteria
 - [ ] AC1: Annotation guidance is specific enough to produce consistent tree/detail rendering.
 - [ ] AC2: UX notes include accessibility considerations for non-color cues.
+- [ ] AC3: Guidance defines where inference rationale appears in tree/detail/warnings flows.
 
 ## Dependencies
 - S-0503

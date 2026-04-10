@@ -216,6 +216,371 @@
       ]
     },
     {
+      "specId": "E-0005",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "E-0002",
+        "E-0003",
+        "E-0004"
+      ],
+      "notes": "Epic specs were refined into clearer inference, diagnostics, projection, and fixture-driven implementation cards.",
+      "tags": [
+        "drift",
+        "planning"
+      ]
+    },
+    {
+      "specId": "F-0015",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0005",
+        "F-0010"
+      ],
+      "notes": "Tolerant ingestion now calls out inference contracts, candidate preservation, and fixture coverage.",
+      "tags": [
+        "drift",
+        "ingestion"
+      ]
+    },
+    {
+      "specId": "F-0016",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0015",
+        "F-0011"
+      ],
+      "notes": "Confidence and drift diagnostics now emphasize deterministic scoring and validation-compatible warnings.",
+      "tags": [
+        "drift",
+        "validation"
+      ]
+    },
+    {
+      "specId": "F-0017",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0015",
+        "F-0016",
+        "F-0007",
+        "F-0009",
+        "F-0011"
+      ],
+      "notes": "Projection and visualization now include virtual-node identity, accessibility, and warning navigation.",
+      "tags": [
+        "drift",
+        "ui"
+      ]
+    },
+    {
+      "specId": "S-0501",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0004",
+        "F-0005"
+      ],
+      "notes": "Ingestion story now preserves candidate parent evidence for ambiguous relationships.",
+      "tags": [
+        "drift",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0502",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0010",
+        "F-0011"
+      ],
+      "notes": "Ambiguity story now requires deterministic confidence and warning outputs.",
+      "tags": [
+        "drift",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0503",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0007",
+        "F-0009",
+        "F-0011",
+        "F-0016"
+      ],
+      "notes": "Visualization story now includes warning navigation and non-color cues.",
+      "tags": [
+        "drift",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0504",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0015"
+      ],
+      "notes": "Shared inference result contract story added for downstream validation and UI consumers.",
+      "tags": [
+        "drift",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0505",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0501",
+        "S-0504"
+      ],
+      "notes": "Fixture-driven drift scenario story added for deterministic acceptance coverage.",
+      "tags": [
+        "drift",
+        "story",
+        "tests"
+      ]
+    },
+    {
+      "specId": "S-0506",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0016",
+        "S-0504"
+      ],
+      "notes": "Deterministic confidence scoring story added.",
+      "tags": [
+        "drift",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0507",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0016",
+        "S-0506",
+        "F-0011"
+      ],
+      "notes": "Validation drift findings story added.",
+      "tags": [
+        "drift",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0508",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0017",
+        "F-0015",
+        "F-0016"
+      ],
+      "notes": "Canonical projection and virtual hierarchy story added.",
+      "tags": [
+        "drift",
+        "story"
+      ]
+    },
+    {
+      "specId": "S-0509",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0017",
+        "S-0507",
+        "S-0508"
+      ],
+      "notes": "Warning-to-inferred-structure navigation story added.",
+      "tags": [
+        "drift",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0501",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0501"
+      ],
+      "notes": "Inference evidence contract task strengthened with selected/candidate/ambiguous states.",
+      "tags": [
+        "drift",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0502",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0502"
+      ],
+      "notes": "Confidence and warning taxonomy task strengthened with deterministic stability rules.",
+      "tags": [
+        "drift",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0503",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0503"
+      ],
+      "notes": "UI annotation task strengthened with virtual-node and accessibility guidance.",
+      "tags": [
+        "drift",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0504",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0501",
+        "S-0504"
+      ],
+      "notes": "Inference candidate strategy implementation task added.",
+      "tags": [
+        "drift",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0505",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0505",
+        "T-0504"
+      ],
+      "notes": "Drift fixture and assertion task added.",
+      "tags": [
+        "drift",
+        "task",
+        "tests"
+      ]
+    },
+    {
+      "specId": "T-0506",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0504",
+        "T-0501"
+      ],
+      "notes": "Runtime inference contract materialization task added.",
+      "tags": [
+        "drift",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0507",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0506",
+        "T-0502",
+        "T-0506"
+      ],
+      "notes": "Deterministic confidence scoring implementation task added.",
+      "tags": [
+        "drift",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0508",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0507",
+        "T-0502",
+        "T-0507"
+      ],
+      "notes": "Drift finding validation mapping task added.",
+      "tags": [
+        "drift",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0509",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0507",
+        "T-0505",
+        "T-0508"
+      ],
+      "notes": "Confidence and drift regression test task added.",
+      "tags": [
+        "drift",
+        "task",
+        "tests"
+      ]
+    },
+    {
+      "specId": "T-0510",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0508",
+        "T-0506"
+      ],
+      "notes": "Projection model and virtual-node identity task added.",
+      "tags": [
+        "drift",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0511",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0503",
+        "T-0503",
+        "T-0510"
+      ],
+      "notes": "UI inferred-edge annotation implementation task added.",
+      "tags": [
+        "drift",
+        "task",
+        "ui"
+      ]
+    },
+    {
+      "specId": "T-0512",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0509",
+        "T-0508",
+        "T-0511"
+      ],
+      "notes": "Warning navigation implementation task added.",
+      "tags": [
+        "drift",
+        "task",
+        "ui"
+      ]
+    },
+    {
       "specId": "E-0006",
       "planningStatus": "backlog",
       "blocked": false,

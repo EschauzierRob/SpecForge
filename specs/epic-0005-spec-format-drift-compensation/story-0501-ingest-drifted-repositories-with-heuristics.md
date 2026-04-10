@@ -18,6 +18,7 @@ Users cannot always clean repositories into canonical format before trying SpecF
 ## Goals
 - Keep ingestion resilient in the presence of structure drift.
 - Produce inferred links when explicit parents are missing.
+- Retain evidence for the inference strategy that produced each candidate link.
 
 ## Non-goals
 - Attempting to mutate upstream files to enforce structure.
@@ -25,10 +26,12 @@ Users cannot always clean repositories into canonical format before trying SpecF
 ## Requirements
 - [ ] R1: Parsing continues when canonical parent levels are absent.
 - [ ] R2: Heuristics evaluate naming, file location, and in-file references to infer parents.
+- [ ] R3: Inference output includes candidate parent sets and evidence for each accepted or ambiguous candidate.
 
 ## Acceptance Criteria
 - [ ] AC1: Ingestion succeeds for mixed-level repositories that currently produce partial trees.
 - [ ] AC2: Inferred links retain provenance fields for each heuristic used.
+- [ ] AC3: Multiple plausible parents are preserved for ambiguity reporting instead of silently choosing one.
 
 ## Dependencies
 - F-0004

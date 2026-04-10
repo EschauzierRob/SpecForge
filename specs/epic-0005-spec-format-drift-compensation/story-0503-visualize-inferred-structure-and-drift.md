@@ -18,6 +18,7 @@ A rendered hierarchy is only trustworthy if users can tell which parts are infer
 ## Goals
 - Make inferred relationships visually distinct.
 - Expose confidence and drift annotations in context.
+- Enable navigation from warning findings to affected hierarchy nodes or inferred edges.
 
 ## Non-goals
 - Hiding ambiguity to keep UI minimal.
@@ -25,10 +26,12 @@ A rendered hierarchy is only trustworthy if users can tell which parts are infer
 ## Requirements
 - [ ] R1: Tree and detail surfaces show explicit/inferred relationship states.
 - [ ] R2: Node/edge inspection reveals confidence and inference evidence.
+- [ ] R3: Warning navigation can focus the affected node, edge, or drift hotspot when the target is resolvable.
 
 ## Acceptance Criteria
 - [ ] AC1: Users can identify low-confidence edges without reading raw markdown files.
 - [ ] AC2: Drift hotspots are highlighted and navigable from warnings to affected nodes.
+- [ ] AC3: Inferred-state markers include non-color cues for accessibility.
 
 ## Dependencies
 - F-0007
