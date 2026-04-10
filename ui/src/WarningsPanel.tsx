@@ -40,7 +40,7 @@ export function WarningsPanel(props: {
       <div className="panel-header">
         <div>
           <h2>Validation findings</h2>
-          <p>Inspect findings by severity and rule id, then jump directly to matching specs when available.</p>
+          <p>Inspect findings by severity and Rule ID, then jump directly to matching specs when available.</p>
         </div>
       </div>
 
@@ -68,7 +68,7 @@ export function WarningsPanel(props: {
             list="warnings-rule-options"
             value={props.filters.ruleIdQuery}
             onChange={(event) => props.onFiltersChanged({ ...props.filters, ruleIdQuery: event.target.value })}
-            placeholder="Filter by rule id"
+            placeholder="Filter by Rule ID"
           />
           <datalist id="warnings-rule-options">
             {ruleIds.map((ruleId) => (
@@ -90,7 +90,7 @@ export function WarningsPanel(props: {
                 <article key={`${finding.ruleId}-${severity}-${index}-${finding.message}`} className="warnings-item">
                   <header className="warnings-item-header">
                     <span className={`severity-badge severity-badge--${severity}`}>{severity}</span>
-                    <strong>{finding.ruleId}</strong>
+                    <strong>Rule ID: {finding.ruleId}</strong>
                     {targetSpecId ? (
                       <button type="button" className="warnings-link" onClick={() => props.onFindingSelected(targetSpecId)}>
                         Open {targetSpecId}
@@ -98,7 +98,7 @@ export function WarningsPanel(props: {
                     ) : null}
                   </header>
                   <p className="warnings-message">{finding.message}</p>
-                  <p className="warnings-source-paths">Source: {finding.sourcePaths.join(", ")}</p>
+                  <p className="warnings-source-paths">Source: {finding.sourcePaths.length > 0 ? finding.sourcePaths.join(", ") : "n/a"}</p>
                 </article>
               );
             }),
