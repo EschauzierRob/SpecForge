@@ -19,6 +19,7 @@ import {
   getSelectedComposedNode,
   getSelectedLineageToEpic,
   PLANNING_STATUS_LANE_ORDER,
+  getRecommendedNextWork,
   type WarningsFilters,
 } from "./lib/selectors";
 import {
@@ -295,6 +296,49 @@ function DebugPanel(props: {
   );
 }
 
+function NextWorkPanel(props: {
+  composeResult?: ComposeRepositoryResult;
+  validationResult?: ValidationResult;
+  onSelect(specId: string): void;
+}): JSX.Element {
+  const result = useMemo(
+    () => getRecommendedNextWork(props.composeResult, props.validationResult),
+    [props.composeResult, props.validationResult],
+  );
+  const recommendedItems = result.recommendations.slice(0, 12);
+
+  return (
+    <section className="panel">
+      <div className="panel-header">
+        <div>
+          <h2>Recommended next work</h2>
+          <p>Actionable items only: done, blocked, and unresolved dependency items are automatically excluded.</p>
+        </div>
+        <div className="panel-pill">{recommendedItems.length} actionable</div>
+      </div>
+
+      {recommendedItems.length === 0 ? <div className="quick-pick-empty">No actionable work found for this workspace.</div> : null}
+
+      <div className="warnings-list">
+        {recommendedItems.map((item) => (
+          <article key={item.specId} className="warnings-item">
+            <header className="warnings-item-header">
+              <strong>{item.specId}</strong>
+              <span className="tree-badge">{item.planningStatus}</span>
+              <span className="tree-badge">rank {item.rankValue === Number.MAX_SAFE_INTEGER ? "default" : item.rankValue}</span>
+              <button type="button" className="warnings-link" onClick={() => props.onSelect(item.specId)}>
+                Open detail
+              </button>
+            </header>
+            <p className="warnings-message">{item.rationale.summary}</p>
+            <p className="warnings-source-paths">Top factors: {item.rationale.topScoreFactors.join(", ") || "none"}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function SelectionContextHeader(props: {
   lineage: ComposeRepositoryResult["composedNodes"];
   onSelect(specId: string): void;
@@ -502,9 +546,10 @@ export default function App(): JSX.Element {
     }
 
     return (
-      <PlaceholderPanel
-        title="Next Work foundation"
-        detail="The recommendation engine arrives later. This shell keeps the route and payload wiring stable in the meantime."
+      <NextWorkPanel
+        composeResult={state.composeResult}
+        validationResult={state.validationResult}
+        onSelect={(specId) => handleItemSelected(specId, true)}
       />
     );
   })();

@@ -10,6 +10,7 @@ import {
   getDependencyCount,
   getOverviewCounts,
   getPlanningStatusCounts,
+  getRecommendedNextWork,
   getSelectedComposedNode,
   getTriageBadges,
 } from "../ui/src/lib/selectors.ts";
@@ -241,6 +242,19 @@ test("screen changes persist across successful reloads when data stays in memory
   });
 
   assert.equal(finalState.activeScreen, "Warnings");
+});
+
+test("next work recommendations exclude blocked items and include rationale", () => {
+  const result = getRecommendedNextWork(composeFixture, validationFixture);
+
+  assert.deepEqual(result.recommendations.map((item) => item.specId), ["epic-0001", "feature-0001"]);
+  assert.equal(result.evaluations.find((item) => item.specId === "story-0001")?.eligible, false);
+  assert.ok(
+    result.evaluations
+      .find((item) => item.specId === "story-0001")
+      ?.rationale.reasonCodes.includes("excluded_blocked"),
+  );
+  assert.ok(result.recommendations.every((item) => item.rationale.topScoreFactors.length > 0));
 });
 
 test("selected item is preserved across reloads when it still exists", () => {
