@@ -24,15 +24,15 @@ The tolerant ingestion feature needs concrete inference strategies that generate
 - Pluggable third-party inference engines.
 
 ## Requirements
-- [ ] R1: Naming-based inference produces candidates from shared numeric tokens, title tokens, or ID-like references.
-- [ ] R2: Directory-adjacency inference produces candidates from nearby files and folders.
-- [ ] R3: Textual-reference inference produces candidates from in-content references to known spec IDs or titles.
-- [ ] R4: Strategy outputs use the shared inference result contract.
+- [x] R1: Naming-based inference produces candidates from shared numeric tokens, title tokens, or ID-like references.
+- [x] R2: Directory-adjacency inference produces candidates from nearby files and folders.
+- [x] R3: Textual-reference inference produces candidates from in-content references to known spec IDs or titles.
+- [x] R4: Strategy outputs use the shared inference result contract.
 
 ## Acceptance Criteria
-- [ ] AC1: Each strategy has unit coverage for accepted and rejected candidate scenarios.
-- [ ] AC2: Ambiguous candidates remain available for confidence and validation processing.
-- [ ] AC3: Strategy evidence is present in composed or projection-ready output.
+- [x] AC1: Each strategy has unit coverage for accepted and rejected candidate scenarios.
+- [x] AC2: Ambiguous candidates remain available for confidence and validation processing.
+- [x] AC3: Strategy evidence is present in composed or projection-ready output.
 
 ## Dependencies
 - S-0501
@@ -43,3 +43,5 @@ The tolerant ingestion feature needs concrete inference strategies that generate
 
 ## Notes
 Implementation task for initial deterministic heuristic generation.
+
+Runtime implementation runs all strategies before deterministic selection; content ID references can select alone, while weaker non-content evidence requires multiple strategy families.

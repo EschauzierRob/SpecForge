@@ -277,14 +277,15 @@
     },
     {
       "specId": "S-0501",
-      "planningStatus": "backlog",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": [
         "F-0004",
         "F-0005"
       ],
-      "notes": "Ingestion story now preserves candidate parent evidence for ambiguous relationships.",
+      "notes": "Core tolerant ingestion heuristics are implemented with optional inference metadata; skipped-level projection remains with S-0508.",
       "tags": [
+        "completed",
         "drift",
         "story"
       ]
@@ -408,13 +409,14 @@
     },
     {
       "specId": "T-0501",
-      "planningStatus": "backlog",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": [
         "S-0501"
       ],
-      "notes": "Inference evidence contract task strengthened with selected/candidate/ambiguous states.",
+      "notes": "Inference result, relationship, candidate, and evidence contracts are documented and exposed through runtime types.",
       "tags": [
+        "completed",
         "drift",
         "task"
       ]
@@ -447,14 +449,15 @@
     },
     {
       "specId": "T-0504",
-      "planningStatus": "backlog",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": [
         "S-0501",
         "S-0504"
       ],
-      "notes": "Inference candidate strategy implementation task added.",
+      "notes": "Naming, directory-adjacency, and content-reference strategies are implemented with deterministic evidence and ambiguity preservation.",
       "tags": [
+        "completed",
         "drift",
         "task"
       ]
@@ -467,7 +470,7 @@
         "S-0505",
         "T-0504"
       ],
-      "notes": "Drift fixture and assertion task added.",
+      "notes": "Initial fixture-builder matrix now covers missing parent, mixed naming, ambiguous parent, skipped level, flat list, and orphan node for ingestion/inference assertions; broader warning/projection expectations remain.",
       "tags": [
         "drift",
         "task",

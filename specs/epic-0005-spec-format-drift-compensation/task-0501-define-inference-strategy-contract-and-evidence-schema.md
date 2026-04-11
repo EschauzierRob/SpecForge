@@ -23,14 +23,14 @@ Inference strategies must produce consistent outputs so downstream confidence an
 - Implementing strategies in runtime code.
 
 ## Requirements
-- [ ] R1: Contract includes inferred parent ID, selected edge state, candidate set, strategy ID, and evidence fields.
-- [ ] R2: Evidence schema supports strategy-specific details for naming, directory adjacency, and textual-reference signals.
-- [ ] R3: Contract identifies stable IDs or keys needed by confidence scoring, validation findings, and UI navigation.
+- [x] R1: Contract includes inferred parent ID, selected edge state, candidate set, strategy ID, and evidence fields.
+- [x] R2: Evidence schema supports strategy-specific details for naming, directory adjacency, and textual-reference signals.
+- [x] R3: Contract identifies stable IDs or keys needed by confidence scoring, validation findings, and UI navigation.
 
 ## Acceptance Criteria
-- [ ] AC1: Spec documents mandatory and optional fields for inferred-edge payloads.
-- [ ] AC2: Documentation examples cover at least naming-based and file-structure-based inference.
-- [ ] AC3: The contract distinguishes selected, candidate, ambiguous, and rejected relationships.
+- [x] AC1: Spec documents mandatory and optional fields for inferred-edge payloads.
+- [x] AC2: Documentation examples cover at least naming-based and file-structure-based inference.
+- [x] AC3: The contract distinguishes selected, candidate, ambiguous, and rejected relationships.
 
 ## Dependencies
 - S-0501

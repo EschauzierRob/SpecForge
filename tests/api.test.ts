@@ -12,6 +12,7 @@ import {
   startSpecForgeApiServer,
   validateRepository,
 } from "../src/index.ts";
+import { createDriftFixtureRepository } from "./fixtures/drifted-repositories.ts";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(currentDirectory, "..");
@@ -200,4 +201,35 @@ test("API compose endpoint exposes bootstrap actions for partially initialized r
     { kind: "directory", path: "specforge/overlay" },
     { kind: "file", path: "specforge/overlay/local-dev.overlay.json" },
   ]);
+});
+
+test("API parse and compose endpoints expose inference metadata for drifted repositories", async (t) => {
+  const handle = await withApiServer(t);
+  const fixture = await createDriftFixtureRepository("missing-parent");
+
+  const parseResponse = await fetch(`${handle.url}/api/parse`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ repoPath: fixture.root }),
+  });
+  const composeResponse = await fetch(`${handle.url}/api/compose`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ repoPath: fixture.root }),
+  });
+
+  assert.equal(parseResponse.status, 200);
+  assert.equal(composeResponse.status, 200);
+
+  const parsePayload = await parseResponse.json();
+  const composePayload = await composeResponse.json();
+
+  assert.equal(parsePayload.inference?.relationships[0]?.childId, "S-0001");
+  assert.equal(parsePayload.inference?.relationships[0]?.selectedParentId, "F-0001");
+  assert.equal(composePayload.inference?.relationships[0]?.childId, "S-0001");
+  assert.equal(composePayload.inference?.relationships[0]?.selectedParentId, "F-0001");
 });

@@ -24,14 +24,14 @@ Users cannot always clean repositories into canonical format before trying SpecF
 - Attempting to mutate upstream files to enforce structure.
 
 ## Requirements
-- [ ] R1: Parsing continues when canonical parent levels are absent.
-- [ ] R2: Heuristics evaluate naming, file location, and in-file references to infer parents.
-- [ ] R3: Inference output includes candidate parent sets and evidence for each accepted or ambiguous candidate.
+- [x] R1: Parsing continues when canonical parent levels are absent.
+- [x] R2: Heuristics evaluate naming, file location, and in-file references to infer parents.
+- [x] R3: Inference output includes candidate parent sets and evidence for each accepted or ambiguous candidate.
 
 ## Acceptance Criteria
-- [ ] AC1: Ingestion succeeds for mixed-level repositories that currently produce partial trees.
-- [ ] AC2: Inferred links retain provenance fields for each heuristic used.
-- [ ] AC3: Multiple plausible parents are preserved for ambiguity reporting instead of silently choosing one.
+- [x] AC1: Ingestion succeeds for mixed-level repositories that currently produce partial trees.
+- [x] AC2: Inferred links retain provenance fields for each heuristic used.
+- [x] AC3: Multiple plausible parents are preserved for ambiguity reporting instead of silently choosing one.
 
 ## Dependencies
 - F-0004
@@ -49,3 +49,4 @@ Runtime implementation notes:
 - Parse, compose, and ingest results may include optional `inference` metadata when drift handling had work to report. Canonical repositories with only valid explicit parents omit the metadata.
 - Inference metadata preserves original explicit parent IDs, selected parent IDs, candidate parents, candidate state, support score, strategy evidence, source paths, and stable edge/candidate keys.
 - Confidence scoring, drift validation findings, virtual projection, and UI annotations remain owned by later stories.
+- Skipped-level inputs remain unresolved with evidence unless a canonical expected parent exists; connected projected hierarchy for skipped levels is owned by S-0508.

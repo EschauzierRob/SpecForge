@@ -5,7 +5,7 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { ingestRepository, parseSpecFile } from "../src/index.ts";
+import { composeRepository, ingestRepository, parseRepository, parseSpecFile } from "../src/index.ts";
 import { runCli } from "../src/cli.ts";
 
 const currentDirectory = path.dirname(fileURLToPath(import.meta.url));
@@ -147,6 +147,16 @@ test("ingestRepository ingests the current repo and sample repo successfully", a
   assert.equal(sampleRepoResult.overlayFiles.length, 1);
   assert.equal(sampleRepoResult.composedNodes.length, 1);
   assert.equal(sampleRepoResult.canonicalNodes[0]?.id, "E-9001");
+});
+
+test("canonical repositories omit inference metadata across parse compose and ingest", async () => {
+  const parseResult = await parseRepository(repoRoot);
+  const composeResult = await composeRepository(repoRoot);
+  const ingestResult = await ingestRepository(repoRoot);
+
+  assert.equal(parseResult.inference, undefined);
+  assert.equal(composeResult.inference, undefined);
+  assert.equal(ingestResult.inference, undefined);
 });
 
 test("ingestRepository bootstraps missing overlay essentials before composition", async () => {
