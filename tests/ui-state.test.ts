@@ -31,6 +31,7 @@ const composeFixture: ComposeRepositoryResult = {
     specsPath: "specs",
     overlayPath: "specforge/overlay",
     specDiscoveryProfile: "canonical",
+    validationProfile: "canonical",
     hasOverlayDirectory: true,
     discoveredSpecFiles: ["specs/epic-0001-foundation/epic.md"],
     adapterIncludedSpecFiles: [],

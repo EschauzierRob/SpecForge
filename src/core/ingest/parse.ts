@@ -5,20 +5,19 @@ import type {
   ParseRepositoryResult,
   RepositoryAdapterOptions,
 } from "../model/types.ts";
-import { parseSpecFile } from "../parser/map.ts";
 import { discoverRepository } from "./discovery.ts";
-import { inferHierarchyRelationships } from "./inference.ts";
-import { inferAdapterProjectionVirtualNodes } from "./projection.ts";
 import { attachChildren, compareParserDiagnostics } from "./shared.ts";
+import { resolveRepositoryAdapter } from "./adapters/index.ts";
 
 export async function parseRepository(
   repoPath: string,
   options: RepositoryAdapterOptions = {},
 ): Promise<ParseRepositoryResult> {
+  const { adapter } = resolveRepositoryAdapter(options);
   const discovery = await discoverRepository(repoPath, options);
   const parseResults = await Promise.all(
     discovery.discoveredSpecFiles.map((relativePath) =>
-      parseSpecFile(path.join(discovery.repoRoot, relativePath), discovery.repoRoot),
+      adapter.parseArtifact(path.join(discovery.repoRoot, relativePath), discovery.repoRoot),
     ),
   );
 
@@ -28,18 +27,11 @@ export async function parseRepository(
   const parseResultsBySourcePath = new Map(
     discovery.discoveredSpecFiles.map((sourcePath, index) => [sourcePath, parseResults[index]] as const),
   );
-  const inferredRelationships = inferHierarchyRelationships(parsedNodes);
-  const projectedVirtualNodes = inferAdapterProjectionVirtualNodes(discovery, parseResultsBySourcePath, parsedNodes);
-  const inference =
-    inferredRelationships || projectedVirtualNodes.virtualNodes.length > 0
-      ? {
-          relationships: [
-            ...(inferredRelationships?.relationships ?? []),
-            ...projectedVirtualNodes.relationships,
-          ].sort((left, right) => left.childId.localeCompare(right.childId)),
-          ...(projectedVirtualNodes.virtualNodes.length > 0 ? { virtualNodes: projectedVirtualNodes.virtualNodes } : {}),
-        }
-      : undefined;
+  const inference = adapter.inferRelationships({
+    discovery,
+    parseResultsBySourcePath,
+    parsedNodes,
+  });
   const repairedMissingParentSpecIds = new Set(
     inference?.relationships
       .filter((relationship) => relationship.state === "inferred" && relationship.selectedParentId)

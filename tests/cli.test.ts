@@ -161,3 +161,38 @@ test("CLI usage errors still return exit code 1", async () => {
   assert.equal(exitCode, 1);
   assert.ok(errorLines.some((line) => line.startsWith("Usage: specforge")));
 });
+
+test("parse CLI supports --adapter for tolerant discovery", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-cli-adapter-"));
+  const specsPath = path.join(root, "specs", "messy-product");
+  await mkdir(specsPath, { recursive: true });
+  await writeFile(
+    path.join(specsPath, "epic"),
+    `# Adapter Epic
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Loaded through CLI adapter option.
+`,
+  );
+
+  const outputLines: string[] = [];
+  const errorLines: string[] = [];
+  const exitCode = await runCli(
+    ["parse", root, "--adapter", "bitbetmatic2", "--json"],
+    (line) => outputLines.push(line),
+    (line) => errorLines.push(line),
+  );
+
+  assert.equal(exitCode, 0);
+  assert.deepEqual(errorLines, []);
+
+  const payload = JSON.parse(outputLines.join("\n"));
+  assert.equal(payload.discovery.specDiscoveryProfile, "bitbetmatic2");
+  assert.equal(payload.canonicalNodes[0]?.id, "E-0001");
+});

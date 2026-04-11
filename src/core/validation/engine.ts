@@ -5,6 +5,7 @@ import type {
   DiagnosticSeverity,
   IngestResult,
   ParserDiagnostic,
+  RepositoryAdapterOptions,
   SpecNodeType,
   ValidationFinding,
   ValidationResult,
@@ -150,7 +151,7 @@ function validatePathConventionRule(
     return;
   }
 
-  const profile = result.discovery.specDiscoveryProfile;
+  const profile = result.discovery.validationProfile;
   if (profile === "canonical") {
     addFinding(findings, {
       ruleId: "V-007",
@@ -199,7 +200,7 @@ function validateAdapterOnlyFileConventions(
   diagnosticCodesBySourcePath: Map<string, string[]>,
   discoveredSpecPaths: Set<string>,
 ): void {
-  if (result.discovery.specDiscoveryProfile === "canonical") {
+  if (result.discovery.validationProfile === "canonical") {
     return;
   }
 
@@ -540,7 +541,10 @@ export function validateIngestResult(result: IngestResult): ValidationResult {
   };
 }
 
-export async function validateRepository(repoPath: string): Promise<ValidationResult> {
-  const ingestResult = await ingestRepository(repoPath);
+export async function validateRepository(
+  repoPath: string,
+  options: RepositoryAdapterOptions = {},
+): Promise<ValidationResult> {
+  const ingestResult = await ingestRepository(repoPath, options);
   return validateIngestResult(ingestResult);
 }

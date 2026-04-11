@@ -118,9 +118,6 @@ export function inferAdapterProjectionVirtualNodes(
   parseResultsBySourcePath: Map<string, ParseSpecFileResult>,
   parsedNodes: CanonicalNode[],
 ): { virtualNodes: InferenceVirtualNode[]; relationships: InferenceRelationship[] } {
-  if (discovery.specDiscoveryProfile !== "bitbetmatic2") {
-    return { virtualNodes: [], relationships: [] };
-  }
 
   const virtualNodes: InferenceVirtualNode[] = [];
 

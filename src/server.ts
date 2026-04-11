@@ -9,12 +9,13 @@ import { composeRepository } from "./core/ingest/compose.ts";
 import { parseRepository } from "./core/ingest/parse.ts";
 import { rankRecommendedNextWork } from "./core/recommendation/engine.ts";
 import { validateRepository } from "./core/validation/engine.ts";
+import type { RepositoryAdapterOptions, SpecDiscoveryAdapterProfile } from "./core/model/types.ts";
 
 const DEFAULT_HOST = "127.0.0.1";
 const DEFAULT_PORT = 4311;
 
 type ApiCommand = "parse" | "compose" | "validate" | "recommend";
-type ApiHandler = (repoPath: string) => Promise<unknown>;
+type ApiHandler = (repoPath: string, options: RepositoryAdapterOptions) => Promise<unknown>;
 
 export interface ApiServerOptions {
   host?: string;
@@ -56,7 +57,7 @@ async function readRequestBody(request: IncomingMessage): Promise<string> {
   return Buffer.concat(chunks).toString("utf8");
 }
 
-async function readRepoPathFromRequest(request: IncomingMessage): Promise<string> {
+async function readRequestPayload(request: IncomingMessage): Promise<{ repoPath: string; adapterOptions: RepositoryAdapterOptions }> {
   const rawBody = await readRequestBody(request);
 
   if (!rawBody.trim()) {
@@ -74,12 +75,20 @@ async function readRepoPathFromRequest(request: IncomingMessage): Promise<string
     throw new Error("Request body must be a JSON object with a repoPath string.");
   }
 
-  const { repoPath } = payload as { repoPath?: unknown };
+  const { repoPath, adapterProfile } = payload as { repoPath?: unknown; adapterProfile?: unknown };
   if (typeof repoPath !== "string" || repoPath.trim().length === 0) {
     throw new Error("Request body must include a non-empty repoPath string.");
   }
 
-  return path.resolve(repoPath);
+  if (adapterProfile !== undefined && adapterProfile !== "canonical" && adapterProfile !== "bitbetmatic2") {
+    throw new Error("adapterProfile must be either canonical or bitbetmatic2.");
+  }
+
+  const adapterOptions: RepositoryAdapterOptions = typeof adapterProfile === "string"
+    ? { adapterProfile: adapterProfile as SpecDiscoveryAdapterProfile }
+    : {};
+
+  return { repoPath: path.resolve(repoPath), adapterOptions };
 }
 
 function mapErrorStatus(error: unknown): { statusCode: number; code: string; message: string } {
@@ -116,22 +125,22 @@ function mapErrorStatus(error: unknown): { statusCode: number; code: string; mes
 
 function getHandler(command: ApiCommand): ApiHandler {
   if (command === "parse") {
-    return parseRepository;
+    return (repoPath, options) => parseRepository(repoPath, options);
   }
 
   if (command === "compose") {
-    return composeRepository;
+    return (repoPath, options) => composeRepository(repoPath, options);
   }
 
   if (command === "recommend") {
-    return async (repoPath: string) => {
-      const composeResult = await composeRepository(repoPath);
-      const validationResult = await validateRepository(repoPath);
+    return async (repoPath: string, options: RepositoryAdapterOptions) => {
+      const composeResult = await composeRepository(repoPath, options);
+      const validationResult = await validateRepository(repoPath, options);
       return rankRecommendedNextWork(composeResult.composedNodes, validationResult.findings);
     };
   }
 
-  return validateRepository;
+  return (repoPath, options) => validateRepository(repoPath, options);
 }
 
 async function handleCommandRequest(
@@ -146,8 +155,11 @@ async function handleCommandRequest(
   }
 
   let repoPath: string;
+  let adapterOptions: RepositoryAdapterOptions = {};
   try {
-    repoPath = await readRepoPathFromRequest(request);
+    const payload = await readRequestPayload(request);
+    repoPath = payload.repoPath;
+    adapterOptions = payload.adapterOptions;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     sendError(response, 400, "invalid-request", message);
@@ -155,7 +167,7 @@ async function handleCommandRequest(
   }
 
   try {
-    const result = await getHandler(command)(repoPath);
+    const result = await getHandler(command)(repoPath, adapterOptions);
     sendJson(response, 200, result);
   } catch (error) {
     const mapped = mapErrorStatus(error);
