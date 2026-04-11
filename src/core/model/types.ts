@@ -61,6 +61,11 @@ export interface SectionMap {
 export interface CanonicalParserMetadata {
   sectionOrder: string[];
   unknownSections: Record<string, string>;
+  fallbackExtraction?: {
+    title?: string;
+    summary?: string;
+    candidateMarkers: string[];
+  };
 }
 
 export interface CanonicalNode {
@@ -124,6 +129,7 @@ export interface ParsedSpecFile {
   title?: string;
   sectionMap: SectionMap;
   sourcePath: string;
+  rawContent?: string;
 }
 
 export interface ParseSpecFileResult {

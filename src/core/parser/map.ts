@@ -41,6 +41,12 @@ const requiredSectionsByType: Record<SpecNodeType, string[]> = {
   task: ["summary", "parent"],
 };
 
+interface FallbackSignals {
+  title?: string;
+  summary?: string;
+  candidateMarkers: string[];
+}
+
 function normalizeNewlines(value: string): string {
   return value.replace(/\r\n/g, "\n");
 }
@@ -91,7 +97,7 @@ function parseList(sectionValue: string | undefined): string[] | undefined {
 
 function parseFreeText(sectionValue: string | undefined): string | undefined {
   const line = firstNonEmptyLine(sectionValue);
-  return line && line.toLowerCase() !== "none" ? normalizeNewlines(sectionValue!).trim() : undefined;
+  return line && line.toLowerCase() !== "none" ? normalizeNewlines(sectionValue).trim() : undefined;
 }
 
 function parseDependencies(sectionValue: string | undefined): string[] | undefined {
@@ -123,6 +129,64 @@ function parseType(sectionValue: string | undefined): SpecNodeType | undefined {
   return line as SpecNodeType;
 }
 
+function findFallbackSummary(markdown: string): string | undefined {
+  const normalized = normalizeNewlines(markdown);
+  const paragraphMatches = normalized.match(/(?:^|\n\n)([^\n].*?(?:\n(?!\n).*)*)/g) ?? [];
+
+  for (const rawParagraph of paragraphMatches) {
+    const paragraph = rawParagraph.trim();
+    if (!paragraph) {
+      continue;
+    }
+
+    const cleanedLines = paragraph
+      .split("\n")
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
+      .filter((line) => !line.startsWith("#"))
+      .filter((line) => !line.startsWith("##"))
+      .filter((line) => !/^[-*]\s+/.test(line))
+      .filter((line) => !/^\d+\.\s+/.test(line));
+
+    if (cleanedLines.length === 0) {
+      continue;
+    }
+
+    const candidate = cleanedLines.join(" ").trim();
+    if (candidate.length >= 20) {
+      return candidate;
+    }
+  }
+
+  return undefined;
+}
+
+function extractFallbackSignals(markdown: string): FallbackSignals {
+  const normalized = normalizeNewlines(markdown);
+  const candidateMarkers = Array.from(
+    new Set(
+      normalized
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line.length > 0)
+        .filter((line) => /\b(epic|feature|story|task)\s+([a-z]|\d+(?:\.\d+)?)\b/i.test(line)),
+    ),
+  );
+
+  const firstLine = normalized
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line.length > 0)
+    ?.replace(/^#+\s+/, "")
+    .trim();
+
+  return {
+    title: firstLine,
+    summary: findFallbackSummary(normalized),
+    candidateMarkers,
+  };
+}
+
 function addMissingFieldDiagnostic(
   diagnostics: ParserDiagnostic[],
   sourcePath: string,
@@ -146,15 +210,31 @@ function addMissingFieldDiagnostic(
 export function mapSectionsToCanonical(parsedFile: ParsedSpecFile): ParseSpecFileResult {
   const diagnostics: ParserDiagnostic[] = [];
   const { sectionMap, sourcePath } = parsedFile;
-  const title = parsedFile.title?.trim();
+  const canonicalTitle = parsedFile.title?.trim();
+  const fallbackSignals = parsedFile.rawContent ? extractFallbackSignals(parsedFile.rawContent) : undefined;
+  const usedFallbackTitle = !canonicalTitle && Boolean(fallbackSignals?.title);
+  const title = canonicalTitle ?? fallbackSignals?.title;
 
-  if (!title) {
+  if (!canonicalTitle) {
     diagnostics.push(
       createDiagnostic(
         {
           severity: "warning",
           code: "missing-title",
           message: "Missing top-level # title heading.",
+        },
+        sourcePath,
+      ),
+    );
+  }
+
+  if (usedFallbackTitle) {
+    diagnostics.push(
+      createDiagnostic(
+        {
+          severity: "info",
+          code: "fallback-title",
+          message: "Used fallback title from the first non-empty line.",
         },
         sourcePath,
       ),
@@ -192,14 +272,32 @@ export function mapSectionsToCanonical(parsedFile: ParsedSpecFile): ParseSpecFil
     );
   }
 
-  const summary = parseFreeText(sectionMap.sections.summary);
-  if (!summary) {
+  const canonicalSummary = parseFreeText(sectionMap.sections.summary);
+  const usedFallbackSummary = !canonicalSummary && Boolean(fallbackSignals?.summary);
+  const summary = canonicalSummary ?? fallbackSignals?.summary;
+
+  if (!canonicalSummary) {
     diagnostics.push(
       createDiagnostic(
         {
           severity: "warning",
           code: "missing-required-section",
           message: "Missing required section: Summary.",
+          specId: id,
+          sectionName: "Summary",
+        },
+        sourcePath,
+      ),
+    );
+  }
+
+  if (usedFallbackSummary) {
+    diagnostics.push(
+      createDiagnostic(
+        {
+          severity: "info",
+          code: "fallback-summary",
+          message: "Used fallback summary from the first meaningful paragraph.",
           specId: id,
           sectionName: "Summary",
         },
@@ -284,6 +382,14 @@ export function mapSectionsToCanonical(parsedFile: ParsedSpecFile): ParseSpecFil
     parserMetadata: {
       sectionOrder: [...sectionMap.order],
       unknownSections,
+      fallbackExtraction:
+        fallbackSignals && (usedFallbackTitle || usedFallbackSummary || fallbackSignals.candidateMarkers.length > 0)
+          ? {
+              title: usedFallbackTitle ? fallbackSignals.title : undefined,
+              summary: usedFallbackSummary ? fallbackSignals.summary : undefined,
+              candidateMarkers: fallbackSignals.candidateMarkers,
+            }
+          : undefined,
     },
   };
 
@@ -319,5 +425,6 @@ export async function parseSpecFile(filePath: string, repoRoot: string): Promise
     title,
     sectionMap,
     sourcePath: relativeSourcePath,
+    rawContent: markdown,
   });
 }

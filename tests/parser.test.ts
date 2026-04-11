@@ -96,3 +96,38 @@ Keep me around.`),
   assert.equal(parsed.node?.parserMetadata?.unknownSections["Extra Stuff"], "Keep me around.");
   assert.ok(parsed.diagnostics.some((diagnostic) => diagnostic.code === "unknown-section"));
 });
+
+
+test("mapSectionsToCanonical uses fallback title/summary and records marker provenance", () => {
+  const rawContent = `Project Phoenix Rollout
+
+Feature 1
+Story 3.1
+
+This document explains rollout sequencing and migration checkpoints for launch readiness.
+
+## ID
+F-0007
+
+## Type
+Feature
+
+## Parent
+E-0001
+
+## Requirements
+- [ ] R1: Keep fallback details`;
+
+  const parsed = mapSectionsToCanonical({
+    title: undefined,
+    sourcePath: "specs/feature-fallback.md",
+    rawContent,
+    sectionMap: tokenizeSections(rawContent),
+  });
+
+  assert.equal(parsed.node?.title, "Project Phoenix Rollout");
+  assert.match(parsed.node?.summary ?? "", /rollout sequencing and migration checkpoints/i);
+  assert.deepEqual(parsed.node?.parserMetadata?.fallbackExtraction?.candidateMarkers, ["Feature 1", "Story 3.1"]);
+  assert.ok(parsed.diagnostics.some((diagnostic) => diagnostic.code === "fallback-title"));
+  assert.ok(parsed.diagnostics.some((diagnostic) => diagnostic.code === "fallback-summary"));
+});
