@@ -5,6 +5,7 @@ export type DiagnosticSeverity = "error" | "warning" | "info";
 export type InferenceStrategyId = "naming" | "directory-adjacency" | "content-reference";
 export type InferenceCandidateState = "selected" | "candidate" | "ambiguous" | "rejected";
 export type InferenceRelationshipState = "explicit" | "inferred" | "ambiguous" | "unresolved";
+export type InferenceVirtualType = "slice";
 export type SpecDiscoveryAdapterProfile = "canonical" | "bitbetmatic2";
 
 export interface RepositoryAdapterOptions {
@@ -123,6 +124,17 @@ export interface InferenceRelationship {
 
 export interface InferenceResult {
   relationships: InferenceRelationship[];
+  virtualNodes?: InferenceVirtualNode[];
+}
+
+export interface InferenceVirtualNode {
+  id: string;
+  sourcePath: string;
+  title: string;
+  parentId: string;
+  virtualType: InferenceVirtualType;
+  projectedType: SpecNodeType;
+  evidence: InferenceEvidence[];
 }
 
 export interface ParsedSpecFile {
