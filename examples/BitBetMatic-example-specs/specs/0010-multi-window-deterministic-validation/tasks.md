@@ -1,0 +1,8 @@
+- [x] Add `DeterministicValidation` configuration with fixed named BTC-EUR / 15m windows.
+- [x] Add dedicated validation persistence for suite runs, suite windows, and suite candidate summaries.
+- [x] Implement a validation orchestration service that reuses deterministic stage services per named window.
+- [x] Persist evaluated vs `insufficient_data` window outcomes using a coverage threshold.
+- [x] Implement suite-level `repeatability_v1` scoring and decision artifacts for non-control candidates.
+- [x] Keep `control-buy-and-hold` in every window and suite summary as the benchmark.
+- [x] Add validation read APIs and a dashboard page for cross-window robustness evidence.
+- [x] Add focused regression tests for validation suite orchestration and validation read-model projections.
