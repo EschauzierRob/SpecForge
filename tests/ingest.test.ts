@@ -227,6 +227,45 @@ Loaded through adapter profile.
   assert.equal(ingestResult.canonicalNodes[0]?.id, "E-0001");
 });
 
+test("bitbetmatic slice files are exposed as inferred virtual nodes only", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-adapter-slice-"));
+  const specsPath = path.join(root, "specs", "domain", "payments");
+  await mkdir(specsPath, { recursive: true });
+  await writeFile(
+    path.join(specsPath, "epic"),
+    `# Payments Platform
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Payments domain outcomes.
+`,
+  );
+  await writeFile(path.join(specsPath, "slice-risk-controls.md"), "# Risk controls slice\n\nSketch only.");
+
+  const result = await ingestRepository(root, { adapterProfile: "bitbetmatic2" });
+
+  assert.equal(result.canonicalNodes.length, 1);
+  assert.equal(result.canonicalNodes[0]?.id, "E-0001");
+  assert.ok(result.inference?.virtualNodes?.length === 1);
+  assert.equal(result.inference?.virtualNodes?.[0]?.virtualType, "slice");
+  assert.equal(result.inference?.virtualNodes?.[0]?.parentId, "E-0001");
+  assert.equal(result.inference?.virtualNodes?.[0]?.sourcePath, "specs/domain/payments/slice-risk-controls.md");
+  assert.equal(result.inference?.relationships.length, 1);
+  assert.equal(result.inference?.relationships[0]?.childId, result.inference?.virtualNodes?.[0]?.id);
+  assert.equal(result.inference?.relationships[0]?.selectedParentId, "E-0001");
+  assert.ok(
+    result.inference?.virtualNodes?.[0]?.evidence.some(
+      (evidence) =>
+        evidence.strategyId === "directory-adjacency" && evidence.matchedSignal === "nearest-epic-feature-directory",
+    ),
+  );
+});
+
 test("ingestRepository preserves ambiguous inferred parent candidates without selecting one", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "specforge-drifted-ambiguous-"));
   const specsPath = path.join(root, "specs", "ambiguous");
