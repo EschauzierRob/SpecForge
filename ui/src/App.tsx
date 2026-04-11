@@ -28,6 +28,9 @@ import {
   workspaceReducer,
 } from "./lib/workspace-state";
 
+const THEME_STORAGE_KEY = "specforge.theme";
+type Theme = "light" | "dark";
+
 const screens: UiScreen[] = ["Overview", "Tree", "Board", "Detail", "Warnings", "Next Work"];
 
 function MetricCard(props: { label: string; value: number | string }): JSX.Element {
@@ -381,6 +384,23 @@ export default function App(): JSX.Element {
   const [state, dispatch] = useReducer(workspaceReducer, initialWorkspaceState);
   const [isBoardDetailOpen, setIsBoardDetailOpen] = useState(false);
   const [warningsFilters, setWarningsFilters] = useState<WarningsFilters>(() => createWarningsFilters());
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window === "undefined") {
+      return "light";
+    }
+
+    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (storedTheme === "light" || storedTheme === "dark") {
+      return storedTheme;
+    }
+
+    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+  });
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = theme;
+    window.localStorage.setItem(THEME_STORAGE_KEY, theme);
+  }, [theme]);
 
   useEffect(() => {
     let cancelled = false;
@@ -557,8 +577,18 @@ export default function App(): JSX.Element {
   return (
     <div className="app-shell">
       <header className="hero">
-        <div>
+        <div className="hero-top-row">
           <p className="eyebrow">SpecForge UI foundation</p>
+          <button
+            type="button"
+            className="theme-toggle"
+            aria-pressed={theme === "dark"}
+            onClick={() => setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"))}
+          >
+            {theme === "dark" ? "☀️ Light mode" : "🌙 Dark mode"}
+          </button>
+        </div>
+        <div>
           <h1>Inspect your local spec repository in a stable, read-only workspace.</h1>
           <p className="hero-copy">
             Slice 5 wires the existing TypeScript pipeline into a lightweight browser shell so later feature slices can focus on views instead of plumbing.
