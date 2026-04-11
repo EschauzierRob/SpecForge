@@ -1,12 +1,58 @@
-:root {
-  color-scheme: light;
+ :root {
+  color-scheme: light dark;
   font-family: "Segoe UI", "Helvetica Neue", sans-serif;
   line-height: 1.5;
   font-weight: 400;
-  color: #10243a;
+  --text-color: #10243a;
+  --bg-start: #f7fafc;
+  --bg-end: #eef3f8;
+  --bg-radial: rgba(86, 158, 255, 0.18);
+  --hero-start: #123456;
+  --hero-end: #0f5c7b;
+  --hero-text: #f7fbff;
+  --panel-border: rgba(18, 52, 86, 0.08);
+  --panel-bg: rgba(255, 255, 255, 0.9);
+  --panel-shadow: rgba(16, 36, 58, 0.07);
+  --muted-text: #51697f;
+  --field-label: #315070;
+  --field-bg: #fbfdff;
+  --field-border: #c6d3df;
+  --primary: #0f5c7b;
+  --tab-bg: #f2f7fb;
+  --tab-text: #123456;
+  --tab-border: #d0dbe7;
+  --error-bg: #fff1f1;
+  --error-text: #8d1f1f;
+}
+
+:root[data-theme="dark"] {
+  --text-color: #e6effa;
+  --bg-start: #0c1622;
+  --bg-end: #111e2d;
+  --bg-radial: rgba(86, 158, 255, 0.12);
+  --hero-start: #1a3957;
+  --hero-end: #16506b;
+  --hero-text: #edf6ff;
+  --panel-border: rgba(150, 180, 215, 0.22);
+  --panel-bg: rgba(18, 30, 44, 0.88);
+  --panel-shadow: rgba(0, 0, 0, 0.35);
+  --muted-text: #b7c8db;
+  --field-label: #bfd1e5;
+  --field-bg: #132538;
+  --field-border: #3b5570;
+  --primary: #63b0dd;
+  --tab-bg: #1a3045;
+  --tab-text: #dde9f5;
+  --tab-border: #3f5670;
+  --error-bg: #4e1f25;
+  --error-text: #ffd8d8;
+}
+
+:root {
+  color: var(--text-color);
   background:
-    radial-gradient(circle at top left, rgba(86, 158, 255, 0.18), transparent 28%),
-    linear-gradient(180deg, #f7fafc 0%, #eef3f8 100%);
+    radial-gradient(circle at top left, var(--bg-radial), transparent 28%),
+    linear-gradient(180deg, var(--bg-start) 0%, var(--bg-end) 100%);
 }
 
 * {
@@ -42,9 +88,25 @@ button {
   margin-bottom: 20px;
   padding: 32px;
   border-radius: 20px;
-  background: linear-gradient(135deg, #123456, #0f5c7b);
-  color: #f7fbff;
+  background: linear-gradient(135deg, var(--hero-start), var(--hero-end));
+  color: var(--hero-text);
   box-shadow: 0 18px 40px rgba(16, 36, 58, 0.16);
+}
+
+
+.hero-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.theme-toggle {
+  border: 1px solid color-mix(in srgb, var(--hero-text) 42%, transparent);
+  border-radius: 999px;
+  padding: 8px 12px;
+  background: color-mix(in srgb, var(--hero-text) 16%, transparent);
+  color: var(--hero-text);
 }
 
 .hero h1 {
@@ -75,10 +137,10 @@ button {
 
 .panel {
   padding: 22px;
-  border: 1px solid rgba(18, 52, 86, 0.08);
+  border: 1px solid var(--panel-border);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 0 10px 24px rgba(16, 36, 58, 0.07);
+  background: var(--panel-bg);
+  box-shadow: 0 10px 24px var(--panel-shadow);
   backdrop-filter: blur(8px);
 }
 
@@ -102,24 +164,24 @@ button {
 
 .field span {
   font-size: 0.92rem;
-  color: #315070;
+  color: var(--field-label);
 }
 
 .field input {
   width: 100%;
   padding: 12px 14px;
-  border: 1px solid #c6d3df;
+  border: 1px solid var(--field-border);
   border-radius: 12px;
-  background: #fbfdff;
+  background: var(--field-bg);
 }
 
 .toolbar button,
 .screen-tab,
 .quick-pick {
   padding: 11px 14px;
-  border: 1px solid #0f5c7b;
+  border: 1px solid var(--primary);
   border-radius: 999px;
-  background: #0f5c7b;
+  background: var(--primary);
   color: #ffffff;
 }
 
@@ -136,9 +198,9 @@ button {
 }
 
 .screen-tab {
-  background: #f2f7fb;
-  color: #123456;
-  border-color: #d0dbe7;
+  background: var(--tab-bg);
+  color: var(--tab-text);
+  border-color: var(--tab-border);
 }
 
 .screen-tab--active {
@@ -152,7 +214,7 @@ button {
   flex-wrap: wrap;
   gap: 16px;
   margin-top: 16px;
-  color: #48627d;
+  color: var(--muted-text);
   font-size: 0.94rem;
 }
 
@@ -160,8 +222,8 @@ button {
   margin: 14px 0 0;
   padding: 12px 14px;
   border-radius: 12px;
-  background: #fff1f1;
-  color: #8d1f1f;
+  background: var(--error-bg);
+  color: var(--error-text);
 }
 
 .panel-header {
@@ -182,14 +244,14 @@ button {
 .placeholder-panel p,
 .split-panel p {
   margin: 0;
-  color: #51697f;
+  color: var(--muted-text);
 }
 
 .panel-pill {
   padding: 9px 12px;
   border-radius: 999px;
   background: #eef5fb;
-  color: #123456;
+  color: var(--tab-text);
   white-space: nowrap;
 }
 
@@ -327,7 +389,7 @@ button {
   text-align: left;
   border-radius: 16px;
   background: #f8fbfd;
-  color: #123456;
+  color: var(--tab-text);
   border-color: #d5e0ea;
 }
 
@@ -346,7 +408,7 @@ button {
   padding: 14px;
   border-radius: 14px;
   background: #f8fbfd;
-  color: #51697f;
+  color: var(--muted-text);
 }
 
 .debug-block {
@@ -378,7 +440,7 @@ button {
   padding: 14px;
   border-radius: 14px;
   background: #f8fbfd;
-  color: #51697f;
+  color: var(--muted-text);
 }
 
 .board-grid {
@@ -399,7 +461,7 @@ button {
   align-items: center;
   gap: 8px;
   font-size: 0.88rem;
-  color: #315070;
+  color: var(--field-label);
 }
 
 .board-lane {
@@ -430,7 +492,7 @@ button {
   padding: 2px 8px;
   border-radius: 999px;
   background: #e5eff8;
-  color: #123456;
+  color: var(--tab-text);
   font-weight: 700;
 }
 
@@ -448,7 +510,7 @@ button {
   justify-items: start;
   gap: 4px;
   text-align: left;
-  color: #123456;
+  color: var(--tab-text);
 }
 
 .board-card--blocked {
@@ -486,8 +548,8 @@ button {
 }
 
 .board-card-badge--blocked {
-  background: #fff1f1;
-  color: #8d1f1f;
+  background: var(--error-bg);
+  color: var(--error-text);
 }
 
 .board-card-badge--dependencies {
@@ -632,8 +694,8 @@ button {
 
 .tree-badge--blocked {
   border-color: #e0b5b5;
-  background: #fff1f1;
-  color: #8d1f1f;
+  background: var(--error-bg);
+  color: var(--error-text);
 }
 
 .tree-badge--dependencies {
@@ -681,7 +743,7 @@ button {
 }
 
 .detail-empty {
-  color: #51697f;
+  color: var(--muted-text);
   font-style: italic;
 }
 
@@ -722,7 +784,7 @@ button {
   border: 1px solid #d5e0ea;
   border-radius: 12px;
   background: #f8fbfd;
-  color: #123456;
+  color: var(--tab-text);
 }
 
 .detail-link span {
@@ -743,8 +805,8 @@ button {
 }
 
 .detail-triage-badge--blocked {
-  background: #fff1f1;
-  color: #8d1f1f;
+  background: var(--error-bg);
+  color: var(--error-text);
 }
 
 .detail-triage-badge--dependencies {
@@ -786,16 +848,16 @@ button {
 }
 
 .warnings-rule-filter span {
-  color: #315070;
+  color: var(--field-label);
   font-size: 0.9rem;
 }
 
 .warnings-rule-filter input {
   width: 100%;
   padding: 10px 12px;
-  border: 1px solid #c6d3df;
+  border: 1px solid var(--field-border);
   border-radius: 12px;
-  background: #fbfdff;
+  background: var(--field-bg);
 }
 
 .warnings-list {
