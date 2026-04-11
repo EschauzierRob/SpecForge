@@ -9,13 +9,15 @@ export function tokenizeSections(markdown: string): SectionMap {
   const lines = normalized.split("\n");
   const sections: Record<string, string> = {};
   const rawSections: Record<string, string> = {};
+  const sectionOffsets: Record<string, { startLine: number; endLine: number }> = {};
   const order: string[] = [];
 
   let currentRawName: string | undefined;
   let currentKey: string | undefined;
+  let currentHeadingLine = 0;
   let buffer: string[] = [];
 
-  const flush = (): void => {
+  const flush = (endLine: number): void => {
     if (!currentKey || !currentRawName) {
       return;
     }
@@ -23,16 +25,22 @@ export function tokenizeSections(markdown: string): SectionMap {
     const content = buffer.join("\n").trim();
     sections[currentKey] = content;
     rawSections[currentRawName] = content;
+    sectionOffsets[currentRawName] = {
+      startLine: currentHeadingLine,
+      endLine: Math.max(currentHeadingLine, endLine),
+    };
     order.push(currentRawName);
     buffer = [];
   };
 
-  for (const line of lines) {
+  for (const [index, line] of lines.entries()) {
+    const lineNumber = index + 1;
     const heading = line.match(/^##\s+(.+?)\s*$/);
     if (heading) {
-      flush();
+      flush(lineNumber - 1);
       currentRawName = heading[1].trim();
       currentKey = normalizeSectionName(currentRawName);
+      currentHeadingLine = lineNumber;
       continue;
     }
 
@@ -41,11 +49,12 @@ export function tokenizeSections(markdown: string): SectionMap {
     }
   }
 
-  flush();
+  flush(lines.length);
 
   return {
     order,
     sections,
     rawSections,
+    sectionOffsets,
   };
 }

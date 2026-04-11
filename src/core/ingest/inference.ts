@@ -276,6 +276,47 @@ function applyContentReferenceStrategy(
       });
     }
   }
+
+  const normalizedDecisions = child.parserMetadata?.normalizedDecisions ?? [];
+  for (const decision of normalizedDecisions) {
+    const decisionNamespace = [decision.decisionId, decision.decision, decision.reason].filter(Boolean).join("\n");
+    for (const candidate of candidates) {
+      const idPattern = new RegExp(`\\b${candidate.id.replace("-", "\\-")}\\b`, "i");
+      if (idPattern.test(decisionNamespace)) {
+        addEvidence(candidateMap, candidate, {
+          strategyId: "content-reference",
+          source: "parser-metadata.normalizedDecisions",
+          matchedSignal: "decision-id-reference",
+          weight: 3.5,
+          details: {
+            referencedId: candidate.id,
+            sectionName: decision.sectionName,
+            sourcePath: decision.sourcePath,
+            sectionStartLine: decision.sectionOffset.startLine,
+            sectionEndLine: decision.sectionOffset.endLine,
+          },
+        });
+      }
+
+      const normalizedTitle = normalizeText(candidate.title);
+      const normalizedDecisionNamespace = normalizeText(decisionNamespace);
+      if (normalizedTitle.length >= 6 && normalizedDecisionNamespace.includes(normalizedTitle)) {
+        addEvidence(candidateMap, candidate, {
+          strategyId: "content-reference",
+          source: "parser-metadata.normalizedDecisions",
+          matchedSignal: "decision-title-reference",
+          weight: 1.75,
+          details: {
+            referencedTitle: candidate.title,
+            sectionName: decision.sectionName,
+            sourcePath: decision.sourcePath,
+            sectionStartLine: decision.sectionOffset.startLine,
+            sectionEndLine: decision.sectionOffset.endLine,
+          },
+        });
+      }
+    }
+  }
 }
 
 function applyHeadingGrammarStrategy(

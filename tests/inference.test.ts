@@ -220,3 +220,51 @@ test("inferHierarchyRelationships adds grammar-derived evidence with matched gro
     ),
   );
 });
+
+test("inferHierarchyRelationships uses normalized decision metadata as content-reference evidence", () => {
+  const epic = createNode({
+    id: "E-0004",
+    type: "epic",
+    title: "Payments Epic",
+    sourcePath: "specs/epic-0004-payments/epic.md",
+  });
+  const feature = createNode({
+    id: "F-0002",
+    type: "feature",
+    title: "Billing Orchestration",
+    sourcePath: "specs/epic-0004-payments/feature-0002-billing-orchestration.md",
+    parentId: "E-0004",
+  });
+  const story = createNode({
+    id: "S-0021",
+    type: "story",
+    title: "Route billing step",
+    sourcePath: "specs/epic-0004-payments/story-0021-route-billing.md",
+    summary: "Story summary with no parent ID mention.",
+    parentId: undefined,
+    parserMetadata: {
+      sectionOrder: ["D-0004-1"],
+      unknownSections: {},
+      normalizedDecisions: [
+        {
+          sourcePath: "specs/epic-0004-payments/story-0021-route-billing.md",
+          sectionName: "D-0004-1",
+          sectionOffset: { startLine: 20, endLine: 22 },
+          decisionId: "D-0004-1",
+          decision: "Parent should be F-0002 for billing orchestration ownership.",
+          reason: "F-0002 owns all billing orchestration.",
+        },
+      ],
+    },
+  });
+
+  const inference = inferHierarchyRelationships([epic, feature, story]);
+  const selected = inference?.relationships[0]?.candidates.find((candidate) => candidate.state === "selected");
+  const decisionEvidence = selected?.evidence.find((evidence) => evidence.matchedSignal === "decision-id-reference");
+
+  assert.equal(story.parentId, "F-0002");
+  assert.equal(inference?.relationships[0]?.state, "inferred");
+  assert.ok(decisionEvidence);
+  assert.equal(decisionEvidence?.source, "parser-metadata.normalizedDecisions");
+  assert.equal(decisionEvidence?.details.sectionStartLine, 20);
+});

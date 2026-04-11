@@ -8,6 +8,7 @@ import type {
   SectionMap,
   SpecNodeType,
 } from "../model/types.ts";
+import { extractNormalizedDecisionRecords } from "./decision-adapter.ts";
 import { tokenizeSections } from "./sections.ts";
 
 const knownSections = new Set([
@@ -355,6 +356,7 @@ export function mapSectionsToCanonical(parsedFile: ParsedSpecFile): ParseSpecFil
   const unknownSections = Object.fromEntries(
     Object.entries(sectionMap.rawSections).filter(([name]) => !knownSections.has(name.trim().toLowerCase())),
   );
+  const normalizedDecisions = extractNormalizedDecisionRecords(sectionMap, sourcePath);
 
   const node: CanonicalNode = {
     id,
@@ -382,6 +384,7 @@ export function mapSectionsToCanonical(parsedFile: ParsedSpecFile): ParseSpecFil
     parserMetadata: {
       sectionOrder: [...sectionMap.order],
       unknownSections,
+      ...(normalizedDecisions.length > 0 ? { normalizedDecisions } : {}),
       fallbackExtraction:
         fallbackSignals && (usedFallbackTitle || usedFallbackSummary || fallbackSignals.candidateMarkers.length > 0)
           ? {
