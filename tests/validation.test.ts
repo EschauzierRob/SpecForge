@@ -222,6 +222,71 @@ test("validateIngestResult detects V-007 path convention violations", () => {
   assert.ok(result.findings.some((finding) => finding.ruleId === "V-007" && finding.specId === "F-0001"));
 });
 
+test("validateIngestResult emits adapter-specific V-007 warning for non-canonical but understood files", () => {
+  const feature = createCanonicalNode({
+    id: "F-0001",
+    type: "feature",
+    sourcePath: "specs/epic-0001-sample/feat-0001-feature.md",
+    parentId: "E-0001",
+    requirements: ["R1"],
+    goals: undefined,
+    nonGoals: undefined,
+  });
+
+  const result = validateIngestResult(
+    createIngestResult({
+      discovery: {
+        ...createIngestResult().discovery,
+        specDiscoveryProfile: "bitbetmatic2",
+      },
+      canonicalNodes: [createCanonicalNode(), feature],
+      composedNodes: [{ spec: createCanonicalNode() }, { spec: feature }],
+    }),
+  );
+
+  assert.ok(
+    result.findings.some(
+      (finding) =>
+        finding.ruleId === "V-007" &&
+        finding.specId === "F-0001" &&
+        finding.message.includes("non-canonical but understood"),
+    ),
+  );
+});
+
+test("validateIngestResult emits adapter-specific V-007 warning for unparseable adapter-only files", () => {
+  const result = validateIngestResult(
+    createIngestResult({
+      discovery: {
+        ...createIngestResult().discovery,
+        specDiscoveryProfile: "bitbetmatic2",
+        discoveredSpecFiles: ["specs/epic-0001-sample/slice-checkout.md"],
+        adapterIncludedSpecFiles: ["specs/epic-0001-sample/slice-checkout.md"],
+      },
+      diagnostics: [
+        {
+          severity: "warning",
+          code: "empty-file",
+          message: "Spec file is empty.",
+          sourcePath: "specs/epic-0001-sample/slice-checkout.md",
+        },
+      ],
+      inference: {
+        relationships: [],
+      },
+    }),
+  );
+
+  assert.ok(
+    result.findings.some(
+      (finding) =>
+        finding.ruleId === "V-007" &&
+        finding.sourcePaths.includes("specs/epic-0001-sample/slice-checkout.md") &&
+        finding.message.includes("currently unparseable"),
+    ),
+  );
+});
+
 test("validateIngestResult maps overlay validation rules from composition diagnostics and overlay data", () => {
   const overlayFiles: OverlayFile[] = [
     {

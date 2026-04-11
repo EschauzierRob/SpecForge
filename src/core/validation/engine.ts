@@ -32,6 +32,14 @@ const expectedPathPatterns: Record<SpecNodeType, RegExp> = {
   task: /^specs\/epic-\d{4}-[^/]+\/task-(\d{4})-[^/]+\.md$/,
 };
 
+const parseabilityPenaltyByDiagnosticCode: Record<string, number> = {
+  "empty-file": 1,
+  "invalid-or-missing-type": 0.45,
+  "missing-title": 0.35,
+  "missing-required-section": 0.2,
+  "missing-parent": 0.15,
+};
+
 function createFinding(
   finding: ValidationFinding,
 ): ValidationFinding {
@@ -100,10 +108,149 @@ function buildDuplicateNodeIndex(canonicalNodes: CanonicalNode[]): Map<string, C
   return duplicateIndex;
 }
 
+function calculateParseabilityScore(diagnosticCodes: string[]): number {
+  const penalty = diagnosticCodes.reduce(
+    (score, code) => score + (parseabilityPenaltyByDiagnosticCode[code] ?? 0.1),
+    0,
+  );
+
+  return Math.max(0, Math.min(1, 1 - penalty));
+}
+
+function hasRecoverableHierarchySignal(
+  result: IngestResult,
+  node: CanonicalNode,
+): boolean {
+  if (node.type === "epic") {
+    return true;
+  }
+
+  if (node.parentId) {
+    return true;
+  }
+
+  return (result.inference?.relationships ?? []).some(
+    (relationship) =>
+      relationship.childId === node.id &&
+      (relationship.selectedParentId || relationship.explicitParentId),
+  );
+}
+
+function validatePathConventionRule(
+  result: IngestResult,
+  node: CanonicalNode,
+  findings: ValidationFinding[],
+  diagnosticCodesBySourcePath: Map<string, string[]>,
+  discoveredSpecPaths: Set<string>,
+): void {
+  const expectedPattern = expectedPathPatterns[node.type];
+  const match = node.sourcePath.match(expectedPattern);
+  const nodeIdSuffix = node.id.split("-")[1] ?? "";
+  if (match && match[1] === nodeIdSuffix) {
+    return;
+  }
+
+  const profile = result.discovery.specDiscoveryProfile;
+  if (profile === "canonical") {
+    addFinding(findings, {
+      ruleId: "V-007",
+      severity: "warning",
+      message: `Item ${node.id} does not follow the expected file or folder naming convention.`,
+      specId: node.id,
+      sourcePaths: [node.sourcePath],
+      remediationHint: "Rename the file or folder to match the documented spec conventions.",
+    });
+    return;
+  }
+
+  const discoverable = discoveredSpecPaths.has(node.sourcePath);
+  const parseabilityScore = calculateParseabilityScore(diagnosticCodesBySourcePath.get(node.sourcePath) ?? []);
+  const recoverableHierarchy = hasRecoverableHierarchySignal(result, node);
+
+  if (!discoverable || parseabilityScore < 0.35 || !recoverableHierarchy) {
+    addFinding(findings, {
+      ruleId: "V-007",
+      severity: "warning",
+      message:
+        `Adapter profile flagged ${node.id} as non-canonical and currently unparseable ` +
+        `(discoverable=${discoverable}, parseability=${parseabilityScore.toFixed(2)}, recoverableHierarchy=${recoverableHierarchy}).`,
+      specId: node.id,
+      sourcePaths: [node.sourcePath],
+      remediationHint: "Fix the source shape so adapter parsing can recover structure and hierarchy.",
+    });
+    return;
+  }
+
+  addFinding(findings, {
+    ruleId: "V-007",
+    severity: "warning",
+    message:
+      `Adapter profile understood ${node.id} even though it is non-canonical ` +
+      `(discoverable=${discoverable}, parseability=${parseabilityScore.toFixed(2)}, recoverableHierarchy=${recoverableHierarchy}).`,
+    specId: node.id,
+    sourcePaths: [node.sourcePath],
+    remediationHint: "Optionally rename the file or folder to canonical conventions for consistency.",
+  });
+}
+
+function validateAdapterOnlyFileConventions(
+  result: IngestResult,
+  findings: ValidationFinding[],
+  diagnosticCodesBySourcePath: Map<string, string[]>,
+  discoveredSpecPaths: Set<string>,
+): void {
+  if (result.discovery.specDiscoveryProfile === "canonical") {
+    return;
+  }
+
+  for (const sourcePath of result.discovery.adapterIncludedSpecFiles) {
+    const discoverable = discoveredSpecPaths.has(sourcePath);
+    const parseabilityScore = calculateParseabilityScore(diagnosticCodesBySourcePath.get(sourcePath) ?? []);
+    const recoverableHierarchy = (result.inference?.relationships ?? []).some(
+      (relationship) => relationship.childSourcePath === sourcePath && Boolean(relationship.selectedParentId),
+    );
+    const inferredSpecId = (result.inference?.relationships ?? []).find(
+      (relationship) => relationship.childSourcePath === sourcePath,
+    )?.childId;
+
+    if (!discoverable || parseabilityScore < 0.35 || !recoverableHierarchy) {
+      addFinding(findings, {
+        ruleId: "V-007",
+        severity: "warning",
+        message:
+          `Adapter profile found ${sourcePath} but it is currently unparseable ` +
+          `(discoverable=${discoverable}, parseability=${parseabilityScore.toFixed(2)}, recoverableHierarchy=${recoverableHierarchy}).`,
+        specId: inferredSpecId,
+        sourcePaths: [sourcePath],
+        remediationHint: "Add recoverable structure or canonical sections so the adapter can understand this file.",
+      });
+      continue;
+    }
+
+    addFinding(findings, {
+      ruleId: "V-007",
+      severity: "warning",
+      message:
+        `Adapter profile interpreted ${sourcePath} as non-canonical but understood ` +
+        `(discoverable=${discoverable}, parseability=${parseabilityScore.toFixed(2)}, recoverableHierarchy=${recoverableHierarchy}).`,
+      specId: inferredSpecId,
+      sourcePaths: [sourcePath],
+      remediationHint: "Keep adapter mode or move this file toward canonical naming and sections.",
+    });
+  }
+}
+
 function validateCanonicalRules(
   result: IngestResult,
   findings: ValidationFinding[],
 ): void {
+  const diagnosticCodesBySourcePath = new Map<string, string[]>();
+  for (const diagnostic of result.diagnostics) {
+    const diagnosticCodes = diagnosticCodesBySourcePath.get(diagnostic.sourcePath) ?? [];
+    diagnosticCodes.push(diagnostic.code);
+    diagnosticCodesBySourcePath.set(diagnostic.sourcePath, diagnosticCodes);
+  }
+  const discoveredSpecPaths = new Set(result.discovery.discoveredSpecFiles);
   const firstNodeIndex = buildFirstNodeIndex(result.canonicalNodes);
   const duplicateNodeIndex = buildDuplicateNodeIndex(result.canonicalNodes);
 
@@ -235,20 +382,10 @@ function validateCanonicalRules(
       });
     }
 
-    const expectedPattern = expectedPathPatterns[node.type];
-    const match = node.sourcePath.match(expectedPattern);
-    const nodeIdSuffix = node.id.split("-")[1] ?? "";
-    if (!match || match[1] !== nodeIdSuffix) {
-      addFinding(findings, {
-        ruleId: "V-007",
-        severity: "warning",
-        message: `Item ${node.id} does not follow the expected file or folder naming convention.`,
-        specId: node.id,
-        sourcePaths: [node.sourcePath],
-        remediationHint: "Rename the file or folder to match the documented spec conventions.",
-      });
-    }
+    validatePathConventionRule(result, node, findings, diagnosticCodesBySourcePath, discoveredSpecPaths);
   }
+
+  validateAdapterOnlyFileConventions(result, findings, diagnosticCodesBySourcePath, discoveredSpecPaths);
 }
 
 function mapParserDiagnosticsToFindings(
