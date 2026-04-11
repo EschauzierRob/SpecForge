@@ -4,6 +4,8 @@ This directory contains SpecForge-specific metadata, adapter contracts, and gene
 
 ## Layout
 
+- `ai-coder-instructions.md` defines AI-facing workflow rules for keeping specs and overlay metadata aligned.
+
 - `overlay/` — planning metadata files and schema examples
 - `indexes/` — placeholder for generated indexes/caches (implementation phase)
 - `adapters/` — adapter contracts and ecosystem integration notes
@@ -11,3 +13,5 @@ This directory contains SpecForge-specific metadata, adapter contracts, and gene
 ## Design Principle
 
 Everything here composes with `/specs` and does not redefine source-of-truth product intent.
+
+AI-assisted implementation should read `ai-coder-instructions.md` before changing specs, code, tests, or overlay metadata.

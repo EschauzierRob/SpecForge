@@ -216,6 +216,82 @@
       ]
     },
     {
+      "specId": "S-0403",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "F-0014",
+        "T-0401"
+      ],
+      "notes": "Bootstrap should seed AI-facing SpecForge workflow instructions into target repositories.",
+      "tags": [
+        "bootstrap",
+        "workflow",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0407",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0403"
+      ],
+      "notes": "Define deterministic bootstrapped AI instruction content.",
+      "tags": [
+        "bootstrap",
+        "docs",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0408",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0403",
+        "T-0407"
+      ],
+      "notes": "Extend bootstrap to seed AI instruction docs without overwriting user files.",
+      "tags": [
+        "bootstrap",
+        "docs",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0409",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0403",
+        "T-0408"
+      ],
+      "notes": "Report created AI instruction files through existing bootstrap summaries.",
+      "tags": [
+        "bootstrap",
+        "cli",
+        "api",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0410",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": [
+        "S-0403",
+        "T-0408",
+        "T-0409"
+      ],
+      "notes": "Add regression tests for AI instruction bootstrap behavior.",
+      "tags": [
+        "bootstrap",
+        "tests",
+        "task"
+      ]
+    },
+    {
       "specId": "E-0005",
       "planningStatus": "backlog",
       "blocked": false,

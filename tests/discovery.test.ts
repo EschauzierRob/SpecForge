@@ -157,10 +157,14 @@ test("discoverRepository bootstraps the overlay directory and seeded local overl
     [
       { kind: "directory", path: "specforge" },
       { kind: "directory", path: "specforge/overlay" },
+      { kind: "file", path: "specforge/README.md" },
+      { kind: "file", path: "specforge/overlay/README.md" },
       { kind: "file", path: "specforge/overlay/local-dev.overlay.json" },
+      { kind: "file", path: "specforge/ai-coder-instructions.md" },
+      { kind: "file", path: "AGENTS.md" },
     ],
   );
-  assert.equal(discovery.bootstrap.createdCount, 3);
+  assert.equal(discovery.bootstrap.createdCount, 7);
   assert.deepEqual(discovery.discoveredOverlayFiles, ["specforge/overlay/local-dev.overlay.json"]);
 
   const overlayPayload = JSON.parse(
@@ -174,18 +178,55 @@ test("discoverRepository bootstraps the overlay directory and seeded local overl
   assert.equal(overlayPayload.version, "0.1");
   assert.equal(overlayPayload.repositoryId, path.basename(root));
   assert.deepEqual(overlayPayload.entries, []);
+
+  const aiInstructions = await readFile(path.join(root, "specforge", "ai-coder-instructions.md"), "utf8");
+  assert.match(aiInstructions, /Read `\/specs` before implementing/);
+  assert.match(aiInstructions, /specforge\/overlay\/local-dev\.overlay\.json/);
+
+  const agentsInstructions = await readFile(path.join(root, "AGENTS.md"), "utf8");
+  assert.match(agentsInstructions, /specforge\/ai-coder-instructions\.md/);
 });
 
-test("discoverRepository bootstraps only the local overlay file when the directory already exists", async () => {
+test("discoverRepository bootstraps missing essentials when the overlay directory already exists", async () => {
   const root = await createBootstrapCandidate(true);
 
   const discovery = await discoverRepository(root);
 
   assert.deepEqual(discovery.bootstrap.actions, [
+    { kind: "file", path: "specforge/README.md" },
+    { kind: "file", path: "specforge/overlay/README.md" },
     { kind: "file", path: "specforge/overlay/local-dev.overlay.json" },
+    { kind: "file", path: "specforge/ai-coder-instructions.md" },
+    { kind: "file", path: "AGENTS.md" },
   ]);
-  assert.equal(discovery.bootstrap.createdCount, 1);
+  assert.equal(discovery.bootstrap.createdCount, 5);
   assert.deepEqual(discovery.discoveredOverlayFiles, ["specforge/overlay/local-dev.overlay.json"]);
+});
+
+test("discoverRepository preserves existing root agent instructions during bootstrap", async () => {
+  const root = await createBootstrapCandidate(false);
+  const existingAgents = "# Existing Agent Rules\n\nKeep project-specific instructions intact.\n";
+  await writeFile(path.join(root, "AGENTS.md"), existingAgents);
+
+  const discovery = await discoverRepository(root);
+
+  assert.equal(discovery.bootstrap.createdCount, 6);
+  assert.ok(!discovery.bootstrap.actions.some((action) => action.path === "AGENTS.md"));
+  assert.equal(await readFile(path.join(root, "AGENTS.md"), "utf8"), existingAgents);
+});
+
+test("discoverRepository bootstrap is idempotent for AI instruction files", async () => {
+  const root = await createBootstrapCandidate(false);
+
+  const first = await discoverRepository(root);
+  const before = await readFile(path.join(root, "specforge", "ai-coder-instructions.md"), "utf8");
+  const second = await discoverRepository(root);
+  const after = await readFile(path.join(root, "specforge", "ai-coder-instructions.md"), "utf8");
+
+  assert.equal(first.bootstrap.createdCount, 7);
+  assert.equal(second.bootstrap.createdCount, 0);
+  assert.deepEqual(second.bootstrap.actions, []);
+  assert.equal(after, before);
 });
 
 

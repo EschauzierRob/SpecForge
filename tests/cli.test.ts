@@ -143,10 +143,14 @@ test("compose CLI reports bootstrap actions when required artifacts are created"
 
   assert.equal(exitCode, 0);
   assert.deepEqual(errorLines, []);
-  assert.ok(outputLines.includes("bootstrap created artifacts: 3"));
+  assert.ok(outputLines.includes("bootstrap created artifacts: 7"));
   assert.ok(outputLines.includes("bootstrap created directory: specforge"));
   assert.ok(outputLines.includes("bootstrap created directory: specforge/overlay"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/README.md"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/overlay/README.md"));
   assert.ok(outputLines.includes("bootstrap created file: specforge/overlay/local-dev.overlay.json"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/ai-coder-instructions.md"));
+  assert.ok(outputLines.includes("bootstrap created file: AGENTS.md"));
   assert.ok(outputLines.includes("overlay files: 1"));
 });
 

@@ -18,3 +18,5 @@ Overlay files store planning and execution metadata independent of product specs
 Do not copy overlay fields into `/specs` markdown files.
 
 For AI-assisted implementation, follow `docs/ai-overlay-sync-workflow.md` to validate, add, or repair entries in `specforge/overlay/local-dev.overlay.json` before and after changes.
+
+Bootstrapped repositories also include `specforge/ai-coder-instructions.md` so AI coding agents can find the same workflow guidance locally.
