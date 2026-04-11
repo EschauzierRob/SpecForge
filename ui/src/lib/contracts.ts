@@ -6,6 +6,7 @@ export type UiScreen = "Overview" | "Tree" | "Board" | "Detail" | "Warnings" | "
 export type InferenceStrategyId = "naming" | "directory-adjacency" | "content-reference";
 export type InferenceCandidateState = "selected" | "candidate" | "ambiguous" | "rejected";
 export type InferenceRelationshipState = "explicit" | "inferred" | "ambiguous" | "unresolved";
+export type SpecDiscoveryAdapterProfile = "canonical" | "bitbetmatic2";
 
 export interface ParserDiagnostic {
   severity: DiagnosticSeverity;
@@ -20,8 +21,10 @@ export interface RepositoryDiscovery {
   repoRoot: string;
   specsPath: string;
   overlayPath: string;
+  specDiscoveryProfile: SpecDiscoveryAdapterProfile;
   hasOverlayDirectory: boolean;
   discoveredSpecFiles: string[];
+  adapterIncludedSpecFiles: string[];
   discoveredOverlayFiles: string[];
   specFileCount: number;
   overlayFileCount: number;

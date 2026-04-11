@@ -3,14 +3,18 @@ import path from "node:path";
 import type {
   CanonicalNode,
   ParseRepositoryResult,
+  RepositoryAdapterOptions,
 } from "../model/types.ts";
 import { parseSpecFile } from "../parser/map.ts";
 import { discoverRepository } from "./discovery.ts";
 import { inferHierarchyRelationships } from "./inference.ts";
 import { attachChildren, compareParserDiagnostics } from "./shared.ts";
 
-export async function parseRepository(repoPath: string): Promise<ParseRepositoryResult> {
-  const discovery = await discoverRepository(repoPath);
+export async function parseRepository(
+  repoPath: string,
+  options: RepositoryAdapterOptions = {},
+): Promise<ParseRepositoryResult> {
+  const discovery = await discoverRepository(repoPath, options);
   const parseResults = await Promise.all(
     discovery.discoveredSpecFiles.map((relativePath) =>
       parseSpecFile(path.join(discovery.repoRoot, relativePath), discovery.repoRoot),

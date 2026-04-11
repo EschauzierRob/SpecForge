@@ -109,6 +109,42 @@ test("discoverRepository ignores hidden and excluded directories", async () => {
   assert.ok(discovery.ignoredEntries.includes("specforge/overlay/node_modules"));
 });
 
+test("discoverRepository defaults to canonical profile", async () => {
+  const root = await createTempRepo();
+  await writeFile(path.join(root, "specs", "epic-0001-sample", "epic.md"), "# Epic\n");
+  await writeFile(path.join(root, "specs", "epic-0001-sample", "notes"), "# Extensionless note\n");
+  await writeFile(path.join(root, "specs", "epic-0001-sample", "brainstorm.markdown"), "# Markdown-like note\n");
+
+  const discovery = await discoverRepository(root);
+
+  assert.equal(discovery.specDiscoveryProfile, "canonical");
+  assert.deepEqual(discovery.discoveredSpecFiles, ["specs/epic-0001-sample/epic.md"]);
+  assert.deepEqual(discovery.adapterIncludedSpecFiles, []);
+});
+
+test("discoverRepository supports tolerant adapter profile for extensionless and markdown-like files", async () => {
+  const root = await createTempRepo();
+  await writeFile(path.join(root, "specs", "epic-0001-sample", "epic.md"), "# Epic\n");
+  await writeFile(path.join(root, "specs", "epic-0001-sample", "notes"), "# Extensionless note\n");
+  await writeFile(path.join(root, "specs", "epic-0001-sample", "brainstorm.markdown"), "# Markdown-like note\n");
+  await mkdir(path.join(root, "specs", "templates"), { recursive: true });
+  await writeFile(path.join(root, "specs", "templates", "rough.markdown"), "# Template doc\n");
+
+  const discovery = await discoverRepository(root, { adapterProfile: "bitbetmatic2" });
+
+  assert.equal(discovery.specDiscoveryProfile, "bitbetmatic2");
+  assert.deepEqual(discovery.discoveredSpecFiles, [
+    "specs/epic-0001-sample/brainstorm.markdown",
+    "specs/epic-0001-sample/epic.md",
+    "specs/epic-0001-sample/notes",
+  ]);
+  assert.deepEqual(discovery.adapterIncludedSpecFiles, [
+    "specs/epic-0001-sample/brainstorm.markdown",
+    "specs/epic-0001-sample/notes",
+  ]);
+  assert.ok(!discovery.discoveredSpecFiles.includes("specs/templates/rough.markdown"));
+});
+
 test("discoverRepository bootstraps the overlay directory and seeded local overlay file when missing", async () => {
   const root = await createBootstrapCandidate(false);
 
