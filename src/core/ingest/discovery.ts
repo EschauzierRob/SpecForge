@@ -6,7 +6,7 @@ import type { RepositoryDiscovery } from "../model/types.ts";
 import { bootstrapWorkspace } from "./bootstrap.ts";
 
 const ignoredDirectoryNames = new Set([".git", "node_modules", "dist"]);
-const specFilePattern = /^(epic\.md|feature-\d{4}-.+\.md|story-\d{4}-.+\.md|task-\d{4}-.+\.md)$/i;
+const canonicalSpecFilePattern = /^(epic\.md|feature-\d{4}-.+\.md|story-\d{4}-.+\.md|task-\d{4}-.+\.md)$/i;
 const overlayFilePattern = /\.overlay\.json$/i;
 
 function normalizePath(value: string): string {
@@ -23,6 +23,21 @@ function shouldIgnoreOverlay(name: string): boolean {
 
 function shouldIgnoreOverlayFile(relativePath: string): boolean {
   return relativePath === "specforge/overlay/examples/local-dev.overlay.json";
+}
+
+function shouldIgnoreSpecFile(relativePath: string): boolean {
+  const normalizedPath = normalizePath(relativePath);
+  const fileName = path.basename(normalizedPath);
+
+  if (!fileName.toLowerCase().endsWith(".md")) {
+    return true;
+  }
+
+  if (canonicalSpecFilePattern.test(fileName)) {
+    return false;
+  }
+
+  return fileName.toLowerCase() === "readme.md" || normalizedPath.startsWith("specs/templates/");
 }
 
 async function walkSpecFiles(
@@ -52,7 +67,7 @@ async function walkSpecFiles(
       continue;
     }
 
-    if (!specFilePattern.test(entry.name)) {
+    if (shouldIgnoreSpecFile(relativePath)) {
       continue;
     }
 

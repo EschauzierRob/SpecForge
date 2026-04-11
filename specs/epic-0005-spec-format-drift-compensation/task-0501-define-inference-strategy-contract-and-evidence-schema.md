@@ -40,3 +40,22 @@ Inference strategies must produce consistent outputs so downstream confidence an
 
 ## Notes
 Documentation-only task to unblock implementation planning.
+
+Runtime contract:
+- `InferenceResult` is optional on parse, compose, and ingest results and contains `relationships`.
+- Each relationship includes `key`, `childId`, `childSourcePath`, optional `explicitParentId`, optional `selectedParentId`, `state`, and `candidates`.
+- Relationship states are `explicit`, `inferred`, `ambiguous`, and `unresolved`; S-0501 currently emits inferred, ambiguous, or unresolved records only when inference work was required.
+- Each candidate includes `key`, `parentId`, `parentSourcePath`, `state`, `supportScore`, and `evidence`.
+- Candidate states are `selected`, `candidate`, `ambiguous`, and `rejected`.
+- Each evidence item includes `strategyId`, `source`, `matchedSignal`, `weight`, and strategy-specific `details`.
+
+Strategy IDs and example evidence:
+- `naming`: shared numeric tokens, shared title tokens, or parent ID references found in child ID/title/source path.
+- `directory-adjacency`: same-directory or ancestor-directory source path proximity.
+- `content-reference`: known parent IDs or normalized parent titles referenced in parsed fields such as summary, requirements, acceptance criteria, dependencies, notes, or description.
+
+Selection semantics:
+- A content ID reference can select a unique expected-type parent by itself.
+- Weaker non-content signals require at least two strategy families before selection, such as naming plus directory adjacency.
+- Equal top candidates are retained as ambiguous and do not mutate `parentId`.
+- Below-threshold candidates are retained as rejected evidence for downstream diagnostics.

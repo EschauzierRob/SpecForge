@@ -42,3 +42,10 @@ Users cannot always clean repositories into canonical format before trying SpecF
 
 ## Notes
 Story focused on ingestion and inferred-edge generation.
+
+Runtime implementation notes:
+- Discovery should include drifted markdown spec files under `specs/` even when file names are not canonical, while continuing to ignore general docs and templates such as `README.md` and `specs/templates/**`.
+- `CanonicalNode.parentId` is the effective runtime parent. When inference selects a parent, ingestion materializes that selected parent into the in-memory node and recomputes `childrenIds`; source markdown is never rewritten.
+- Parse, compose, and ingest results may include optional `inference` metadata when drift handling had work to report. Canonical repositories with only valid explicit parents omit the metadata.
+- Inference metadata preserves original explicit parent IDs, selected parent IDs, candidate parents, candidate state, support score, strategy evidence, source paths, and stable edge/candidate keys.
+- Confidence scoring, drift validation findings, virtual projection, and UI annotations remain owned by later stories.
