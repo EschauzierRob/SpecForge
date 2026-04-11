@@ -63,11 +63,27 @@ export interface SectionMap {
   order: string[];
   sections: Record<string, string>;
   rawSections: Record<string, string>;
+  sectionOffsets: Record<string, SectionOffset>;
+}
+
+export interface SectionOffset {
+  startLine: number;
+  endLine: number;
+}
+
+export interface NormalizedDecisionRecord {
+  sourcePath: string;
+  sectionName: string;
+  sectionOffset: SectionOffset;
+  decisionId?: string;
+  decision: string;
+  reason?: string;
 }
 
 export interface CanonicalParserMetadata {
   sectionOrder: string[];
   unknownSections: Record<string, string>;
+  normalizedDecisions?: NormalizedDecisionRecord[];
   fallbackExtraction?: {
     title?: string;
     summary?: string;
