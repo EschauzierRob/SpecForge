@@ -5,6 +5,8 @@ import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { createRepositoryEdgeFixture } from "./fixtures/repository-edge-fixtures.ts";
+
 import type {
   CanonicalNode,
   CompositionDiagnostic,
@@ -411,4 +413,26 @@ test("validate CLI returns exit code 1 when error findings are present", async (
   assert.equal(exitCode, 1);
   assert.deepEqual(errorLines, []);
   assert.ok(outputLines.some((line) => line.includes("V-001")));
+});
+
+
+test("validateRepository emits informative adapter warnings for edge fixture repository", async () => {
+  const fixture = await createRepositoryEdgeFixture();
+
+  const result = await validateRepository(fixture.root, { adapterProfile: "bitbetmatic2" });
+  const warnings = result.findings.filter((finding) => finding.severity === "warning");
+
+  assert.ok(warnings.length > 0);
+  assert.ok(
+    warnings.some((finding) => finding.message.includes("non-canonical") && finding.message.includes("parseability=")),
+  );
+  assert.ok(
+    warnings.some((finding) =>
+      finding.message.includes("currently unparseable") &&
+      finding.sourcePaths.includes("specs/epic-1000-edge-cases/plan.md"),
+    ),
+  );
+  assert.ok(
+    warnings.every((finding) => !/^Item [A-Z]-\d{4} does not follow the expected file or folder naming convention\.$/.test(finding.message)),
+  );
 });

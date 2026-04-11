@@ -1,7 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { mapSectionsToCanonical, tokenizeSections } from "../src/index.ts";
+import path from "node:path";
+
+import { mapSectionsToCanonical, parseSpecFile, tokenizeSections } from "../src/index.ts";
+import { createRepositoryEdgeFixture } from "./fixtures/repository-edge-fixtures.ts";
 
 test("tokenizeSections parses the current markdown section format", () => {
   const markdown = `# Example
@@ -172,4 +175,23 @@ none
     decision: "Parent should align to F-0002 billing scope.",
     reason: "F-0002 owns all checkout billing orchestration.",
   });
+});
+
+
+test("parseSpecFile captures fallback extraction and mixed punctuation headings in edge fixture", async () => {
+  const fixture = await createRepositoryEdgeFixture();
+  const sourcePath = "specs/epic-1000-edge-cases/feature-1002-payment-ledger";
+
+  const parsed = await parseSpecFile(path.join(fixture.root, sourcePath), fixture.root);
+
+  assert.equal(parsed.node?.id, "F-1002");
+  assert.equal(parsed.node?.title, "Feature B — Payment Ledger");
+  assert.match(parsed.node?.summary ?? "", /embedded Feature and Story markers/i);
+  assert.deepEqual(parsed.node?.parserMetadata?.fallbackExtraction?.candidateMarkers, [
+    "Feature B — Payment Ledger",
+    "Story 2.1",
+  ]);
+  assert.ok(parsed.diagnostics.some((diagnostic) => diagnostic.code === "missing-title"));
+  assert.ok(parsed.diagnostics.some((diagnostic) => diagnostic.code === "fallback-title"));
+  assert.ok(parsed.diagnostics.some((diagnostic) => diagnostic.code === "fallback-summary"));
 });
