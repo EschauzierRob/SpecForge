@@ -2,7 +2,13 @@ export type SpecNodeType = "epic" | "feature" | "story" | "task";
 export type PlanningStatus = "backlog" | "ready" | "in_progress" | "blocked" | "done";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
-export type InferenceStrategyId = "naming" | "directory-adjacency" | "content-reference";
+export type InferenceStrategyId =
+  | "naming"
+  | "directory-adjacency"
+  | "content-reference"
+  | "heading-grammar"
+  | "filename-grammar"
+  | "cross-reference-grammar";
 export type InferenceCandidateState = "selected" | "candidate" | "ambiguous" | "rejected";
 export type InferenceRelationshipState = "explicit" | "inferred" | "ambiguous" | "unresolved";
 export type InferenceVirtualType = "slice";
