@@ -10,12 +10,12 @@ import {
   parseRepository,
   validateRepository,
 } from "./index.ts";
-import type { WorkspaceBootstrapSummary } from "./core/model/types.ts";
+import type { RepositoryAdapterOptions, WorkspaceBootstrapSummary } from "./core/model/types.ts";
 
 type Writer = (message: string) => void;
 
 function printUsage(writeError: Writer): void {
-  writeError("Usage: specforge <parse|compose|ingest|validate> <repoPath> [--json] [--output <path>]");
+  writeError("Usage: specforge <parse|compose|ingest|validate> <repoPath> [--json] [--output <path>] [--adapter <canonical|bitbetmatic2>]");
 }
 
 function countDiagnostics(
@@ -107,6 +107,25 @@ export function formatValidationSummary(result: Awaited<ReturnType<typeof valida
   return lines;
 }
 
+
+function readAdapterOptions(args: string[]): RepositoryAdapterOptions | undefined {
+  const adapterFlagIndex = args.indexOf("--adapter");
+  if (adapterFlagIndex < 0) {
+    return undefined;
+  }
+
+  const adapterProfile = args[adapterFlagIndex + 1];
+  if (!adapterProfile || adapterProfile.startsWith("--")) {
+    return undefined;
+  }
+
+  if (adapterProfile !== "canonical" && adapterProfile !== "bitbetmatic2") {
+    return undefined;
+  }
+
+  return { adapterProfile };
+}
+
 async function writeJsonArtifact(outputPath: string, payload: unknown): Promise<void> {
   const resolvedPath = path.resolve(outputPath);
   await mkdir(path.dirname(resolvedPath), { recursive: true });
@@ -126,6 +145,8 @@ export async function runCli(
   const command = args[0];
   const outputFlagIndex = args.indexOf("--output");
   const outputPathArg = outputFlagIndex >= 0 ? args[outputFlagIndex + 1] : undefined;
+  const adapterFlagIndex = args.indexOf("--adapter");
+  const adapterProfileArg = adapterFlagIndex >= 0 ? args[adapterFlagIndex + 1] : undefined;
   if (outputFlagIndex >= 0 && (!outputPathArg || outputPathArg.startsWith("--"))) {
     printUsage(writeError);
     return 1;
@@ -138,9 +159,16 @@ export async function runCli(
       argument !== "compose" &&
       argument !== "ingest" &&
       argument !== "validate" &&
-      (outputFlagIndex < 0 || index !== outputFlagIndex + 1),
+      (outputFlagIndex < 0 || index !== outputFlagIndex + 1) &&
+      (adapterFlagIndex < 0 || index !== adapterFlagIndex + 1),
   );
   const emitJson = args.includes("--json");
+  const adapterOptions = readAdapterOptions(args);
+
+  if (adapterFlagIndex >= 0 && (!adapterProfileArg || adapterProfileArg.startsWith("--") || !adapterOptions)) {
+    printUsage(writeError);
+    return 1;
+  }
 
   if (!repoPathArg) {
     printUsage(writeError);
@@ -148,7 +176,7 @@ export async function runCli(
   }
 
   if (command === "parse") {
-    const result = await parseRepository(path.resolve(repoPathArg));
+    const result = await parseRepository(path.resolve(repoPathArg), adapterOptions ?? {});
 
     if (outputPathArg) {
       await writeJsonArtifact(outputPathArg, result);
@@ -168,8 +196,8 @@ export async function runCli(
 
   if (command === "compose" || command === "ingest") {
     const result = command === "compose"
-      ? await composeRepository(path.resolve(repoPathArg))
-      : await ingestRepository(path.resolve(repoPathArg));
+      ? await composeRepository(path.resolve(repoPathArg), adapterOptions ?? {})
+      : await ingestRepository(path.resolve(repoPathArg), adapterOptions ?? {});
 
     if (outputPathArg) {
       await writeJsonArtifact(outputPathArg, result);
@@ -188,7 +216,7 @@ export async function runCli(
     return 0;
   }
 
-  const result = await validateRepository(path.resolve(repoPathArg));
+  const result = await validateRepository(path.resolve(repoPathArg), adapterOptions ?? {});
 
   if (outputPathArg) {
     await writeJsonArtifact(outputPathArg, result);

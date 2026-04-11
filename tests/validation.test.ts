@@ -62,6 +62,7 @@ function createIngestResult(overrides: Partial<IngestResult> = {}): IngestResult
       specsPath: "specs",
       overlayPath: "specforge/overlay",
       specDiscoveryProfile: "canonical",
+    validationProfile: "canonical",
       hasOverlayDirectory: true,
       discoveredSpecFiles: canonicalNodes.map((node) => node.sourcePath),
       adapterIncludedSpecFiles: [],
@@ -238,6 +239,7 @@ test("validateIngestResult emits adapter-specific V-007 warning for non-canonica
       discovery: {
         ...createIngestResult().discovery,
         specDiscoveryProfile: "bitbetmatic2",
+        validationProfile: "bitbetmatic2",
       },
       canonicalNodes: [createCanonicalNode(), feature],
       composedNodes: [{ spec: createCanonicalNode() }, { spec: feature }],
@@ -260,6 +262,7 @@ test("validateIngestResult emits adapter-specific V-007 warning for unparseable 
       discovery: {
         ...createIngestResult().discovery,
         specDiscoveryProfile: "bitbetmatic2",
+        validationProfile: "bitbetmatic2",
         discoveredSpecFiles: ["specs/epic-0001-sample/slice-checkout.md"],
         adapterIncludedSpecFiles: ["specs/epic-0001-sample/slice-checkout.md"],
       },

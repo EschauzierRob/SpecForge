@@ -233,3 +233,37 @@ test("API parse and compose endpoints expose inference metadata for drifted repo
   assert.equal(composePayload.inference?.relationships[0]?.childId, "S-0001");
   assert.equal(composePayload.inference?.relationships[0]?.selectedParentId, "F-0001");
 });
+
+test("API parse endpoint accepts adapterProfile option", async (t) => {
+  const handle = await withApiServer(t);
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-api-adapter-"));
+  const specsPath = path.join(root, "specs", "messy-product");
+  await mkdir(specsPath, { recursive: true });
+  await writeFile(
+    path.join(specsPath, "epic"),
+    `# Adapter Epic
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Loaded through API adapter option.
+`,
+  );
+
+  const response = await fetch(`${handle.url}/api/parse`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ repoPath: root, adapterProfile: "bitbetmatic2" }),
+  });
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.discovery.specDiscoveryProfile, "bitbetmatic2");
+  assert.equal(payload.canonicalNodes[0]?.id, "E-0001");
+});

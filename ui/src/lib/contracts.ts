@@ -22,6 +22,7 @@ export interface RepositoryDiscovery {
   specsPath: string;
   overlayPath: string;
   specDiscoveryProfile: SpecDiscoveryAdapterProfile;
+  validationProfile: SpecDiscoveryAdapterProfile;
   hasOverlayDirectory: boolean;
   discoveredSpecFiles: string[];
   adapterIncludedSpecFiles: string[];

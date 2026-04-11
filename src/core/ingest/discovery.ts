@@ -5,14 +5,13 @@ import { constants } from "node:fs";
 import type {
   RepositoryAdapterOptions,
   RepositoryDiscovery,
-  SpecDiscoveryAdapterProfile,
 } from "../model/types.ts";
 import { bootstrapWorkspace } from "./bootstrap.ts";
+import type { RepositoryAdapter } from "./adapters/types.ts";
+import { resolveRepositoryAdapter } from "./adapters/index.ts";
 
 const ignoredDirectoryNames = new Set([".git", "node_modules", "dist"]);
-const canonicalSpecFilePattern = /^(epic\.md|feature-\d{4}-.+\.md|story-\d{4}-.+\.md|task-\d{4}-.+\.md)$/i;
 const overlayFilePattern = /\.overlay\.json$/i;
-const markdownLikeExtensions = new Set([".md", ".mdx", ".markdown", ".mdown", ".mkd", ".mkdn"]);
 
 function normalizePath(value: string): string {
   return value.replace(/\\/g, "/");
@@ -30,72 +29,10 @@ function shouldIgnoreOverlayFile(relativePath: string): boolean {
   return relativePath === "specforge/overlay/examples/local-dev.overlay.json";
 }
 
-function shouldIgnoreSpecFile(relativePath: string): boolean {
-  const normalizedPath = normalizePath(relativePath);
-  const fileName = path.basename(normalizedPath);
-
-  if (!fileName.toLowerCase().endsWith(".md")) {
-    return true;
-  }
-
-  if (canonicalSpecFilePattern.test(fileName)) {
-    return false;
-  }
-
-  return fileName.toLowerCase() === "readme.md" || normalizedPath.startsWith("specs/templates/");
-}
-
-interface SpecFileAcceptanceResult {
-  include: boolean;
-  adapterOnly: boolean;
-}
-
-interface SpecFileDiscoveryStrategy {
-  profile: SpecDiscoveryAdapterProfile;
-  accept(relativePath: string): SpecFileAcceptanceResult;
-}
-
-function isExtensionless(fileName: string): boolean {
-  return !fileName.includes(".");
-}
-
-function createSpecFileDiscoveryStrategy(profile: SpecDiscoveryAdapterProfile): SpecFileDiscoveryStrategy {
-  if (profile === "bitbetmatic2") {
-    return {
-      profile,
-      accept(relativePath) {
-        if (!shouldIgnoreSpecFile(relativePath)) {
-          return { include: true, adapterOnly: false };
-        }
-
-        const normalizedPath = normalizePath(relativePath);
-        if (normalizedPath.startsWith("specs/templates/")) {
-          return { include: false, adapterOnly: false };
-        }
-
-        const fileName = path.basename(normalizedPath);
-        const extension = path.extname(fileName).toLowerCase();
-        if (markdownLikeExtensions.has(extension) || isExtensionless(fileName)) {
-          return { include: true, adapterOnly: true };
-        }
-
-        return { include: false, adapterOnly: false };
-      },
-    };
-  }
-
-  return {
-    profile: "canonical",
-    accept(relativePath) {
-      return { include: !shouldIgnoreSpecFile(relativePath), adapterOnly: false };
-    },
-  };
-}
-
 async function walkSpecFiles(
   currentPath: string,
   rootPath: string,
-  strategy: SpecFileDiscoveryStrategy,
+  adapter: RepositoryAdapter,
   discoveredSpecFiles: string[],
   adapterIncludedSpecFiles: string[],
   ignoredEntries: string[],
@@ -113,7 +50,7 @@ async function walkSpecFiles(
     }
 
     if (entry.isDirectory()) {
-      await walkSpecFiles(fullPath, rootPath, strategy, discoveredSpecFiles, adapterIncludedSpecFiles, ignoredEntries);
+      await walkSpecFiles(fullPath, rootPath, adapter, discoveredSpecFiles, adapterIncludedSpecFiles, ignoredEntries);
       continue;
     }
 
@@ -121,7 +58,7 @@ async function walkSpecFiles(
       continue;
     }
 
-    const acceptance = strategy.accept(relativePath);
+    const acceptance = adapter.discoverCandidates(relativePath);
     if (!acceptance.include) {
       continue;
     }
@@ -192,7 +129,7 @@ export async function discoverRepository(
   repoPath: string,
   options: RepositoryAdapterOptions = {},
 ): Promise<RepositoryDiscovery> {
-  const strategy = createSpecFileDiscoveryStrategy(options.adapterProfile ?? "canonical");
+  const { adapter } = resolveRepositoryAdapter(options);
   const repoRoot = path.resolve(repoPath);
 
   await access(repoRoot, constants.R_OK);
@@ -225,7 +162,7 @@ export async function discoverRepository(
   const adapterIncludedSpecFiles: string[] = [];
   const discoveredOverlayFiles: string[] = [];
   const ignoredEntries: string[] = [];
-  await walkSpecFiles(specsPath, repoRoot, strategy, discoveredSpecFiles, adapterIncludedSpecFiles, ignoredEntries);
+  await walkSpecFiles(specsPath, repoRoot, adapter, discoveredSpecFiles, adapterIncludedSpecFiles, ignoredEntries);
   if (hasOverlayDirectory) {
     await walkOverlayFiles(overlayPath, repoRoot, discoveredOverlayFiles, ignoredEntries);
   }
@@ -239,7 +176,8 @@ export async function discoverRepository(
     repoRoot,
     specsPath: normalizePath(path.relative(repoRoot, specsPath)) || "specs",
     overlayPath: normalizePath(path.relative(repoRoot, overlayPath)) || "specforge/overlay",
-    specDiscoveryProfile: strategy.profile,
+    specDiscoveryProfile: adapter.profile,
+    validationProfile: adapter.validationProfile(),
     hasOverlayDirectory,
     discoveredSpecFiles,
     adapterIncludedSpecFiles,
