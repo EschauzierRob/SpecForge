@@ -2,6 +2,9 @@ export type SpecNodeType = "epic" | "feature" | "story" | "task";
 export type PlanningStatus = "backlog" | "ready" | "in_progress" | "blocked" | "done";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
+export type InferenceStrategyId = "naming" | "directory-adjacency" | "content-reference";
+export type InferenceCandidateState = "selected" | "candidate" | "ambiguous" | "rejected";
+export type InferenceRelationshipState = "explicit" | "inferred" | "ambiguous" | "unresolved";
 
 export interface ParserDiagnostic {
   severity: DiagnosticSeverity;
@@ -77,6 +80,37 @@ export interface CanonicalNode {
   technicalNotes?: string[];
   definitionOfDone?: string[];
   parserMetadata?: CanonicalParserMetadata;
+}
+
+export interface InferenceEvidence {
+  strategyId: InferenceStrategyId;
+  source: string;
+  matchedSignal: string;
+  weight: number;
+  details: Record<string, string | number | boolean | string[]>;
+}
+
+export interface InferenceCandidate {
+  key: string;
+  parentId: string;
+  parentSourcePath: string;
+  state: InferenceCandidateState;
+  supportScore: number;
+  evidence: InferenceEvidence[];
+}
+
+export interface InferenceRelationship {
+  key: string;
+  childId: string;
+  childSourcePath: string;
+  explicitParentId?: string;
+  selectedParentId?: string;
+  state: InferenceRelationshipState;
+  candidates: InferenceCandidate[];
+}
+
+export interface InferenceResult {
+  relationships: InferenceRelationship[];
 }
 
 export interface ParsedSpecFile {
@@ -200,6 +234,7 @@ export interface ParseRepositoryResult {
   discovery: RepositoryDiscovery;
   canonicalNodes: CanonicalNode[];
   diagnostics: ParserDiagnostic[];
+  inference?: InferenceResult;
 }
 
 export interface ComposeRepositoryResult {
@@ -209,6 +244,7 @@ export interface ComposeRepositoryResult {
   composedNodes: ComposedNode[];
   diagnostics: ParserDiagnostic[];
   compositionDiagnostics: CompositionDiagnostic[];
+  inference?: InferenceResult;
 }
 
 export interface IngestResult {
@@ -218,4 +254,5 @@ export interface IngestResult {
   composedNodes: ComposedNode[];
   diagnostics: ParserDiagnostic[];
   compositionDiagnostics: CompositionDiagnostic[];
+  inference?: InferenceResult;
 }
