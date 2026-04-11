@@ -37,5 +37,6 @@ export async function composeRepository(repoPath: string): Promise<ComposeReposi
     composedNodes: composeResult.composedNodes,
     diagnostics: parseResult.diagnostics,
     compositionDiagnostics,
+    ...(parseResult.inference ? { inference: parseResult.inference } : {}),
   };
 }

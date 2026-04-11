@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -40,6 +40,72 @@ Bootstrap coverage epic.
   );
 
   return root;
+}
+
+async function createDriftedInferenceRepo(): Promise<{ root: string; storyPath: string }> {
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-drifted-ingest-"));
+  const specsPath = path.join(root, "specs", "messy-product");
+  await mkdir(specsPath, { recursive: true });
+  await writeFile(
+    path.join(specsPath, "epic.md"),
+    `# Messy Epic
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Messy but ingestible.
+
+## Goals
+- Load drifted specs.
+
+## Non-goals
+- Rewrite files.
+`,
+  );
+  await writeFile(
+    path.join(specsPath, "feature without canonical name.md"),
+    `# Payments Feature
+
+## ID
+F-0001
+
+## Type
+Feature
+
+## Parent
+E-0001
+
+## Summary
+Payments capability.
+
+## Requirements
+- R1: Accept payments.
+`,
+  );
+  const storyPath = path.join(specsPath, "story without canonical name.md");
+  await writeFile(
+    storyPath,
+    `# Payments Story
+
+## ID
+S-0001
+
+## Type
+Story
+
+## Summary
+This story belongs to F-0001.
+
+## Acceptance Criteria
+- AC1: The relationship is inferred.
+`,
+  );
+
+  return { root, storyPath };
 }
 
 test("parseSpecFile extracts canonical fields from a real repository spec", async () => {
@@ -99,6 +165,117 @@ test("ingestRepository bootstraps missing overlay essentials before composition"
   assert.equal(result.overlayFiles[0]?.entries.length, 0);
   assert.equal(result.composedNodes.length, 1);
   assert.equal(result.composedNodes[0]?.spec.id, "E-0001");
+});
+
+test("ingestRepository discovers drifted markdown names and attaches selected inferred parents", async () => {
+  const { root, storyPath } = await createDriftedInferenceRepo();
+  const before = await readFile(storyPath, "utf8");
+
+  const result = await ingestRepository(root);
+  const after = await readFile(storyPath, "utf8");
+  const story = result.canonicalNodes.find((node) => node.id === "S-0001");
+  const feature = result.canonicalNodes.find((node) => node.id === "F-0001");
+
+  assert.ok(result.discovery.discoveredSpecFiles.includes("specs/messy-product/feature without canonical name.md"));
+  assert.ok(result.discovery.discoveredSpecFiles.includes("specs/messy-product/story without canonical name.md"));
+  assert.equal(story?.parentId, "F-0001");
+  assert.deepEqual(feature?.childrenIds, ["S-0001"]);
+  assert.equal(result.inference?.relationships[0]?.state, "inferred");
+  assert.equal(result.inference?.relationships[0]?.selectedParentId, "F-0001");
+  assert.equal(before, after);
+});
+
+test("ingestRepository preserves ambiguous inferred parent candidates without selecting one", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-drifted-ambiguous-"));
+  const specsPath = path.join(root, "specs", "ambiguous");
+  await mkdir(specsPath, { recursive: true });
+  await writeFile(
+    path.join(specsPath, "epic.md"),
+    `# Ambiguous Epic
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Ambiguity coverage.
+
+## Goals
+- Keep candidates.
+
+## Non-goals
+- Guess silently.
+`,
+  );
+  await writeFile(
+    path.join(specsPath, "feature-a.md"),
+    `# Checkout Alpha
+
+## ID
+F-0001
+
+## Type
+Feature
+
+## Parent
+E-0001
+
+## Summary
+First checkout candidate.
+
+## Requirements
+- R1: Exists.
+`,
+  );
+  await writeFile(
+    path.join(specsPath, "feature-b.md"),
+    `# Checkout Beta
+
+## ID
+F-0002
+
+## Type
+Feature
+
+## Parent
+E-0001
+
+## Summary
+Second checkout candidate.
+
+## Requirements
+- R1: Exists.
+`,
+  );
+  await writeFile(
+    path.join(specsPath, "story-drifted.md"),
+    `# Checkout Story
+
+## ID
+S-0003
+
+## Type
+Story
+
+## Summary
+No explicit parent.
+
+## Acceptance Criteria
+- AC1: Ambiguous parents are retained.
+`,
+  );
+
+  const result = await ingestRepository(root);
+  const story = result.canonicalNodes.find((node) => node.id === "S-0003");
+
+  assert.equal(story?.parentId, undefined);
+  assert.equal(result.inference?.relationships[0]?.state, "ambiguous");
+  assert.deepEqual(
+    result.inference?.relationships[0]?.candidates.map((candidate) => candidate.parentId),
+    ["F-0001", "F-0002"],
+  );
 });
 
 test("CLI --json output is machine-readable and stable enough for snapshots", async () => {
