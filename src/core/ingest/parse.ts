@@ -8,6 +8,7 @@ import type {
 import { parseSpecFile } from "../parser/map.ts";
 import { discoverRepository } from "./discovery.ts";
 import { inferHierarchyRelationships } from "./inference.ts";
+import { inferAdapterProjectionVirtualNodes } from "./projection.ts";
 import { attachChildren, compareParserDiagnostics } from "./shared.ts";
 
 export async function parseRepository(
@@ -24,7 +25,21 @@ export async function parseRepository(
   const parsedNodes = parseResults
     .map((result) => result.node)
     .filter((node): node is CanonicalNode => Boolean(node));
-  const inference = inferHierarchyRelationships(parsedNodes);
+  const parseResultsBySourcePath = new Map(
+    discovery.discoveredSpecFiles.map((sourcePath, index) => [sourcePath, parseResults[index]] as const),
+  );
+  const inferredRelationships = inferHierarchyRelationships(parsedNodes);
+  const projectedVirtualNodes = inferAdapterProjectionVirtualNodes(discovery, parseResultsBySourcePath, parsedNodes);
+  const inference =
+    inferredRelationships || projectedVirtualNodes.virtualNodes.length > 0
+      ? {
+          relationships: [
+            ...(inferredRelationships?.relationships ?? []),
+            ...projectedVirtualNodes.relationships,
+          ].sort((left, right) => left.childId.localeCompare(right.childId)),
+          ...(projectedVirtualNodes.virtualNodes.length > 0 ? { virtualNodes: projectedVirtualNodes.virtualNodes } : {}),
+        }
+      : undefined;
   const repairedMissingParentSpecIds = new Set(
     inference?.relationships
       .filter((relationship) => relationship.state === "inferred" && relationship.selectedParentId)

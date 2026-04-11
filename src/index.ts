@@ -25,6 +25,8 @@ export type {
   InferenceRelationshipState,
   InferenceResult,
   InferenceStrategyId,
+  InferenceVirtualNode,
+  InferenceVirtualType,
   OverlayEntry,
   OverlayFacet,
   OverlayFile,
