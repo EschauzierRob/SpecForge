@@ -195,6 +195,38 @@ test("ingestRepository discovers drifted markdown names and attaches selected in
   assert.equal(before, after);
 });
 
+test("parse/compose/ingest support adapter profile hints", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "specforge-adapter-hint-"));
+  const specsPath = path.join(root, "specs", "messy-product");
+  await mkdir(specsPath, { recursive: true });
+  await writeFile(
+    path.join(specsPath, "epic"),
+    `# Adapter Epic
+
+## ID
+E-0001
+
+## Type
+Epic
+
+## Summary
+Loaded through adapter profile.
+`,
+  );
+
+  const parseResult = await parseRepository(root, { adapterProfile: "bitbetmatic2" });
+  const composeResult = await composeRepository(root, { adapterProfile: "bitbetmatic2" });
+  const ingestResult = await ingestRepository(root, { adapterProfile: "bitbetmatic2" });
+
+  assert.equal(parseResult.discovery.specDiscoveryProfile, "bitbetmatic2");
+  assert.equal(composeResult.discovery.specDiscoveryProfile, "bitbetmatic2");
+  assert.equal(ingestResult.discovery.specDiscoveryProfile, "bitbetmatic2");
+  assert.deepEqual(parseResult.discovery.adapterIncludedSpecFiles, ["specs/messy-product/epic"]);
+  assert.equal(parseResult.canonicalNodes[0]?.id, "E-0001");
+  assert.equal(composeResult.canonicalNodes[0]?.id, "E-0001");
+  assert.equal(ingestResult.canonicalNodes[0]?.id, "E-0001");
+});
+
 test("ingestRepository preserves ambiguous inferred parent candidates without selecting one", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "specforge-drifted-ambiguous-"));
   const specsPath = path.join(root, "specs", "ambiguous");
