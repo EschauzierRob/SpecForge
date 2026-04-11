@@ -5,6 +5,7 @@ import os from "node:os";
 import path from "node:path";
 
 import { discoverRepository } from "../src/index.ts";
+import { createRepositoryEdgeFixture } from "./fixtures/repository-edge-fixtures.ts";
 
 async function createTempRepo(): Promise<string> {
   const root = await mkdtemp(path.join(os.tmpdir(), "specforge-discovery-"));
@@ -185,4 +186,17 @@ test("discoverRepository bootstraps only the local overlay file when the directo
   ]);
   assert.equal(discovery.bootstrap.createdCount, 1);
   assert.deepEqual(discovery.discoveredOverlayFiles, ["specforge/overlay/local-dev.overlay.json"]);
+});
+
+
+test("discoverRepository includes extensionless and slice artifacts for tolerant profile", async () => {
+  const fixture = await createRepositoryEdgeFixture();
+
+  const discovery = await discoverRepository(fixture.root, { adapterProfile: "bitbetmatic2" });
+
+  assert.ok(discovery.discoveredSpecFiles.includes("specs/epic-1000-edge-cases/feature-1002-payment-ledger"));
+  assert.ok(discovery.discoveredSpecFiles.includes("specs/epic-1000-edge-cases/slice-ledger-observability.md"));
+  assert.ok(discovery.discoveredSpecFiles.includes("specs/epic-1000-edge-cases/plan.md"));
+  assert.ok(discovery.adapterIncludedSpecFiles.includes("specs/epic-1000-edge-cases/feature-1002-payment-ledger"));
+  assert.ok(discovery.adapterIncludedSpecFiles.includes("specs/epic-1000-edge-cases/plan.md"));
 });

@@ -1,8 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import type { CanonicalNode } from "../src/index.ts";
+import { ingestRepository, type CanonicalNode } from "../src/index.ts";
 import { inferHierarchyRelationships } from "../src/core/ingest/inference.ts";
+import { createRepositoryEdgeFixture } from "./fixtures/repository-edge-fixtures.ts";
 
 function createNode(overrides: Partial<CanonicalNode>): CanonicalNode {
   return {
@@ -267,4 +268,24 @@ test("inferHierarchyRelationships uses normalized decision metadata as content-r
   assert.ok(decisionEvidence);
   assert.equal(decisionEvidence?.source, "parser-metadata.normalizedDecisions");
   assert.equal(decisionEvidence?.details.sectionStartLine, 20);
+});
+
+
+test("ingestRepository keeps inferred parent candidates and scores stable for edge fixtures", async () => {
+  const fixture = await createRepositoryEdgeFixture();
+  const result = await ingestRepository(fixture.root, { adapterProfile: "bitbetmatic2" });
+
+  const story = result.canonicalNodes.find((node) => node.id === "S-1002");
+  const relationship = result.inference?.relationships.find((candidate) => candidate.childId === "S-1002");
+
+  assert.equal(story?.parentId, "F-1002");
+  assert.equal(relationship?.state, "inferred");
+  assert.equal(relationship?.selectedParentId, "F-1002");
+  assert.deepEqual(relationship?.candidates.map((candidate) => candidate.parentId), ["F-1002", "F-1001"]);
+  assert.ok((relationship?.candidates[0]?.supportScore ?? 0) > (relationship?.candidates[1]?.supportScore ?? 0));
+
+  const projectedSlice = result.inference?.virtualNodes?.find((node) => node.virtualType === "slice");
+  const projectedRelationship = result.inference?.relationships.find((candidate) => candidate.childId === projectedSlice?.id);
+  assert.equal(projectedSlice?.sourcePath, "specs/epic-1000-edge-cases/slice-ledger-observability.md");
+  assert.equal(projectedRelationship?.selectedParentId, "F-1002");
 });
