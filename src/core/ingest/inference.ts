@@ -278,6 +278,174 @@ function applyContentReferenceStrategy(
   }
 }
 
+function applyHeadingGrammarStrategy(
+  child: CanonicalNode,
+  candidates: CanonicalNode[],
+  candidateMap: Map<string, CandidateAccumulator>,
+): void {
+  const headingPatterns = [
+    {
+      regex: /\b(Feature [A-Z])\b/g,
+      expectedType: "feature" as const,
+      weight: 1.25,
+      matchedSignal: "feature-letter-heading",
+    },
+    {
+      regex: /\b(Story \d+(?:\.\d+)+)\b/g,
+      expectedType: "story" as const,
+      weight: 1.25,
+      matchedSignal: "story-decimal-heading",
+    },
+  ];
+
+  for (const pattern of headingPatterns) {
+    for (const match of child.title.matchAll(pattern.regex)) {
+      const heading = match[1];
+      if (!heading) {
+        continue;
+      }
+
+      const normalizedHeading = normalizeText(heading);
+      for (const candidate of candidates) {
+        if (candidate.type !== pattern.expectedType) {
+          continue;
+        }
+
+        if (!normalizeText(candidate.title).includes(normalizedHeading)) {
+          continue;
+        }
+
+        addEvidence(candidateMap, candidate, {
+          strategyId: "heading-grammar",
+          source: "title",
+          matchedSignal: pattern.matchedSignal,
+          weight: pattern.weight,
+          details: {
+            matchedGroup: heading,
+            group1: heading,
+            headingPattern: pattern.regex.source,
+          },
+        });
+      }
+    }
+  }
+}
+
+function applyFilenameGrammarStrategy(
+  child: CanonicalNode,
+  candidates: CanonicalNode[],
+  candidateMap: Map<string, CandidateAccumulator>,
+): void {
+  const normalizedPath = normalizePath(child.sourcePath);
+  const baseName = path.posix.basename(normalizedPath);
+  const extension = path.posix.extname(baseName);
+  const stem = extension.length > 0 ? baseName.slice(0, -extension.length) : baseName;
+  const isExtensionless = !baseName.includes(".");
+
+  const featureMatch = stem.match(/^(feature-[a-z0-9-]+)$/i);
+  if (featureMatch) {
+    const featureToken = featureMatch[1];
+    for (const candidate of candidates) {
+      if (candidate.type !== "feature") {
+        continue;
+      }
+
+      const candidatePath = normalizePath(candidate.sourcePath);
+      const candidateStem = path.posix.basename(candidatePath, path.posix.extname(candidatePath));
+      if (candidateStem !== featureToken) {
+        continue;
+      }
+
+      addEvidence(candidateMap, candidate, {
+        strategyId: "filename-grammar",
+        source: "sourcePath",
+        matchedSignal: isExtensionless ? "extensionless-feature-file" : "feature-prefix-filename",
+        weight: isExtensionless ? 1.75 : 1.25,
+        details: {
+          matchedGroup: featureToken,
+          group1: featureToken,
+          extensionless: isExtensionless,
+        },
+      });
+    }
+  }
+
+  const sliceMatch = stem.match(/^(slice-[a-z0-9-]+)$/i);
+  if (sliceMatch) {
+    const sliceToken = sliceMatch[1];
+    const sliceSuffix = sliceToken.replace(/^slice-/i, "");
+    for (const candidate of candidates) {
+      if (candidate.type !== "feature") {
+        continue;
+      }
+
+      const normalizedCandidatePath = normalizeText(candidate.sourcePath);
+      const normalizedCandidateTitle = normalizeText(candidate.title);
+      if (
+        !normalizedCandidatePath.includes(normalizeText(sliceSuffix)) &&
+        !normalizedCandidateTitle.includes(normalizeText(sliceSuffix))
+      ) {
+        continue;
+      }
+
+      addEvidence(candidateMap, candidate, {
+        strategyId: "filename-grammar",
+        source: "sourcePath",
+        matchedSignal: "slice-prefix-filename",
+        weight: 1,
+        details: {
+          matchedGroup: sliceToken,
+          group1: sliceToken,
+          group2: sliceSuffix,
+        },
+      });
+    }
+  }
+}
+
+function applyCrossReferenceGrammarStrategy(
+  child: CanonicalNode,
+  candidates: CanonicalNode[],
+  candidateMap: Map<string, CandidateAccumulator>,
+): void {
+  const searchText = `${child.title}\n${getNodeSearchText(child)}`;
+  const mentionPattern = /\b(Feature|Epic)\s+([A-Z]|\d+(?:\.\d+)*)\b/g;
+
+  for (const match of searchText.matchAll(mentionPattern)) {
+    const entity = match[1];
+    const reference = match[2];
+    const fullMatch = match[0];
+    if (!entity || !reference || !fullMatch) {
+      continue;
+    }
+
+    const expectedType: SpecNodeType = entity.toLowerCase() === "epic" ? "epic" : "feature";
+    const normalizedFullMatch = normalizeText(fullMatch);
+    for (const candidate of candidates) {
+      if (candidate.type !== expectedType) {
+        continue;
+      }
+
+      const candidateNamespace = normalizeText(`${candidate.id} ${candidate.title} ${candidate.sourcePath}`);
+      if (!candidateNamespace.includes(normalizedFullMatch) && !candidateNamespace.includes(normalizeText(reference))) {
+        continue;
+      }
+
+      addEvidence(candidateMap, candidate, {
+        strategyId: "cross-reference-grammar",
+        source: "title/parsed-fields",
+        matchedSignal: `${entity.toLowerCase()}-reference`,
+        weight: 2.25,
+        details: {
+          matchedGroup: fullMatch,
+          group1: entity,
+          group2: reference,
+        },
+      });
+    }
+  }
+}
+
 function hasStrongContentIdReference(candidate: CandidateAccumulator): boolean {
   return candidate.evidence.some(
     (evidence) => evidence.strategyId === "content-reference" && evidence.matchedSignal === "id-reference",
@@ -355,6 +523,9 @@ function inferRelationshipForNode(
   applyNamingStrategy(child, pool.candidates, candidateMap);
   applyDirectoryAdjacencyStrategy(child, pool.candidates, candidateMap);
   applyContentReferenceStrategy(child, pool.candidates, candidateMap);
+  applyHeadingGrammarStrategy(child, pool.candidates, candidateMap);
+  applyFilenameGrammarStrategy(child, pool.candidates, candidateMap);
+  applyCrossReferenceGrammarStrategy(child, pool.candidates, candidateMap);
 
   const accumulators = Array.from(candidateMap.values()).sort((left, right) => left.node.id.localeCompare(right.node.id));
   const scored = accumulators

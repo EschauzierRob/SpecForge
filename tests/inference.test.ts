@@ -180,3 +180,43 @@ test("inferHierarchyRelationships replaces an invalid explicit parent only with 
   assert.equal(inference?.relationships[0]?.explicitParentId, "F-9999");
   assert.equal(inference?.relationships[0]?.selectedParentId, "F-0001");
 });
+
+test("inferHierarchyRelationships adds grammar-derived evidence with matched groups", () => {
+  const epic = createNode({
+    id: "E-0004",
+    type: "epic",
+    title: "Epic 0004",
+    sourcePath: "specs/epic-0004-payments/epic.md",
+  });
+  const feature = createNode({
+    id: "F-0003",
+    type: "feature",
+    title: "Feature 3",
+    sourcePath: "specs/epic-0004-payments/feature-3.md",
+    parentId: "E-0004",
+  });
+  const story = createNode({
+    id: "S-0301",
+    type: "story",
+    title: "Story 3.1",
+    sourcePath: "specs/epic-0004-payments/feature-3",
+    summary: "Depends on Feature 3 and aligns with Epic 0004.",
+    parentId: undefined,
+  });
+
+  const inference = inferHierarchyRelationships([epic, feature, story]);
+  const selected = inference?.relationships[0]?.candidates.find((candidate) => candidate.state === "selected");
+  const grammarEvidence = selected?.evidence.filter((evidence) =>
+    ["heading-grammar", "filename-grammar", "cross-reference-grammar"].includes(evidence.strategyId),
+  );
+
+  assert.equal(story.parentId, "F-0003");
+  assert.ok(grammarEvidence && grammarEvidence.length >= 2);
+  assert.ok(
+    grammarEvidence?.every(
+      (evidence) =>
+        typeof evidence.details.matchedGroup === "string" &&
+        typeof evidence.details.group1 === "string",
+    ),
+  );
+});
