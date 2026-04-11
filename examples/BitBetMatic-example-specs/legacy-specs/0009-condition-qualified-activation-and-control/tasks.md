@@ -1,7 +1,0 @@
-- [x] Add `Control Buy And Hold` to every deterministic backtest run.
-- [x] Extend replay condition metrics with observation share.
-- [x] Implement `SelectConditionActivations` with local-positive and global-safety gates.
-- [x] Persist explicit `stay_flat` outcomes when no candidate qualifies.
-- [x] Surface activation and control-comparison data in backtest/strategy read models.
-- [x] Update the dashboard to show benchmark rows, control deltas, and condition activations.
-- [x] Add regression tests for control replay, activation selection, worker orchestration, and dashboard projections.
