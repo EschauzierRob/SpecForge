@@ -183,6 +183,12 @@ button {
   gap: 16px;
 }
 
+.workspace--board {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  padding-inline: 16px;
+}
+
 .panel {
   padding: 22px;
   border: 1px solid var(--panel-border);
@@ -296,10 +302,13 @@ button {
 }
 
 .panel-pill {
+  max-width: min(420px, 45vw);
   padding: 9px 12px;
   border-radius: 999px;
   background: var(--surface-accent-soft);
   color: var(--tab-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -476,8 +485,11 @@ button {
 .debug-block pre {
   margin: 0;
   padding: 0 14px 14px;
-  overflow: auto;
+  overflow-x: hidden;
   font-size: 0.86rem;
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .placeholder-panel {
@@ -497,6 +509,10 @@ button {
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
 }
 
+.workspace--board .board-grid {
+  grid-template-columns: repeat(5, minmax(220px, 1fr));
+}
+
 .board-filters {
   display: flex;
   flex-wrap: wrap;
@@ -513,6 +529,7 @@ button {
 }
 
 .board-lane {
+  min-width: 0;
   border: 1px solid var(--border-muted);
   border-radius: 16px;
   background: var(--surface-muted);
@@ -549,7 +566,18 @@ button {
   gap: 8px;
 }
 
+.board-lane-empty {
+  margin: 0;
+  padding: 10px;
+  border: 1px dashed var(--border-muted);
+  border-radius: 8px;
+  color: var(--muted-text);
+  font-size: 0.86rem;
+}
+
 .board-card {
+  min-width: 0;
+  width: 100%;
   padding: 10px;
   border-radius: 12px;
   border: 1px solid var(--border-strong);
@@ -559,6 +587,7 @@ button {
   gap: 4px;
   text-align: left;
   color: var(--tab-text);
+  overflow-wrap: anywhere;
 }
 
 .board-card--blocked {
@@ -768,8 +797,20 @@ button {
     grid-template-columns: 1fr;
   }
 
+  .workspace--board {
+    padding-inline: 10px;
+  }
+
   .panel-header {
     flex-direction: column;
+  }
+
+  .panel-pill {
+    max-width: 100%;
+  }
+
+  .workspace--board .board-grid {
+    grid-template-columns: 1fr;
   }
 
   .board-detail-drawer {
@@ -923,6 +964,7 @@ button {
 .warnings-item-header {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
@@ -967,4 +1009,10 @@ button {
 .warnings-source-paths {
   color: var(--text-tertiary);
   font-size: 0.92rem;
+}
+
+@media (min-width: 721px) and (max-width: 1180px) {
+  .workspace--board .board-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
 }

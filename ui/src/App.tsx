@@ -517,26 +517,24 @@ export default function App(): JSX.Element {
             />
           </section>
 
-          <aside
-            className={isBoardDetailOpen ? "board-detail-drawer board-detail-drawer--open" : "board-detail-drawer"}
-            aria-label="Selected card detail"
-            aria-hidden={!isBoardDetailOpen}
-          >
-            <div className="board-detail-drawer__header">
-              <strong>Card detail</strong>
-              <button type="button" className="board-detail-drawer__close" onClick={() => setIsBoardDetailOpen(false)}>
-                Close
-              </button>
-            </div>
-            <Detail
-              composeResult={state.composeResult}
-              selectedItemId={state.selectedItemId}
-              onNavigate={(specId) => {
-                handleItemSelected(specId);
-                setIsBoardDetailOpen(true);
-              }}
-            />
-          </aside>
+          {isBoardDetailOpen ? (
+            <aside className="board-detail-drawer board-detail-drawer--open" aria-label="Selected card detail">
+              <div className="board-detail-drawer__header">
+                <strong>Card detail</strong>
+                <button type="button" className="board-detail-drawer__close" onClick={() => setIsBoardDetailOpen(false)}>
+                  Close
+                </button>
+              </div>
+              <Detail
+                composeResult={state.composeResult}
+                selectedItemId={state.selectedItemId}
+                onNavigate={(specId) => {
+                  handleItemSelected(specId);
+                  setIsBoardDetailOpen(true);
+                }}
+              />
+            </aside>
+          ) : null}
         </>
       );
     }
@@ -596,7 +594,7 @@ export default function App(): JSX.Element {
         </div>
       </header>
 
-      <main className="workspace">
+      <main className={state.activeScreen === "Board" ? "workspace workspace--board" : "workspace"}>
         <section className="panel toolbar-panel">
           <form className="toolbar" onSubmit={handleLoad}>
             <label className="field">
