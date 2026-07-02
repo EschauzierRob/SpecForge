@@ -1039,11 +1039,31 @@
     },
     {
       "specId": "F-0008",
-      "planningStatus": "done"
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0006",
+        "F-0007"
+      ],
+      "notes": "Board navigation remains accessible from the compact sticky workspace header.",
+      "tags": [
+        "ui",
+        "board"
+      ]
     },
     {
       "specId": "F-0009",
-      "planningStatus": "done"
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0007",
+        "F-0008"
+      ],
+      "notes": "Workspace navigation controls were polished into a compact left-aligned tab row with repository loading controls aligned on the right.",
+      "tags": [
+        "ui",
+        "navigation"
+      ]
     },
     {
       "specId": "S-0201",

@@ -596,37 +596,34 @@ export default function App(): JSX.Element {
 
       <main className={state.activeScreen === "Board" ? "workspace workspace--board" : "workspace"}>
         <section className="panel toolbar-panel">
-          <form className="toolbar" onSubmit={handleLoad}>
-            <label className="field">
-              <span>Repository path</span>
-              <input
-                name="repoPath"
-                value={state.repoPath}
-                onChange={(event) => dispatch({ type: "repoPathChanged", repoPath: event.target.value })}
-                placeholder="C:\\path\\to\\repository"
-              />
-            </label>
-            <button type="submit" disabled={state.loadState === "loading" || state.repoPath.trim().length === 0}>
-              {state.loadState === "loading" ? "Loading..." : "Load workspace"}
-            </button>
-          </form>
+          <div className="toolbar-row">
+            <nav className="screen-nav" aria-label="Workspace screens">
+              {screens.map((screen) => (
+                <button
+                  type="button"
+                  key={screen}
+                  className={screen === state.activeScreen ? "screen-tab screen-tab--active" : "screen-tab"}
+                  onClick={() => dispatch({ type: "screenChanged", screen })}
+                >
+                  {screen}
+                </button>
+              ))}
+            </nav>
 
-          <nav className="screen-nav" aria-label="Workspace screens">
-            {screens.map((screen) => (
-              <button
-                type="button"
-                key={screen}
-                className={screen === state.activeScreen ? "screen-tab screen-tab--active" : "screen-tab"}
-                onClick={() => dispatch({ type: "screenChanged", screen })}
-              >
-                {screen}
+            <form className="toolbar" onSubmit={handleLoad}>
+              <label className="field toolbar-field">
+                <span>Repository path</span>
+                <input
+                  name="repoPath"
+                  value={state.repoPath}
+                  onChange={(event) => dispatch({ type: "repoPathChanged", repoPath: event.target.value })}
+                  placeholder="C:\\path\\to\\repository"
+                />
+              </label>
+              <button type="submit" disabled={state.loadState === "loading" || state.repoPath.trim().length === 0}>
+                {state.loadState === "loading" ? "Loading..." : "Load workspace"}
               </button>
-            ))}
-          </nav>
-
-          <div className="status-bar">
-            <span>Load state: {state.loadState}</span>
-            <span>Loaded repo: {state.composeResult?.discovery.repoRoot ?? "none yet"}</span>
+            </form>
           </div>
 
           {state.errorMessage ? <p className="error-banner">{state.errorMessage}</p> : null}
