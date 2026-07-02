@@ -1,0 +1,11 @@
+# SpecForge Local CLI
+
+This directory contains the vendored SpecForge CLI runtime for this repository.
+
+Use the launchers in `specforge/bin/`:
+
+- `specforge/bin/specforge parse .`
+- `specforge/bin/specforge compose .`
+- `specforge/bin/specforge validate .`
+
+The runtime is bootstrapped by SpecForge and should not be edited by hand.

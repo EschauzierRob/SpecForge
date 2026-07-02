@@ -6,6 +6,7 @@ import { canonicalRepositoryAdapter } from "./canonical.ts";
 import type { RepositoryAdapter } from "./types.ts";
 
 const markdownLikeExtensions = new Set([".md", ".mdx", ".markdown", ".mdown", ".mkd", ".mkdn"]);
+const canonicalSpecFilePattern = /^(epic\.md|feature-\d{4}-.+\.md|story-\d{4}-.+\.md|task-\d{4}-.+\.md)$/i;
 
 function normalizePath(value: string): string {
   return value.replace(/\\/g, "/");
@@ -20,7 +21,11 @@ export const bitbetmatic2RepositoryAdapter: RepositoryAdapter = {
   discoverCandidates(relativePath) {
     const canonicalAcceptance = canonicalRepositoryAdapter.discoverCandidates(relativePath);
     if (canonicalAcceptance.include) {
-      return canonicalAcceptance;
+      const fileName = path.basename(normalizePath(relativePath));
+      return {
+        include: true,
+        adapterOnly: !canonicalSpecFilePattern.test(fileName),
+      };
     }
 
     const normalizedPath = normalizePath(relativePath);

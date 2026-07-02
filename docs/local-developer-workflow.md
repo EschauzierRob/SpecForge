@@ -11,6 +11,12 @@ For AI-assisted implementation work, follow `docs/ai-overlay-sync-workflow.md` b
 
 Use `compose` and `validate` after overlay edits to confirm the local overlay file still composes cleanly and does not introduce validation findings.
 
+Repositories bootstrapped with SpecForge include local launchers under `specforge/bin/`. Prefer those commands in connected repositories:
+
+```powershell
+specforge/bin/specforge validate .
+```
+
 ### Parse
 
 Use `parse` when you want the canonical spec snapshot and parser diagnostics only.

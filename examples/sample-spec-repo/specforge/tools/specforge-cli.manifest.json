@@ -1,0 +1,17 @@
+{
+  "name": "specforge-local-cli",
+  "version": "0.1.0",
+  "runtime": "specforge/tools/specforge-cli.mjs",
+  "launchers": [
+    "specforge/bin/specforge.ps1",
+    "specforge/bin/specforge.cmd",
+    "specforge/bin/specforge"
+  ],
+  "commands": [
+    "parse",
+    "compose",
+    "ingest",
+    "validate"
+  ],
+  "node": ">=22.0.0"
+}

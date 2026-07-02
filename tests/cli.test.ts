@@ -143,14 +143,23 @@ test("compose CLI reports bootstrap actions when required artifacts are created"
 
   assert.equal(exitCode, 0);
   assert.deepEqual(errorLines, []);
-  assert.ok(outputLines.includes("bootstrap created artifacts: 7"));
+  assert.ok(outputLines.includes("bootstrap created artifacts: 15"));
   assert.ok(outputLines.includes("bootstrap created directory: specforge"));
   assert.ok(outputLines.includes("bootstrap created directory: specforge/overlay"));
+  assert.ok(outputLines.includes("bootstrap created directory: specforge/bin"));
+  assert.ok(outputLines.includes("bootstrap created directory: specforge/tools"));
   assert.ok(outputLines.includes("bootstrap created file: specforge/README.md"));
   assert.ok(outputLines.includes("bootstrap created file: specforge/overlay/README.md"));
   assert.ok(outputLines.includes("bootstrap created file: specforge/overlay/local-dev.overlay.json"));
   assert.ok(outputLines.includes("bootstrap created file: specforge/ai-coder-instructions.md"));
   assert.ok(outputLines.includes("bootstrap created file: AGENTS.md"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/bin/specforge.ps1"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/bin/specforge.cmd"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/bin/specforge"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/tools/specforge-cli.mjs"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/tools/specforge-cli.manifest.json"));
+  assert.ok(outputLines.includes("bootstrap created file: specforge/tools/README.md"));
+  assert.ok(outputLines.includes("specforge cli tooling: available"));
   assert.ok(outputLines.includes("overlay files: 1"));
 });
 

@@ -9,6 +9,7 @@ import type {
 import { bootstrapWorkspace } from "./bootstrap.ts";
 import type { RepositoryAdapter } from "./adapters/types.ts";
 import { resolveRepositoryAdapter } from "./adapters/index.ts";
+import { detectSpecForgeCliTooling } from "./cli-tooling.ts";
 
 const ignoredDirectoryNames = new Set([".git", "node_modules", "dist"]);
 const overlayFilePattern = /\.overlay\.json$/i;
@@ -171,11 +172,13 @@ export async function discoverRepository(
   adapterIncludedSpecFiles.sort((left, right) => left.localeCompare(right));
   discoveredOverlayFiles.sort((left, right) => left.localeCompare(right));
   ignoredEntries.sort((left, right) => left.localeCompare(right));
+  const cliTooling = await detectSpecForgeCliTooling(repoRoot);
 
   return {
     repoRoot,
     specsPath: normalizePath(path.relative(repoRoot, specsPath)) || "specs",
     overlayPath: normalizePath(path.relative(repoRoot, overlayPath)) || "specforge/overlay",
+    cliTooling,
     specDiscoveryProfile: adapter.profile,
     validationProfile: adapter.validationProfile(),
     hasOverlayDirectory,

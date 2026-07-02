@@ -164,19 +164,28 @@ test("ingestRepository bootstraps missing overlay essentials before composition"
 
   const result = await ingestRepository(bootstrapRepoRoot);
 
-  assert.equal(result.discovery.bootstrap.createdCount, 7);
+  assert.equal(result.discovery.bootstrap.createdCount, 15);
   assert.deepEqual(
     result.discovery.bootstrap.actions.map((action) => action.path),
     [
       "specforge",
       "specforge/overlay",
+      "specforge/bin",
+      "specforge/tools",
       "specforge/README.md",
       "specforge/overlay/README.md",
       "specforge/overlay/local-dev.overlay.json",
       "specforge/ai-coder-instructions.md",
       "AGENTS.md",
+      "specforge/bin/specforge.ps1",
+      "specforge/bin/specforge.cmd",
+      "specforge/bin/specforge",
+      "specforge/tools/specforge-cli.mjs",
+      "specforge/tools/specforge-cli.manifest.json",
+      "specforge/tools/README.md",
     ],
   );
+  assert.equal(result.discovery.cliTooling.status, "available");
   assert.equal(result.overlayFiles.length, 1);
   assert.equal(result.overlayFiles[0]?.sourcePath, "specforge/overlay/local-dev.overlay.json");
   assert.equal(result.overlayFiles[0]?.version, "0.1");

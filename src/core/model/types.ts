@@ -31,6 +31,7 @@ export interface RepositoryDiscovery {
   repoRoot: string;
   specsPath: string;
   overlayPath: string;
+  cliTooling: SpecForgeCliToolingStatus;
   specDiscoveryProfile: SpecDiscoveryAdapterProfile;
   validationProfile: SpecDiscoveryAdapterProfile;
   hasOverlayDirectory: boolean;
@@ -52,6 +53,16 @@ export interface WorkspaceBootstrapAction {
 export interface WorkspaceBootstrapSummary {
   actions: WorkspaceBootstrapAction[];
   createdCount: number;
+}
+
+export type SpecForgeCliToolingAvailability = "available" | "missing" | "partial";
+
+export interface SpecForgeCliToolingStatus {
+  status: SpecForgeCliToolingAvailability;
+  launchers: string[];
+  runtimePath?: string;
+  manifestPath?: string;
+  version?: string;
 }
 
 export interface SectionToken {

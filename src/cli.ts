@@ -50,6 +50,7 @@ export function formatIngestSummary(result: Awaited<ReturnType<typeof ingestRepo
     `parsed nodes: ${result.canonicalNodes.length}`,
     `composed nodes: ${result.composedNodes.length}`,
     `overlay directory detected: ${result.discovery.hasOverlayDirectory ? "yes" : "no"}`,
+    `specforge cli tooling: ${result.discovery.cliTooling.status}`,
     `parser diagnostics: errors=${parserDiagnosticCounts.error ?? 0}, warnings=${parserDiagnosticCounts.warning ?? 0}, info=${parserDiagnosticCounts.info ?? 0}`,
     `composition diagnostics: errors=${compositionDiagnosticCounts.error ?? 0}, warnings=${compositionDiagnosticCounts.warning ?? 0}, info=${compositionDiagnosticCounts.info ?? 0}`,
   ];
@@ -64,6 +65,7 @@ export function formatParseSummary(result: Awaited<ReturnType<typeof parseReposi
     `spec files: ${result.discovery.specFileCount}`,
     `parsed nodes: ${result.canonicalNodes.length}`,
     `overlay directory detected: ${result.discovery.hasOverlayDirectory ? "yes" : "no"}`,
+    `specforge cli tooling: ${result.discovery.cliTooling.status}`,
     `parser diagnostics: errors=${parserDiagnosticCounts.error ?? 0}, warnings=${parserDiagnosticCounts.warning ?? 0}, info=${parserDiagnosticCounts.info ?? 0}`,
   ];
 }
@@ -80,6 +82,7 @@ export function formatComposeSummary(result: Awaited<ReturnType<typeof composeRe
     `parsed nodes: ${result.canonicalNodes.length}`,
     `composed nodes: ${result.composedNodes.length}`,
     `overlay directory detected: ${result.discovery.hasOverlayDirectory ? "yes" : "no"}`,
+    `specforge cli tooling: ${result.discovery.cliTooling.status}`,
     `parser diagnostics: errors=${parserDiagnosticCounts.error ?? 0}, warnings=${parserDiagnosticCounts.warning ?? 0}, info=${parserDiagnosticCounts.info ?? 0}`,
     `composition diagnostics: errors=${compositionDiagnosticCounts.error ?? 0}, warnings=${compositionDiagnosticCounts.warning ?? 0}, info=${compositionDiagnosticCounts.info ?? 0}`,
   ];

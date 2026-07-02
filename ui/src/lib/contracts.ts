@@ -7,6 +7,7 @@ export type InferenceStrategyId = "naming" | "directory-adjacency" | "content-re
 export type InferenceCandidateState = "selected" | "candidate" | "ambiguous" | "rejected";
 export type InferenceRelationshipState = "explicit" | "inferred" | "ambiguous" | "unresolved";
 export type SpecDiscoveryAdapterProfile = "canonical" | "bitbetmatic2";
+export type SpecForgeCliToolingAvailability = "available" | "missing" | "partial";
 
 export interface ParserDiagnostic {
   severity: DiagnosticSeverity;
@@ -21,6 +22,7 @@ export interface RepositoryDiscovery {
   repoRoot: string;
   specsPath: string;
   overlayPath: string;
+  cliTooling: SpecForgeCliToolingStatus;
   specDiscoveryProfile: SpecDiscoveryAdapterProfile;
   validationProfile: SpecDiscoveryAdapterProfile;
   hasOverlayDirectory: boolean;
@@ -42,6 +44,14 @@ export interface WorkspaceBootstrapAction {
 export interface WorkspaceBootstrapSummary {
   actions: WorkspaceBootstrapAction[];
   createdCount: number;
+}
+
+export interface SpecForgeCliToolingStatus {
+  status: SpecForgeCliToolingAvailability;
+  launchers: string[];
+  runtimePath?: string;
+  manifestPath?: string;
+  version?: string;
 }
 
 export interface CanonicalParserMetadata {

@@ -195,15 +195,23 @@ test("API compose endpoint exposes bootstrap actions for partially initialized r
     };
   };
 
-  assert.equal(payload.discovery.bootstrap.createdCount, 7);
+  assert.equal(payload.discovery.bootstrap.createdCount, 15);
   assert.deepEqual(payload.discovery.bootstrap.actions, [
     { kind: "directory", path: "specforge" },
     { kind: "directory", path: "specforge/overlay" },
+    { kind: "directory", path: "specforge/bin" },
+    { kind: "directory", path: "specforge/tools" },
     { kind: "file", path: "specforge/README.md" },
     { kind: "file", path: "specforge/overlay/README.md" },
     { kind: "file", path: "specforge/overlay/local-dev.overlay.json" },
     { kind: "file", path: "specforge/ai-coder-instructions.md" },
     { kind: "file", path: "AGENTS.md" },
+    { kind: "file", path: "specforge/bin/specforge.ps1" },
+    { kind: "file", path: "specforge/bin/specforge.cmd" },
+    { kind: "file", path: "specforge/bin/specforge" },
+    { kind: "file", path: "specforge/tools/specforge-cli.mjs" },
+    { kind: "file", path: "specforge/tools/specforge-cli.manifest.json" },
+    { kind: "file", path: "specforge/tools/README.md" },
   ]);
 });
 

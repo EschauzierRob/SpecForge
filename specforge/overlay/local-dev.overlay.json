@@ -292,6 +292,95 @@
       ]
     },
     {
+      "specId": "F-0022",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0014",
+        "F-0005",
+        "F-0006",
+        "F-0010"
+      ],
+      "notes": "Workspace bootstrap now seeds local SpecForge CLI launchers/runtime and discovery reports CLI tooling availability.",
+      "tags": [
+        "bootstrap",
+        "cli",
+        "tooling"
+      ]
+    },
+    {
+      "specId": "S-0411",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0022"
+      ],
+      "notes": "Connected repositories can now receive a local, Codex-detectable SpecForge CLI.",
+      "tags": [
+        "bootstrap",
+        "cli",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0411",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0411"
+      ],
+      "notes": "Bootstrap creates local launchers, runtime, manifest, and README without overwriting existing files.",
+      "tags": [
+        "bootstrap",
+        "cli",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0412",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "T-0411"
+      ],
+      "notes": "Repository discovery includes CLI tooling status and artifact paths; human CLI summaries show availability.",
+      "tags": [
+        "discovery",
+        "cli",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0413",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "T-0411"
+      ],
+      "notes": "Bootstrap adds safe npm aliases for existing package.json files while preserving conflicting scripts.",
+      "tags": [
+        "npm",
+        "cli",
+        "task"
+      ]
+    },
+    {
+      "specId": "T-0414",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "T-0411",
+        "T-0412",
+        "T-0413"
+      ],
+      "notes": "Regression tests cover CLI artifact bootstrap, partial repair, runtime execution, and npm script injection.",
+      "tags": [
+        "tests",
+        "cli",
+        "task"
+      ]
+    },
+    {
       "specId": "E-0005",
       "planningStatus": "backlog",
       "blocked": false,

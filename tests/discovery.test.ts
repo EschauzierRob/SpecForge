@@ -1,10 +1,11 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { discoverRepository } from "../src/index.ts";
+import { runCli } from "../src/cli.ts";
 import { createRepositoryEdgeFixture } from "./fixtures/repository-edge-fixtures.ts";
 
 async function createTempRepo(): Promise<string> {
@@ -157,15 +158,32 @@ test("discoverRepository bootstraps the overlay directory and seeded local overl
     [
       { kind: "directory", path: "specforge" },
       { kind: "directory", path: "specforge/overlay" },
+      { kind: "directory", path: "specforge/bin" },
+      { kind: "directory", path: "specforge/tools" },
       { kind: "file", path: "specforge/README.md" },
       { kind: "file", path: "specforge/overlay/README.md" },
       { kind: "file", path: "specforge/overlay/local-dev.overlay.json" },
       { kind: "file", path: "specforge/ai-coder-instructions.md" },
       { kind: "file", path: "AGENTS.md" },
+      { kind: "file", path: "specforge/bin/specforge.ps1" },
+      { kind: "file", path: "specforge/bin/specforge.cmd" },
+      { kind: "file", path: "specforge/bin/specforge" },
+      { kind: "file", path: "specforge/tools/specforge-cli.mjs" },
+      { kind: "file", path: "specforge/tools/specforge-cli.manifest.json" },
+      { kind: "file", path: "specforge/tools/README.md" },
     ],
   );
-  assert.equal(discovery.bootstrap.createdCount, 7);
+  assert.equal(discovery.bootstrap.createdCount, 15);
   assert.deepEqual(discovery.discoveredOverlayFiles, ["specforge/overlay/local-dev.overlay.json"]);
+  assert.equal(discovery.cliTooling.status, "available");
+  assert.deepEqual(discovery.cliTooling.launchers, [
+    "specforge/bin/specforge.ps1",
+    "specforge/bin/specforge.cmd",
+    "specforge/bin/specforge",
+  ]);
+  assert.equal(discovery.cliTooling.runtimePath, "specforge/tools/specforge-cli.mjs");
+  assert.equal(discovery.cliTooling.manifestPath, "specforge/tools/specforge-cli.manifest.json");
+  assert.equal(discovery.cliTooling.version, "0.1.0");
 
   const overlayPayload = JSON.parse(
     await readFile(path.join(root, "specforge", "overlay", "local-dev.overlay.json"), "utf8"),
@@ -181,7 +199,31 @@ test("discoverRepository bootstraps the overlay directory and seeded local overl
 
   const aiInstructions = await readFile(path.join(root, "specforge", "ai-coder-instructions.md"), "utf8");
   assert.match(aiInstructions, /Read `\/specs` before implementing/);
+  assert.match(aiInstructions, /specforge\/bin\/specforge validate \./);
   assert.match(aiInstructions, /specforge\/overlay\/local-dev\.overlay\.json/);
+  assert.match(aiInstructions, /## Canonical Spec Authoring/);
+  assert.match(aiInstructions, /Do not use YAML frontmatter/);
+  assert.match(aiInstructions, /Valid canonical types are exactly/);
+  assert.match(aiInstructions, /`Epic`/);
+  assert.match(aiInstructions, /`Feature`/);
+  assert.match(aiInstructions, /`Story`/);
+  assert.match(aiInstructions, /`Task`/);
+  assert.doesNotMatch(aiInstructions, /`Decision`/);
+  assert.match(aiInstructions, /# <Title>/);
+  assert.match(aiInstructions, /## ID/);
+  assert.match(aiInstructions, /## Parent/);
+  assert.match(aiInstructions, /- \[ \] R1: <requirement>/);
+  assert.match(aiInstructions, /- \[ \] AC1: <observable outcome>/);
+  assert.match(aiInstructions, /Epic -> Feature -> Story -> Task/);
+  assert.match(aiInstructions, /Every non-epic spec must set `## Parent` to its direct parent ID/);
+  assert.match(aiInstructions, /Do not rely on markdown nesting to imply hierarchy/);
+  assert.match(aiInstructions, /specs\/\n  epic-0001-short-name\/\n    epic\.md/);
+  assert.match(aiInstructions, /feature-0001-short-name\.md/);
+  assert.match(aiInstructions, /story-0001-short-name\.md/);
+  assert.match(aiInstructions, /task-0001-short-name\.md/);
+  assert.match(aiInstructions, /Each feature, story, and task must be its own canonical file/);
+  assert.match(aiInstructions, /Overlay entries link to canonical specs by the value in the spec's `## ID` section/);
+  assert.match(aiInstructions, /Canonical `## Dependencies` sections contain semantic\/product spec ID dependencies/);
 
   const agentsInstructions = await readFile(path.join(root, "AGENTS.md"), "utf8");
   assert.match(agentsInstructions, /specforge\/ai-coder-instructions\.md/);
@@ -193,13 +235,21 @@ test("discoverRepository bootstraps missing essentials when the overlay director
   const discovery = await discoverRepository(root);
 
   assert.deepEqual(discovery.bootstrap.actions, [
+    { kind: "directory", path: "specforge/bin" },
+    { kind: "directory", path: "specforge/tools" },
     { kind: "file", path: "specforge/README.md" },
     { kind: "file", path: "specforge/overlay/README.md" },
     { kind: "file", path: "specforge/overlay/local-dev.overlay.json" },
     { kind: "file", path: "specforge/ai-coder-instructions.md" },
     { kind: "file", path: "AGENTS.md" },
+    { kind: "file", path: "specforge/bin/specforge.ps1" },
+    { kind: "file", path: "specforge/bin/specforge.cmd" },
+    { kind: "file", path: "specforge/bin/specforge" },
+    { kind: "file", path: "specforge/tools/specforge-cli.mjs" },
+    { kind: "file", path: "specforge/tools/specforge-cli.manifest.json" },
+    { kind: "file", path: "specforge/tools/README.md" },
   ]);
-  assert.equal(discovery.bootstrap.createdCount, 5);
+  assert.equal(discovery.bootstrap.createdCount, 13);
   assert.deepEqual(discovery.discoveredOverlayFiles, ["specforge/overlay/local-dev.overlay.json"]);
 });
 
@@ -210,7 +260,7 @@ test("discoverRepository preserves existing root agent instructions during boots
 
   const discovery = await discoverRepository(root);
 
-  assert.equal(discovery.bootstrap.createdCount, 6);
+  assert.equal(discovery.bootstrap.createdCount, 14);
   assert.ok(!discovery.bootstrap.actions.some((action) => action.path === "AGENTS.md"));
   assert.equal(await readFile(path.join(root, "AGENTS.md"), "utf8"), existingAgents);
 });
@@ -223,10 +273,75 @@ test("discoverRepository bootstrap is idempotent for AI instruction files", asyn
   const second = await discoverRepository(root);
   const after = await readFile(path.join(root, "specforge", "ai-coder-instructions.md"), "utf8");
 
-  assert.equal(first.bootstrap.createdCount, 7);
+  assert.equal(first.bootstrap.createdCount, 15);
   assert.equal(second.bootstrap.createdCount, 0);
   assert.deepEqual(second.bootstrap.actions, []);
   assert.equal(after, before);
+});
+
+test("discoverRepository repairs partial local CLI tooling and reports availability", async () => {
+  const root = await createBootstrapCandidate(false);
+  await discoverRepository(root);
+  await rm(path.join(root, "specforge", "tools", "specforge-cli.manifest.json"));
+
+  const discovery = await discoverRepository(root);
+
+  assert.equal(discovery.bootstrap.createdCount, 1);
+  assert.deepEqual(discovery.bootstrap.actions, [
+    { kind: "file", path: "specforge/tools/specforge-cli.manifest.json" },
+  ]);
+  assert.equal(discovery.cliTooling.status, "available");
+  assert.equal(discovery.cliTooling.manifestPath, "specforge/tools/specforge-cli.manifest.json");
+});
+
+test("bootstrapped local CLI tooling is detectable and command-compatible", async () => {
+  const root = await createBootstrapCandidate(false);
+  await discoverRepository(root);
+  const runtimePath = path.join(root, "specforge", "tools", "specforge-cli.mjs");
+  const runtime = await readFile(runtimePath, "utf8");
+  const parseOutputLines: string[] = [];
+  const composeOutputLines: string[] = [];
+  const validateOutputLines: string[] = [];
+
+  assert.match(runtime, /validCommands = new Set\(\["parse", "compose", "ingest", "validate"\]\)/);
+
+  const parseExitCode = await runCli(["parse", root, "--json"], (line) => parseOutputLines.push(line), () => {});
+  assert.equal(parseExitCode, 0);
+  const parsePayload = JSON.parse(parseOutputLines.join("\n"));
+  assert.equal(parsePayload.canonicalNodes[0]?.id, "E-0001");
+  assert.equal(parsePayload.discovery.cliTooling.status, "available");
+
+  const composeExitCode = await runCli(["compose", root, "--json"], (line) => composeOutputLines.push(line), () => {});
+  assert.equal(composeExitCode, 0);
+  const composePayload = JSON.parse(composeOutputLines.join("\n"));
+  assert.equal(composePayload.overlayFiles.length, 1);
+  assert.equal(composePayload.composedNodes.length, 1);
+
+  const validateExitCode = await runCli(["validate", root, "--json"], (line) => validateOutputLines.push(line), () => {});
+  assert.equal(validateExitCode, 0);
+  const validatePayload = JSON.parse(validateOutputLines.join("\n"));
+  assert.equal(validatePayload.summary.bySeverity.error, 0);
+});
+
+test("discoverRepository adds SpecForge npm scripts only when package scripts are available", async () => {
+  const root = await createBootstrapCandidate(false);
+  await writeFile(
+    path.join(root, "package.json"),
+    JSON.stringify({
+      name: "bootstrap-package",
+      scripts: {
+        "specforge:compose": "custom command",
+      },
+    }, null, 2),
+  );
+
+  const discovery = await discoverRepository(root);
+  const packageJson = JSON.parse(await readFile(path.join(root, "package.json"), "utf8"));
+
+  assert.ok(discovery.bootstrap.actions.some((action) => action.path === "package.json"));
+  assert.equal(packageJson.scripts["specforge:parse"], "node ./specforge/tools/specforge-cli.mjs parse .");
+  assert.equal(packageJson.scripts["specforge:compose"], "custom command");
+  assert.equal(packageJson.scripts["specforge:validate"], "node ./specforge/tools/specforge-cli.mjs validate .");
 });
 
 
