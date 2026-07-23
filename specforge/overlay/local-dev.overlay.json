@@ -1059,8 +1059,9 @@
         "F-0007",
         "F-0008"
       ],
-      "notes": "Workspace navigation controls were polished into a compact left-aligned tab row with repository loading controls aligned on the right.",
+      "notes": "Workspace navigation controls use a compact left-aligned tab row with repository loading controls on the right; the main UI header now carries the optimized SpecForge wordmark and branded favicon assets.",
       "tags": [
+        "branding",
         "ui",
         "navigation"
       ]

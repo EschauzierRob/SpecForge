@@ -576,7 +576,13 @@ export default function App(): JSX.Element {
     <div className="app-shell">
       <header className="hero">
         <div className="hero-top-row">
-          <p className="eyebrow">SpecForge UI foundation</p>
+          <img
+            className="hero-logo"
+            src="/specforge-header.png"
+            alt="SpecForge"
+            width="1220"
+            height="350"
+          />
           <button
             type="button"
             className="theme-toggle"

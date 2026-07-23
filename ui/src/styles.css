@@ -7,8 +7,6 @@
   --bg-start: #f7fafc;
   --bg-end: #eef3f8;
   --bg-radial: rgba(86, 158, 255, 0.18);
-  --hero-start: #123456;
-  --hero-end: #0f5c7b;
   --hero-text: #f7fbff;
   --panel-border: rgba(18, 52, 86, 0.08);
   --panel-bg: rgba(255, 255, 255, 0.9);
@@ -54,8 +52,6 @@
   --bg-start: #0c1622;
   --bg-end: #111e2d;
   --bg-radial: rgba(86, 158, 255, 0.12);
-  --hero-start: #1a3957;
-  --hero-end: #16506b;
   --hero-text: #edf6ff;
   --panel-border: rgba(150, 180, 215, 0.22);
   --panel-bg: rgba(18, 30, 44, 0.88);
@@ -136,11 +132,10 @@ button {
   margin-bottom: 20px;
   padding: 32px;
   border-radius: 20px;
-  background: linear-gradient(135deg, var(--hero-start), var(--hero-end));
+  background: #051224;
   color: var(--hero-text);
   box-shadow: 0 18px 40px rgba(16, 36, 58, 0.16);
 }
-
 
 .hero-top-row {
   display: flex;
@@ -149,7 +144,14 @@ button {
   gap: 12px;
 }
 
+.hero-logo {
+  display: block;
+  width: min(420px, 100%);
+  height: auto;
+}
+
 .theme-toggle {
+  flex: 0 0 auto;
   border: 1px solid color-mix(in srgb, var(--hero-text) 42%, transparent);
   border-radius: 999px;
   padding: 8px 12px;
@@ -161,14 +163,6 @@ button {
   margin: 8px 0 12px;
   font-size: clamp(2rem, 5vw, 3.1rem);
   line-height: 1.1;
-}
-
-.eyebrow {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  font-size: 0.82rem;
-  opacity: 0.78;
 }
 
 .hero-copy {
@@ -815,6 +809,18 @@ button {
   .hero,
   .panel {
     padding: 18px;
+  }
+
+  .hero-top-row {
+    flex-wrap: wrap;
+  }
+
+  .hero-logo {
+    width: min(360px, 100%);
+  }
+
+  .theme-toggle {
+    margin-left: auto;
   }
 
   .toolbar-panel {
