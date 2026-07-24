@@ -60,6 +60,7 @@ function addFinding(
 function compareFindings(left: ValidationFinding, right: ValidationFinding): number {
   return (
     left.ruleId.localeCompare(right.ruleId) ||
+    (left.sliceId ?? "").localeCompare(right.sliceId ?? "") ||
     (left.specId ?? "").localeCompare(right.specId ?? "") ||
     left.sourcePaths.join("|").localeCompare(right.sourcePaths.join("|")) ||
     left.message.localeCompare(right.message)
@@ -481,6 +482,17 @@ function mapCompositionDiagnosticsToFindings(
         sourcePaths: [diagnostic.sourcePath],
         remediationHint: "Set rank to a positive integer.",
       });
+      continue;
+    }
+
+    if (diagnostic.code === "invalid-execution-slice") {
+      addFinding(findings, {
+        ruleId: "V-200",
+        severity: "error",
+        message: diagnostic.message,
+        sourcePaths: [diagnostic.sourcePath],
+        remediationHint: "Repair the execution slice so every field matches the version 0.2 overlay contract.",
+      });
     }
   }
 }
@@ -511,6 +523,220 @@ function validateOverlayDependencyReferences(
   }
 }
 
+function validateExecutionSlices(
+  result: IngestResult,
+  findings: ValidationFinding[],
+): void {
+  const canonicalIds = new Set(result.canonicalNodes.map((node) => node.id));
+  const slices = result.overlayFiles.flatMap((overlayFile) =>
+    (overlayFile.executionSlices ?? []).map((slice) => ({ slice, sourcePath: overlayFile.sourcePath }))
+  );
+  const slicesById = new Map<string, typeof slices>();
+
+  for (const entry of slices) {
+    const duplicates = slicesById.get(entry.slice.sliceId) ?? [];
+    duplicates.push(entry);
+    slicesById.set(entry.slice.sliceId, duplicates);
+  }
+
+  for (const [sliceId, duplicates] of slicesById) {
+    if (duplicates.length < 2) {
+      continue;
+    }
+    addFinding(findings, {
+      ruleId: "V-202",
+      severity: "error",
+      message: `Execution slice ID ${sliceId} is declared more than once.`,
+      sliceId,
+      sourcePaths: duplicates.map((entry) => entry.sourcePath),
+      remediationHint: "Give every execution slice a repository-unique sliceId.",
+    });
+  }
+
+  const activeSlices = slices.filter(({ slice }) =>
+    slice.planningStatus === "in_progress" || slice.planningStatus === "blocked"
+  );
+  if (activeSlices.length > 1) {
+    addFinding(findings, {
+      ruleId: "V-203",
+      severity: "error",
+      message: `Low-WIP policy allows one active thematic slice, but ${activeSlices.length} are in_progress or blocked.`,
+      sourcePaths: activeSlices.map((entry) => entry.sourcePath),
+      remediationHint: "Close or return the previous thematic slice to a non-active state before activating another.",
+    });
+  }
+
+  const knownSliceIds = new Set(slices.map(({ slice }) => slice.sliceId));
+  for (const { slice, sourcePath } of slices) {
+    const referencedSpecIds = new Set([
+      ...slice.linkedSpecIds,
+      ...slice.work.map((work) => work.specId),
+    ]);
+    for (const specId of referencedSpecIds) {
+      if (!canonicalIds.has(specId)) {
+        addFinding(findings, {
+          ruleId: "V-201",
+          severity: "error",
+          message: `Execution slice ${slice.sliceId} references unknown spec ID ${specId}.`,
+          specId,
+          sliceId: slice.sliceId,
+          sourcePaths: [sourcePath],
+          remediationHint: "Reference a discovered canonical spec ID.",
+        });
+      }
+    }
+
+    for (const dependencySliceId of slice.dependencySliceIds) {
+      if (dependencySliceId === slice.sliceId || !knownSliceIds.has(dependencySliceId)) {
+        addFinding(findings, {
+          ruleId: "V-201",
+          severity: "error",
+          message: `Execution slice ${slice.sliceId} has unresolved or self-referencing dependency ${dependencySliceId}.`,
+          sliceId: slice.sliceId,
+          sourcePaths: [sourcePath],
+          remediationHint: "Reference another execution slice declared in the loaded overlays.",
+        });
+      }
+    }
+
+    const observedIds = new Set(slice.observedEvidence.map((evidence) => evidence.evidenceId));
+    const requiredIds = new Set(slice.requiredEvidence.map((evidence) => evidence.evidenceId));
+    for (const criterion of [...slice.entryCriteria, ...slice.exitCriteria]) {
+      for (const evidenceId of criterion.evidenceIds ?? []) {
+        if (!observedIds.has(evidenceId)) {
+          addFinding(findings, {
+            ruleId: "V-201",
+            severity: "error",
+            message: `Criterion ${criterion.criterionId} in ${slice.sliceId} references unknown observed evidence ${evidenceId}.`,
+            sliceId: slice.sliceId,
+            sourcePaths: [sourcePath],
+            remediationHint: "Reference an observedEvidence evidenceId in the same slice.",
+          });
+        }
+      }
+    }
+    for (const evidence of slice.observedEvidence) {
+      for (const requiredId of evidence.satisfies) {
+        if (!requiredIds.has(requiredId)) {
+          addFinding(findings, {
+            ruleId: "V-201",
+            severity: "error",
+            message: `Observed evidence ${evidence.evidenceId} in ${slice.sliceId} references unknown requirement ${requiredId}.`,
+            sliceId: slice.sliceId,
+            sourcePaths: [sourcePath],
+            remediationHint: "Reference a requiredEvidence evidenceId in the same slice.",
+          });
+        }
+      }
+    }
+
+    const isReadyOrActive = ["ready", "in_progress", "blocked"].includes(slice.planningStatus);
+    if (
+      isReadyOrActive
+      && (
+        slice.entryCriteria.some((criterion) => !criterion.met)
+        || slice.scope.included.length === 0
+        || slice.work.length === 0
+        || slice.exitCriteria.length === 0
+        || slice.requiredEvidence.length === 0
+        || slice.nextAction.trim().length === 0
+      )
+    ) {
+      addFinding(findings, {
+        ruleId: "V-204",
+        severity: "error",
+        message: `Execution slice ${slice.sliceId} is ${slice.planningStatus} without complete entry, scope, work, evidence, exit, and next-action context.`,
+        sliceId: slice.sliceId,
+        sourcePaths: [sourcePath],
+        remediationHint: "Complete the execution context and mark every entry criterion met before making the slice ready.",
+      });
+    }
+
+    const openBlockers = slice.blockers.filter((blocker) => blocker.status === "open");
+    if (
+      (slice.planningStatus === "blocked" && openBlockers.length === 0)
+      || (slice.planningStatus === "in_progress" && openBlockers.length > 0)
+    ) {
+      addFinding(findings, {
+        ruleId: "V-206",
+        severity: "error",
+        message: `Execution slice ${slice.sliceId} has inconsistent planningStatus and open blockers.`,
+        sliceId: slice.sliceId,
+        sourcePaths: [sourcePath],
+        remediationHint: "Use blocked when open blockers exist and in_progress when they do not.",
+      });
+    }
+
+    if (slice.planningStatus !== "done" && slice.resolution !== undefined) {
+      addFinding(findings, {
+        ruleId: "V-204",
+        severity: "error",
+        message: `Execution slice ${slice.sliceId} has a resolution before it is done.`,
+        sliceId: slice.sliceId,
+        sourcePaths: [sourcePath],
+        remediationHint: "Set resolution only when closing the slice.",
+      });
+    }
+
+    if (slice.planningStatus !== "done") {
+      continue;
+    }
+
+    if (!slice.resolution) {
+      addFinding(findings, {
+        ruleId: "V-204",
+        severity: "error",
+        message: `Done execution slice ${slice.sliceId} must record a resolution.`,
+        sliceId: slice.sliceId,
+        sourcePaths: [sourcePath],
+        remediationHint: "Set resolution to validated, disproved, or killed.",
+      });
+      continue;
+    }
+
+    if (slice.resolution === "killed") {
+      if (slice.decisions.length === 0) {
+        addFinding(findings, {
+          ruleId: "V-205",
+          severity: "error",
+          message: `Killed execution slice ${slice.sliceId} must record the kill decision.`,
+          sliceId: slice.sliceId,
+          sourcePaths: [sourcePath],
+          remediationHint: "Add a decision explaining why the slice was killed.",
+        });
+      }
+      continue;
+    }
+
+    const evidenceByRequirement = new Map(
+      slice.requiredEvidence.map((required) => [
+        required.evidenceId,
+        slice.observedEvidence.filter((observed) => observed.satisfies.includes(required.evidenceId)),
+      ]),
+    );
+    const hasCompleteCoverage = Array.from(evidenceByRequirement.values()).every((observations) => observations.length > 0);
+    const allExitCriteriaMet = slice.exitCriteria.every((criterion) => criterion.met);
+    const hasFailedObservation = slice.observedEvidence.some((evidence) => evidence.assessment === "failed");
+    const everyRequirementPassed = Array.from(evidenceByRequirement.values()).every((observations) =>
+      observations.some((observation) => observation.assessment === "passed")
+    );
+    const closureIsValid = hasCompleteCoverage
+      && allExitCriteriaMet
+      && (slice.resolution === "validated" ? everyRequirementPassed : hasFailedObservation);
+
+    if (!closureIsValid) {
+      addFinding(findings, {
+        ruleId: "V-205",
+        severity: "error",
+        message: `Done execution slice ${slice.sliceId} does not have evidence and exit results consistent with resolution ${slice.resolution}.`,
+        sliceId: slice.sliceId,
+        sourcePaths: [sourcePath],
+        remediationHint: "Resolve every required evidence item and exit criterion; validated requires passing coverage and disproved requires a failed observation.",
+      });
+    }
+  }
+}
+
 export function validateIngestResult(result: IngestResult): ValidationResult {
   const findings: ValidationFinding[] = [];
 
@@ -518,6 +744,7 @@ export function validateIngestResult(result: IngestResult): ValidationResult {
   mapParserDiagnosticsToFindings(result.diagnostics, findings);
   mapCompositionDiagnosticsToFindings(result.compositionDiagnostics, findings);
   validateOverlayDependencyReferences(result, findings);
+  validateExecutionSlices(result, findings);
 
   const deduplicated = new Map<string, ValidationFinding>();
   for (const finding of findings) {
@@ -525,6 +752,7 @@ export function validateIngestResult(result: IngestResult): ValidationResult {
       finding.ruleId,
       finding.severity,
       finding.specId ?? "",
+      finding.sliceId ?? "",
       finding.message,
       finding.sourcePaths.join("|"),
     ].join("::");

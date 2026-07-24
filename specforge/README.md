@@ -14,4 +14,6 @@ This directory contains SpecForge-specific metadata, adapter contracts, and gene
 
 Everything here composes with `/specs` and does not redefine source-of-truth product intent.
 
+Execution slices live in version `0.2` overlays and remain cross-cutting operational entities rather than canonical hierarchy nodes.
+
 AI-assisted implementation should read `ai-coder-instructions.md` before changing specs, code, tests, or overlay metadata.

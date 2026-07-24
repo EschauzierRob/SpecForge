@@ -188,8 +188,9 @@ test("ingestRepository bootstraps missing overlay essentials before composition"
   assert.equal(result.discovery.cliTooling.status, "available");
   assert.equal(result.overlayFiles.length, 1);
   assert.equal(result.overlayFiles[0]?.sourcePath, "specforge/overlay/local-dev.overlay.json");
-  assert.equal(result.overlayFiles[0]?.version, "0.1");
+  assert.equal(result.overlayFiles[0]?.version, "0.2");
   assert.equal(result.overlayFiles[0]?.entries.length, 0);
+  assert.equal(result.overlayFiles[0]?.executionSlices.length, 0);
   assert.equal(result.composedNodes.length, 1);
   assert.equal(result.composedNodes[0]?.spec.id, "E-0001");
 });
@@ -413,6 +414,7 @@ test("CLI summary reflects overlay and composition counts", async () => {
   assert.equal(exitCode, 0);
   assert.deepEqual(errorLines, []);
   assert.ok(outputLines.includes("overlay files: 1"));
+  assert.ok(outputLines.includes("execution slices: 1"));
   assert.ok(outputLines.includes(`composed nodes: ${currentRepoResult.composedNodes.length}`));
   assert.ok(outputLines.some((line) => line.startsWith("composition diagnostics: ")));
 });

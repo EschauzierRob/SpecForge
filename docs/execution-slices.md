@@ -1,0 +1,53 @@
+# Execution Slices
+
+Execution slices are SpecForge's operational layer between a canonical backlog and implemented behavior.
+
+```text
+Canonical specs                     Development overlay
+Epic -> Feature -> Story -> Task    Execution slice -> work -> evidence -> resolution
+```
+
+A slice may cross canonical branches. `linkedSpecIds` are scope links, not parents. Each item in `work` is structurally owned by one slice and declares one of `research`, `design`, `implementation`, `validation`, or `documentation`.
+
+## Lifecycle
+
+- `backlog`: a draft that may be incomplete
+- `ready`: entry criteria are met and scope, work, exit criteria, evidence, and next action are defined
+- `in_progress`: the single active thematic slice
+- `blocked`: the active thematic slice has at least one open blocker
+- `done`: execution is closed and has a resolution
+
+Both `in_progress` and `blocked` consume the one-slice WIP limit.
+
+Resolution is separate from lifecycle:
+
+- `validated`: every required evidence item has passing observed evidence
+- `disproved`: every required evidence item is covered and at least one observation failed
+- `killed`: an explicit decision records why execution stopped early
+
+## Evidence
+
+`requiredEvidence` defines the agreed measurement before execution. `observedEvidence` stores actual commands, artifacts, reports, deviations, and assessments. Every observation lists the requirement IDs it satisfies.
+
+Required evidence is baselined when the slice first becomes `in_progress`. If the threshold changes, add an explicit decision so version history shows why the measuring stick moved.
+
+External evidence uses immutable provenance. Record at least repository, commit, report path, observation time, and whether the consuming repository verified the result. A branch may be included as context but is not a stable identity.
+
+## Incidental Work
+
+Small unrelated defects may be handled without changing or blocking the active slice. Represent their canonical overlay entry with:
+
+```json
+{
+  "specId": "T-0000",
+  "planningStatus": "in_progress",
+  "tags": ["incidental"],
+  "notes": "Bounded defect found while working on SL-0001."
+}
+```
+
+Incidental work is not included in `executionSlices[].work` and does not consume thematic slice WIP. If the work develops its own objective, scope, sequence, or evidence threshold, it is no longer incidental and needs a later slice.
+
+## Bundles
+
+Bundles are intentionally not first-class. Use a tag or an external ordered list when several slices need lightweight grouping. Add a bundle model only after it needs independent invariants beyond grouping and order.

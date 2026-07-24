@@ -191,16 +191,19 @@ test("discoverRepository bootstraps the overlay directory and seeded local overl
     version: string;
     repositoryId: string;
     entries: unknown[];
+    executionSlices: unknown[];
   };
 
-  assert.equal(overlayPayload.version, "0.1");
+  assert.equal(overlayPayload.version, "0.2");
   assert.equal(overlayPayload.repositoryId, path.basename(root));
   assert.deepEqual(overlayPayload.entries, []);
+  assert.deepEqual(overlayPayload.executionSlices, []);
 
   const aiInstructions = await readFile(path.join(root, "specforge", "ai-coder-instructions.md"), "utf8");
   assert.match(aiInstructions, /Read `\/specs` before implementing/);
   assert.match(aiInstructions, /specforge\/bin\/specforge validate \./);
   assert.match(aiInstructions, /specforge\/overlay\/local-dev\.overlay\.json/);
+  assert.match(aiInstructions, /tagged `incidental`/);
   assert.match(aiInstructions, /## Canonical Spec Authoring/);
   assert.match(aiInstructions, /Do not use YAML frontmatter/);
   assert.match(aiInstructions, /Valid canonical types are exactly/);

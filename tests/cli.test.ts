@@ -87,6 +87,8 @@ test("compose CLI routes separately from ingest and keeps ingest compatibility",
   assert.equal(ingestExitCode, 0);
   assert.ok(composeOutputLines.includes("overlay files: 1"));
   assert.ok(ingestOutputLines.includes("overlay files: 1"));
+  assert.ok(composeOutputLines.includes("execution slices: 1"));
+  assert.ok(ingestOutputLines.includes("execution slices: 1"));
 });
 
 test("CLI writes JSON artifacts and creates nested output directories", async () => {

@@ -94,3 +94,11 @@ Scope lock:
 - enforce hierarchy, required fields, and duplicate-safe ID generation
 - support lightweight editing of canonical spec sections without overlay metadata changes
 
+## v1.5 — Execution Slices and Evidence
+
+- version 0.2 overlay execution slice contract with version 0.1 read compatibility
+- one-active-slice WIP validation across in-progress and blocked states
+- required versus observed evidence and positive or negative closure resolution
+- read-only execution slice inspection in CLI, API, and UI
+- bounded incidental work outside thematic slice WIP
+

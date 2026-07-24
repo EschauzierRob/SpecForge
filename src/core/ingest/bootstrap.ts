@@ -22,9 +22,10 @@ function createDefaultOverlayFile(repoRoot: string): string {
   const repositoryId = path.basename(repoRoot).trim() || "specforge-local";
   return `${JSON.stringify(
     {
-      version: "0.1",
+      version: "0.2",
       repositoryId,
       entries: [],
+      executionSlices: [],
     },
     null,
     2,
@@ -63,6 +64,8 @@ Use \`specforge/overlay/local-dev.overlay.json\` for local planning state.
 
 - Entries link to specs by stable \`specId\`.
 - Supported planning statuses are \`backlog\`, \`ready\`, \`in_progress\`, \`blocked\`, and \`done\`.
+- Version 0.2 overlays may define first-class \`executionSlices\` for bounded thematic work and evidence.
+- Tag small out-of-slice maintenance entries with \`incidental\`; incidental work does not consume thematic slice WIP.
 - Keep overlay metadata out of \`/specs\` markdown.
 - AI-assisted implementation must update overlay entries for changed target spec IDs.
 `;
@@ -88,6 +91,8 @@ Follow these rules for AI-assisted implementation in this repository.
    - \`notes\`
    - \`tags\`
 7. Run SpecForge parse, compose, and validate checks before finishing when the toolchain is available.
+
+Execution slices are the default boundary for thematic work. Small, unrelated fixes may remain outside a slice when their overlay entry is tagged \`incidental\`; keep them bounded so the tag does not become a second active workstream.
 
 Preferred local commands:
 

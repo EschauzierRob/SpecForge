@@ -2,11 +2,18 @@ import type {
   ComposeRepositoryResult,
   ComposedNode,
   DiagnosticSeverity,
+  ExecutionSlice,
   PlanningStatus,
   UiWorkspaceState,
   ValidationFinding,
   ValidationResult,
 } from "./contracts";
+
+export interface SourcedExecutionSlice {
+  slice: ExecutionSlice;
+  sourcePath: string;
+  repositoryId: string;
+}
 
 export interface ComposedTreeNode {
   node: ComposedNode;
@@ -107,6 +114,29 @@ export function getOverviewCounts(
       info: validationResult?.summary.bySeverity.info ?? 0,
     },
   };
+}
+
+export function getExecutionSlices(composeResult?: ComposeRepositoryResult): SourcedExecutionSlice[] {
+  const statusOrder: Record<PlanningStatus, number> = {
+    in_progress: 0,
+    blocked: 1,
+    ready: 2,
+    backlog: 3,
+    done: 4,
+  };
+
+  return (composeResult?.overlayFiles ?? [])
+    .flatMap((overlayFile) =>
+      (overlayFile.executionSlices ?? []).map((slice) => ({
+        slice,
+        sourcePath: overlayFile.sourcePath,
+        repositoryId: overlayFile.repositoryId,
+      }))
+    )
+    .sort((left, right) =>
+      statusOrder[left.slice.planningStatus] - statusOrder[right.slice.planningStatus]
+      || left.slice.sliceId.localeCompare(right.slice.sliceId)
+    );
 }
 
 export function getPlanningStatusCounts(

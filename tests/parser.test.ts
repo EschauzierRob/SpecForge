@@ -31,7 +31,7 @@ E-0001
   assert.equal(sectionMap.sections.id, "F-1234");
   assert.equal(sectionMap.sections.parent, "E-0001");
   assert.deepEqual(sectionMap.sectionOffsets.ID, { startLine: 3, endLine: 5 });
-  assert.deepEqual(sectionMap.sectionOffsets.Parent, { startLine: 14, endLine: 15 });
+  assert.deepEqual(sectionMap.sectionOffsets.Parent, { startLine: 15, endLine: 17 });
 });
 
 test("mapSectionsToCanonical tolerates out-of-order sections", () => {
@@ -170,7 +170,7 @@ none
   assert.deepEqual(parsed.node?.parserMetadata?.normalizedDecisions?.[0], {
     sourcePath: "specs/story-with-decisions.md",
     sectionName: "D-0004-1",
-    sectionOffset: { startLine: 12, endLine: 14 },
+    sectionOffset: { startLine: 12, endLine: 15 },
     decisionId: "D-0004-1",
     decision: "Parent should align to F-0002 billing scope.",
     reason: "F-0002 owns all checkout billing orchestration.",

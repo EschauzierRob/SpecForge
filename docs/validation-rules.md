@@ -76,6 +76,44 @@ Detect structural, semantic, and convention issues across specs and overlay to p
 - Condition: overlay dependency references unknown ID
 - Severity: Warning
 
+## Execution Slice Rules
+
+### V-200 Invalid Execution Slice Shape
+
+- Condition: a slice or nested slice value violates the overlay `0.2` contract
+- Severity: Error
+
+### V-201 Invalid Slice Reference
+
+- Condition: a slice references an unknown canonical spec, slice dependency, required evidence item, or observed evidence item
+- Severity: Error
+
+### V-202 Duplicate Slice ID
+
+- Condition: multiple loaded overlays declare the same `sliceId`
+- Severity: Error
+
+### V-203 Thematic WIP Limit Exceeded
+
+- Condition: more than one slice has status `in_progress` or `blocked`
+- Severity: Error
+- Note: ordinary overlay entries tagged `incidental` are outside thematic slice WIP
+
+### V-204 Invalid Slice Lifecycle
+
+- Condition: ready or active execution context is incomplete, or status and resolution are inconsistent
+- Severity: Error
+
+### V-205 Invalid Evidence Closure
+
+- Condition: a done slice lacks the evidence or decision required by its resolution
+- Severity: Error
+
+### V-206 Inconsistent Blocker State
+
+- Condition: a blocked slice has no open blocker, or an in-progress slice still has an open blocker
+- Severity: Error
+
 ## Reporting Requirements
 
 Each validation finding should include:

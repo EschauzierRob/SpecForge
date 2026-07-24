@@ -137,6 +137,115 @@ button {
   box-shadow: 0 18px 40px rgba(16, 36, 58, 0.16);
 }
 
+.slice-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.slice-card {
+  border: 1px solid var(--border-soft);
+  border-radius: 14px;
+  padding: 1rem;
+  background: var(--surface-raised);
+}
+
+.slice-card--active {
+  border-left: 5px solid var(--primary);
+}
+
+.slice-card__header,
+.slice-badges,
+.slice-next-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.slice-card__header h3 {
+  margin: 0.2rem 0 0;
+}
+
+.slice-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.slice-list {
+  margin: 0;
+  padding-left: 1.25rem;
+}
+
+.slice-list li {
+  margin: 0.35rem 0;
+}
+
+.slice-list small {
+  display: block;
+  color: var(--muted-text);
+}
+
+.slice-empty {
+  color: var(--muted-text);
+  font-style: italic;
+}
+
+.slice-result {
+  display: inline-block;
+  min-width: 3.25rem;
+  margin-right: 0.35rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--muted-text);
+}
+
+.slice-result--passed {
+  color: #198754;
+}
+
+.slice-result--failed {
+  color: #c0392b;
+}
+
+.slice-work {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.slice-work button {
+  display: grid;
+  grid-template-columns: 9rem 5rem 1fr;
+  gap: 0.75rem;
+  text-align: left;
+}
+
+.slice-next-action {
+  align-items: flex-start;
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--border-soft);
+}
+
+.slice-next-action span,
+.slice-next-action small {
+  color: var(--muted-text);
+}
+
+@media (max-width: 760px) {
+  .slice-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .slice-work button {
+    grid-template-columns: 1fr;
+  }
+
+  .slice-next-action {
+    flex-direction: column;
+  }
+}
+
 .hero-top-row {
   display: flex;
   align-items: center;

@@ -132,9 +132,14 @@ function parseType(sectionValue: string | undefined): SpecNodeType | undefined {
 
 function findFallbackSummary(markdown: string): string | undefined {
   const normalized = normalizeNewlines(markdown);
-  const paragraphMatches = normalized.match(/(?:^|\n\n)([^\n].*?(?:\n(?!\n).*)*)/g) ?? [];
+  const preamble = normalized.split(/^##\s+/m)[0] ?? normalized;
+  const paragraphs = preamble.split(/\n\s*\n/);
+  const fallbackTitle = preamble
+    .split("\n")
+    .map((line) => line.trim())
+    .find((line) => line.length > 0);
 
-  for (const rawParagraph of paragraphMatches) {
+  for (const rawParagraph of paragraphs) {
     const paragraph = rawParagraph.trim();
     if (!paragraph) {
       continue;
@@ -147,7 +152,9 @@ function findFallbackSummary(markdown: string): string | undefined {
       .filter((line) => !line.startsWith("#"))
       .filter((line) => !line.startsWith("##"))
       .filter((line) => !/^[-*]\s+/.test(line))
-      .filter((line) => !/^\d+\.\s+/.test(line));
+      .filter((line) => !/^\d+\.\s+/.test(line))
+      .filter((line) => line !== fallbackTitle)
+      .filter((line) => !/^(epic|feature|story|task)\s+([a-z]|\d+(?:\.\d+)?)(?:\s*[-—].*)?$/i.test(line));
 
     if (cleanedLines.length === 0) {
       continue;

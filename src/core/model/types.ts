@@ -1,5 +1,9 @@
 export type SpecNodeType = "epic" | "feature" | "story" | "task";
 export type PlanningStatus = "backlog" | "ready" | "in_progress" | "blocked" | "done";
+export type ExecutionWorkType = "research" | "design" | "implementation" | "validation" | "documentation";
+export type EvidenceAssessment = "passed" | "failed";
+export type SliceResolution = "validated" | "disproved" | "killed";
+export type BlockerStatus = "open" | "resolved";
 
 export type DiagnosticSeverity = "error" | "warning" | "info";
 export type InferenceStrategyId =
@@ -203,11 +207,90 @@ export interface OverlayEntry {
   tags?: string[];
 }
 
+export interface SliceCriterion {
+  criterionId: string;
+  description: string;
+  met: boolean;
+  evidenceIds?: string[];
+}
+
+export interface SliceScope {
+  included: string[];
+  excluded: string[];
+}
+
+export interface ExecutionWorkItem {
+  workId: string;
+  specId: string;
+  type: ExecutionWorkType;
+  description: string;
+}
+
+export interface RequiredEvidence {
+  evidenceId: string;
+  description: string;
+}
+
+export interface ExternalEvidenceProvenance {
+  repository: string;
+  commit: string;
+  branch?: string;
+  artifactPath: string;
+  observedAt: string;
+  consumerVerified: boolean;
+}
+
+export interface ObservedEvidence {
+  evidenceId: string;
+  description: string;
+  satisfies: string[];
+  assessment: EvidenceAssessment;
+  artifactPath?: string;
+  command?: string;
+  observedAt?: string;
+  provenance?: ExternalEvidenceProvenance;
+}
+
+export interface SliceDecision {
+  decisionId: string;
+  decision: string;
+  reason?: string;
+  decidedAt?: string;
+}
+
+export interface SliceBlocker {
+  blockerId: string;
+  description: string;
+  status: BlockerStatus;
+}
+
+export interface ExecutionSlice {
+  sliceId: string;
+  title: string;
+  planningStatus: PlanningStatus;
+  resolution?: SliceResolution;
+  linkedSpecIds: string[];
+  objective: string;
+  hypothesis?: string;
+  entryCriteria: SliceCriterion[];
+  scope: SliceScope;
+  work: ExecutionWorkItem[];
+  exitCriteria: SliceCriterion[];
+  requiredEvidence: RequiredEvidence[];
+  observedEvidence: ObservedEvidence[];
+  killCriteria: string[];
+  dependencySliceIds: string[];
+  decisions: SliceDecision[];
+  blockers: SliceBlocker[];
+  nextAction: string;
+}
+
 export interface OverlayFile {
   sourcePath: string;
   version: string;
   repositoryId: string;
   entries: OverlayEntry[];
+  executionSlices: ExecutionSlice[];
 }
 
 export interface OverlayFacet extends OverlayEntry {
@@ -226,6 +309,7 @@ export interface ValidationFinding {
   message: string;
   sourcePaths: string[];
   specId?: string;
+  sliceId?: string;
   remediationHint?: string;
 }
 

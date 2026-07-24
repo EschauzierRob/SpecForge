@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "repositoryId": "specforge-local",
   "entries": [
     {
@@ -448,10 +448,12 @@
         "F-0004",
         "F-0005"
       ],
-      "notes": "Core tolerant ingestion heuristics are implemented with optional inference metadata; skipped-level projection remains with S-0508.",
+      "notes": "Core tolerant ingestion heuristics are implemented with optional inference metadata; an incidental repair restored fallback prose extraction and deterministic name-aware virtual slice projection; skipped-level projection remains with S-0508.",
       "tags": [
         "completed",
         "drift",
+        "incidental",
+        "parser",
         "story"
       ]
     },
@@ -1089,6 +1091,187 @@
     {
       "specId": "S-0301",
       "planningStatus": "done"
+    },
+    {
+      "specId": "E-0007",
+      "planningStatus": "done",
+      "notes": "Execution slices are implemented as a first-class operational overlay layer.",
+      "tags": ["execution-slices"]
+    },
+    {
+      "specId": "F-0023",
+      "planningStatus": "done",
+      "dependencies": ["F-0002", "F-0006"],
+      "tags": ["overlay", "execution-slices"]
+    },
+    {
+      "specId": "S-0701",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "T-0701",
+      "planningStatus": "done"
+    },
+    {
+      "specId": "S-0702",
+      "planningStatus": "done",
+      "dependencies": ["S-0701"]
+    },
+    {
+      "specId": "T-0702",
+      "planningStatus": "done",
+      "dependencies": ["T-0701"]
+    },
+    {
+      "specId": "F-0024",
+      "planningStatus": "done",
+      "dependencies": ["F-0023", "F-0009"],
+      "tags": ["ui", "execution-slices"]
+    },
+    {
+      "specId": "S-0703",
+      "planningStatus": "done",
+      "dependencies": ["S-0702"]
+    },
+    {
+      "specId": "T-0703",
+      "planningStatus": "done",
+      "dependencies": ["T-0702"]
+    }
+  ],
+  "executionSlices": [
+    {
+      "sliceId": "SL-0001",
+      "title": "First-class execution slices and evidence",
+      "planningStatus": "done",
+      "resolution": "validated",
+      "linkedSpecIds": ["E-0007", "F-0023", "F-0024"],
+      "objective": "Deliver a backward-compatible, inspectable execution-slice overlay with honest evidence closure.",
+      "hypothesis": "SpecForge can add a bounded operational layer without duplicating the canonical hierarchy or turning incidental fixes into thematic WIP.",
+      "entryCriteria": [
+        {
+          "criterionId": "EC-001",
+          "description": "The canonical slice requirements and boundaries are recorded.",
+          "met": true
+        },
+        {
+          "criterionId": "EC-002",
+          "description": "Version 0.1 compatibility remains required.",
+          "met": true
+        }
+      ],
+      "scope": {
+        "included": [
+          "Overlay v0.2 execution slice contract",
+          "Lifecycle and evidence validation",
+          "CLI, API, and read-only UI inspection",
+          "Incidental work governance"
+        ],
+        "excluded": [
+          "First-class bundles",
+          "Team and personal overlay layering",
+          "Slice editing and workflow automation"
+        ]
+      },
+      "work": [
+        {
+          "workId": "PW-001",
+          "specId": "T-0701",
+          "type": "implementation",
+          "description": "Implement execution slice types and strict loading."
+        },
+        {
+          "workId": "PW-002",
+          "specId": "T-0702",
+          "type": "validation",
+          "description": "Implement lifecycle, reference, WIP, blocker, and evidence validation."
+        },
+        {
+          "workId": "PW-003",
+          "specId": "T-0703",
+          "type": "documentation",
+          "description": "Expose and document slices through diagnostics and the UI."
+        }
+      ],
+      "exitCriteria": [
+        {
+          "criterionId": "XC-001",
+          "description": "Version 0.1 and valid version 0.2 overlays load successfully.",
+          "met": true,
+          "evidenceIds": ["OE-001"]
+        },
+        {
+          "criterionId": "XC-002",
+          "description": "Invalid lifecycle and evidence state produces deterministic findings.",
+          "met": true,
+          "evidenceIds": ["OE-001"]
+        },
+        {
+          "criterionId": "XC-003",
+          "description": "The CLI, API, and UI expose execution slices without adding canonical nodes.",
+          "met": true,
+          "evidenceIds": ["OE-002", "OE-003"]
+        }
+      ],
+      "requiredEvidence": [
+        {
+          "evidenceId": "RE-001",
+          "description": "Core tests cover valid, malformed, active, blocked, validated, and disproved slices."
+        },
+        {
+          "evidenceId": "RE-002",
+          "description": "The UI production build succeeds with the slice screen."
+        },
+        {
+          "evidenceId": "RE-003",
+          "description": "SpecForge parse, compose, and validate pass for this repository."
+        }
+      ],
+      "observedEvidence": [
+        {
+          "evidenceId": "OE-001",
+          "description": "All 110 core tests pass, including slice loader, lifecycle, evidence, WIP, and selector coverage.",
+          "satisfies": ["RE-001"],
+          "assessment": "passed",
+          "command": "npm test",
+          "observedAt": "2026-07-25T00:00:00Z"
+        },
+        {
+          "evidenceId": "OE-002",
+          "description": "The Vite production build completes with the execution slice screen.",
+          "satisfies": ["RE-002"],
+          "assessment": "passed",
+          "command": "npm --prefix ui run build",
+          "observedAt": "2026-07-25T00:00:00Z"
+        },
+        {
+          "evidenceId": "OE-003",
+          "description": "Repository parse, compose, and validation complete with zero diagnostics and zero findings.",
+          "satisfies": ["RE-003"],
+          "assessment": "passed",
+          "command": "npm run parse && npm run compose && npm run validate",
+          "observedAt": "2026-07-25T00:00:00Z"
+        }
+      ],
+      "killCriteria": [
+        "The model requires copying canonical acceptance criteria into slices.",
+        "Version 0.1 overlays cannot remain readable."
+      ],
+      "dependencySliceIds": [],
+      "decisions": [
+        {
+          "decisionId": "D-001",
+          "decision": "Defer bundles until their independent semantics are proven.",
+          "reason": "An ordered or tagged slice group is sufficient for current needs."
+        },
+        {
+          "decisionId": "D-002",
+          "decision": "Allow explicitly tagged incidental maintenance outside the active slice.",
+          "reason": "Small unrelated fixes should not force the thematic slice into blocked state."
+        }
+      ],
+      "blockers": [],
+      "nextAction": "Review the implementation and choose the next execution slice."
     }
   ]
 }

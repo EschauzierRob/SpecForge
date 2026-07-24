@@ -36,8 +36,11 @@ Overlay files add planning metadata without editing specs:
 - blocked state
 - dependencies for execution
 - board grouping inputs
+- bounded execution slices with required and observed evidence
 
 Overlay entries refer to spec items by stable IDs.
+
+Version `0.2` overlays can also define execution slices as a separate operational layer above the canonical hierarchy. See `docs/execution-slices.md` for lifecycle, evidence, low-WIP, and incidental-work rules.
 
 ## What this repository includes now (v0.1 scaffold)
 
@@ -67,6 +70,7 @@ v1.0 focuses on an MVP that can:
    - item detail panel
    - validation warnings panel
    - recommended next work panel
+   - execution slice inspection
 
 ## How to contribute
 

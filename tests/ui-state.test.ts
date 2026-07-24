@@ -8,6 +8,7 @@ import {
   getWarningsEmptyState,
   getBlockedReason,
   getDependencyCount,
+  getExecutionSlices,
   getOverviewCounts,
   getPlanningStatusCounts,
   getSelectedComposedNode,
@@ -95,6 +96,7 @@ const composeFixture: ComposeRepositoryResult = {
           rank: 2,
         },
       ],
+      executionSlices: [],
     },
   ],
   composedNodes: [
@@ -327,6 +329,49 @@ test("overview selectors summarize compose and validation data", () => {
   assert.equal(counts.parserDiagnostics.warning, 1);
   assert.equal(counts.compositionDiagnostics.info, 1);
   assert.equal(counts.validationFindings.total, 1);
+});
+
+test("execution slice selector keeps active thematic work ahead of history", () => {
+  const baseSlice = {
+    sliceId: "SL-0002",
+    title: "Historical proof",
+    planningStatus: "done" as const,
+    resolution: "validated" as const,
+    linkedSpecIds: [],
+    objective: "Record history.",
+    entryCriteria: [],
+    scope: { included: [], excluded: [] },
+    work: [],
+    exitCriteria: [],
+    requiredEvidence: [],
+    observedEvidence: [],
+    killCriteria: [],
+    dependencySliceIds: [],
+    decisions: [],
+    blockers: [],
+    nextAction: "",
+  };
+  const composeResult: ComposeRepositoryResult = {
+    ...composeFixture,
+    overlayFiles: [{
+      ...composeFixture.overlayFiles[0],
+      executionSlices: [
+        baseSlice,
+        {
+          ...baseSlice,
+          sliceId: "SL-0001",
+          title: "Current proof",
+          planningStatus: "in_progress",
+          resolution: undefined,
+        },
+      ],
+    }],
+  };
+
+  assert.deepEqual(
+    getExecutionSlices(composeResult).map((entry) => entry.slice.sliceId),
+    ["SL-0001", "SL-0002"],
+  );
 });
 
 test("planning status selector keeps blocked as card urgency while counting status lanes", () => {

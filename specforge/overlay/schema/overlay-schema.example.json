@@ -1,40 +1,251 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://specforge.local/schema/overlay-schema.example.json",
-  "title": "SpecForge Overlay Schema (Example)",
+  "title": "SpecForge Overlay Schema",
   "type": "object",
   "required": ["version", "repositoryId", "entries"],
   "properties": {
-    "version": { "type": "string", "const": "0.1" },
+    "version": { "type": "string", "enum": ["0.1", "0.2"] },
     "repositoryId": { "type": "string", "minLength": 1 },
     "entries": {
       "type": "array",
-      "items": {
-        "type": "object",
-        "required": ["specId"],
-        "properties": {
-          "specId": { "type": "string", "pattern": "^[EFST]-\\d{4}$" },
-          "planningStatus": {
-            "type": "string",
-            "enum": ["backlog", "ready", "in_progress", "blocked", "done"]
-          },
-          "rank": { "type": "integer", "minimum": 1 },
-          "blocked": { "type": "boolean" },
-          "dependencies": {
-            "type": "array",
-            "items": { "type": "string", "pattern": "^[EFST]-\\d{4}$" },
-            "uniqueItems": true
-          },
-          "notes": { "type": "string" },
-          "tags": {
-            "type": "array",
-            "items": { "type": "string", "minLength": 1 },
-            "uniqueItems": true
-          }
-        },
-        "additionalProperties": false
-      }
+      "items": { "$ref": "#/$defs/overlayEntry" }
+    },
+    "executionSlices": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/executionSlice" }
     }
   },
-  "additionalProperties": false
+  "allOf": [
+    {
+      "if": {
+        "required": ["executionSlices"]
+      },
+      "then": {
+        "properties": {
+          "version": { "const": "0.2" }
+        }
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "specId": {
+      "type": "string",
+      "pattern": "^[EFST]-\\d{4}$"
+    },
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "planningStatus": {
+      "type": "string",
+      "enum": ["backlog", "ready", "in_progress", "blocked", "done"]
+    },
+    "overlayEntry": {
+      "type": "object",
+      "required": ["specId"],
+      "properties": {
+        "specId": { "$ref": "#/$defs/specId" },
+        "planningStatus": { "$ref": "#/$defs/planningStatus" },
+        "rank": { "type": "integer", "minimum": 1 },
+        "blocked": { "type": "boolean" },
+        "blockedReason": { "$ref": "#/$defs/nonEmptyString" },
+        "dependencies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/specId" },
+          "uniqueItems": true
+        },
+        "notes": { "type": "string" },
+        "tags": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "criterion": {
+      "type": "object",
+      "required": ["criterionId", "description", "met"],
+      "properties": {
+        "criterionId": { "type": "string", "pattern": "^(EC|XC)-\\d{3}$" },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "met": { "type": "boolean" },
+        "evidenceIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^OE-\\d{3}$" },
+          "uniqueItems": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "workItem": {
+      "type": "object",
+      "required": ["workId", "specId", "type", "description"],
+      "properties": {
+        "workId": { "type": "string", "pattern": "^PW-\\d{3}$" },
+        "specId": { "$ref": "#/$defs/specId" },
+        "type": {
+          "type": "string",
+          "enum": ["research", "design", "implementation", "validation", "documentation"]
+        },
+        "description": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "additionalProperties": false
+    },
+    "requiredEvidence": {
+      "type": "object",
+      "required": ["evidenceId", "description"],
+      "properties": {
+        "evidenceId": { "type": "string", "pattern": "^RE-\\d{3}$" },
+        "description": { "$ref": "#/$defs/nonEmptyString" }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["repository", "commit", "artifactPath", "observedAt", "consumerVerified"],
+      "properties": {
+        "repository": { "$ref": "#/$defs/nonEmptyString" },
+        "commit": { "type": "string", "pattern": "^[0-9a-fA-F]{7,64}$" },
+        "branch": { "$ref": "#/$defs/nonEmptyString" },
+        "artifactPath": { "$ref": "#/$defs/nonEmptyString" },
+        "observedAt": { "type": "string", "format": "date-time" },
+        "consumerVerified": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "observedEvidence": {
+      "type": "object",
+      "required": ["evidenceId", "description", "satisfies", "assessment"],
+      "properties": {
+        "evidenceId": { "type": "string", "pattern": "^OE-\\d{3}$" },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "satisfies": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^RE-\\d{3}$" },
+          "uniqueItems": true
+        },
+        "assessment": { "type": "string", "enum": ["passed", "failed"] },
+        "artifactPath": { "$ref": "#/$defs/nonEmptyString" },
+        "command": { "$ref": "#/$defs/nonEmptyString" },
+        "observedAt": { "type": "string", "format": "date-time" },
+        "provenance": { "$ref": "#/$defs/provenance" }
+      },
+      "additionalProperties": false
+    },
+    "decision": {
+      "type": "object",
+      "required": ["decisionId", "decision"],
+      "properties": {
+        "decisionId": { "type": "string", "pattern": "^D-\\d{3}$" },
+        "decision": { "$ref": "#/$defs/nonEmptyString" },
+        "reason": { "$ref": "#/$defs/nonEmptyString" },
+        "decidedAt": { "type": "string", "format": "date-time" }
+      },
+      "additionalProperties": false
+    },
+    "blocker": {
+      "type": "object",
+      "required": ["blockerId", "description", "status"],
+      "properties": {
+        "blockerId": { "type": "string", "pattern": "^B-\\d{3}$" },
+        "description": { "$ref": "#/$defs/nonEmptyString" },
+        "status": { "type": "string", "enum": ["open", "resolved"] }
+      },
+      "additionalProperties": false
+    },
+    "executionSlice": {
+      "type": "object",
+      "required": [
+        "sliceId",
+        "title",
+        "planningStatus",
+        "linkedSpecIds",
+        "objective",
+        "entryCriteria",
+        "scope",
+        "work",
+        "exitCriteria",
+        "requiredEvidence",
+        "observedEvidence",
+        "killCriteria",
+        "dependencySliceIds",
+        "decisions",
+        "blockers",
+        "nextAction"
+      ],
+      "properties": {
+        "sliceId": { "type": "string", "pattern": "^SL-\\d{4}$" },
+        "title": { "$ref": "#/$defs/nonEmptyString" },
+        "planningStatus": { "$ref": "#/$defs/planningStatus" },
+        "resolution": { "type": "string", "enum": ["validated", "disproved", "killed"] },
+        "linkedSpecIds": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/specId" },
+          "uniqueItems": true
+        },
+        "objective": { "$ref": "#/$defs/nonEmptyString" },
+        "hypothesis": { "$ref": "#/$defs/nonEmptyString" },
+        "entryCriteria": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/criterion" }
+        },
+        "scope": {
+          "type": "object",
+          "required": ["included", "excluded"],
+          "properties": {
+            "included": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/nonEmptyString" },
+              "uniqueItems": true
+            },
+            "excluded": {
+              "type": "array",
+              "items": { "$ref": "#/$defs/nonEmptyString" },
+              "uniqueItems": true
+            }
+          },
+          "additionalProperties": false
+        },
+        "work": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/workItem" }
+        },
+        "exitCriteria": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/criterion" }
+        },
+        "requiredEvidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/requiredEvidence" }
+        },
+        "observedEvidence": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/observedEvidence" }
+        },
+        "killCriteria": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/nonEmptyString" },
+          "uniqueItems": true
+        },
+        "dependencySliceIds": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^SL-\\d{4}$" },
+          "uniqueItems": true
+        },
+        "decisions": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/decision" }
+        },
+        "blockers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/blocker" }
+        },
+        "nextAction": { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  }
 }

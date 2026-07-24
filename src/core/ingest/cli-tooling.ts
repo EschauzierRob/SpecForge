@@ -371,6 +371,7 @@ async function loadOverlayFile(filePath, repoRoot) {
     version: String(payload.version ?? ""),
     repositoryId: String(payload.repositoryId ?? ""),
     entries: Array.isArray(payload.entries) ? payload.entries : [],
+    executionSlices: Array.isArray(payload.executionSlices) ? payload.executionSlices : [],
   };
 }
 
@@ -422,6 +423,17 @@ function validateResult(composeResult) {
         specId: node.id,
       });
     }
+  }
+
+  const slices = composeResult.overlayFiles.flatMap((overlayFile) => overlayFile.executionSlices ?? []);
+  const activeSlices = slices.filter((slice) => slice?.planningStatus === "in_progress" || slice?.planningStatus === "blocked");
+  if (activeSlices.length > 1) {
+    findings.push({
+      ruleId: "V-203",
+      severity: "error",
+      message: "Low-WIP policy allows one active thematic execution slice.",
+      sourcePaths: composeResult.overlayFiles.map((overlayFile) => overlayFile.sourcePath),
+    });
   }
 
   const bySeverity = { error: 0, warning: 0, info: 0 };
@@ -652,4 +664,3 @@ export async function bootstrapSpecForgeCliTooling(repoRoot: string): Promise<Wo
   actions.push(...await addPackageScriptsIfSafe(repoRoot));
   return actions;
 }
-

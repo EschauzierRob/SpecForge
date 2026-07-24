@@ -17,6 +17,47 @@ async function createTempRepo(): Promise<string> {
   return root;
 }
 
+function createValidSlice(): Record<string, unknown> {
+  return {
+    sliceId: "SL-0001",
+    title: "Parity proof",
+    planningStatus: "in_progress",
+    linkedSpecIds: ["F-0001"],
+    objective: "Prove exact parity.",
+    hypothesis: "The new route preserves behavior.",
+    entryCriteria: [
+      { criterionId: "EC-001", description: "Fixtures are sealed.", met: true, evidenceIds: ["OE-001"] },
+    ],
+    scope: {
+      included: ["Classifier parity"],
+      excluded: ["Production routing"],
+    },
+    work: [
+      { workId: "PW-001", specId: "F-0001", type: "validation", description: "Run parity fixtures." },
+    ],
+    exitCriteria: [
+      { criterionId: "XC-001", description: "Parity result is recorded.", met: false },
+    ],
+    requiredEvidence: [
+      { evidenceId: "RE-001", description: "Sealed fixture parity report." },
+    ],
+    observedEvidence: [
+      {
+        evidenceId: "OE-001",
+        description: "Fixture seal report.",
+        satisfies: [],
+        assessment: "passed",
+        artifactPath: "reports/seal.json",
+      },
+    ],
+    killCriteria: ["Domain leakage is required."],
+    dependencySliceIds: [],
+    decisions: [],
+    blockers: [],
+    nextAction: "Run the parity harness.",
+  };
+}
+
 test("discoverOverlayFiles finds overlay payloads recursively and ignores schema and hidden paths", async () => {
   const root = await createTempRepo();
   await mkdir(path.join(root, "specforge", "overlay", "examples"), { recursive: true });
@@ -80,6 +121,52 @@ test("loadOverlayFile parses a valid overlay file", async () => {
   assert.equal(result.overlayFile?.entries.length, 1);
   assert.equal(result.overlayFile?.entries[0]?.planningStatus, "ready");
   assert.deepEqual(result.diagnostics, []);
+});
+
+test("loadOverlayFile parses version 0.2 execution slices and keeps version 0.1 compatible", async () => {
+  const root = await createTempRepo();
+  const versionTwoPath = path.join(root, "specforge", "overlay", "slices.overlay.json");
+  await writeFile(
+    versionTwoPath,
+    JSON.stringify({
+      version: "0.2",
+      repositoryId: "sample",
+      entries: [],
+      executionSlices: [createValidSlice()],
+    }),
+  );
+
+  const versionTwo = await loadOverlayFile(versionTwoPath, root);
+  assert.equal(versionTwo.overlayFile?.executionSlices.length, 1);
+  assert.equal(versionTwo.overlayFile?.executionSlices[0]?.sliceId, "SL-0001");
+  assert.equal(versionTwo.diagnostics.length, 0);
+
+  const versionOnePath = path.join(root, "specforge", "overlay", "legacy.overlay.json");
+  await writeFile(
+    versionOnePath,
+    JSON.stringify({ version: "0.1", repositoryId: "sample", entries: [] }),
+  );
+  const versionOne = await loadOverlayFile(versionOnePath, root);
+  assert.deepEqual(versionOne.overlayFile?.executionSlices, []);
+});
+
+test("loadOverlayFile omits malformed execution slices with an actionable diagnostic", async () => {
+  const root = await createTempRepo();
+  const filePath = path.join(root, "specforge", "overlay", "invalid-slice.overlay.json");
+  const invalidSlice = { ...createValidSlice(), nextActions: ["Do too many things"], nextAction: undefined };
+  await writeFile(
+    filePath,
+    JSON.stringify({
+      version: "0.2",
+      repositoryId: "sample",
+      entries: [],
+      executionSlices: [invalidSlice],
+    }),
+  );
+
+  const result = await loadOverlayFile(filePath, root);
+  assert.deepEqual(result.overlayFile?.executionSlices, []);
+  assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === "invalid-execution-slice"));
 });
 
 test("loadOverlayFile reports malformed JSON and invalid file shapes", async () => {

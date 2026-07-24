@@ -38,6 +38,10 @@ function formatBootstrapSummary(bootstrap: WorkspaceBootstrapSummary): string[] 
   ];
 }
 
+function countExecutionSlices(result: { overlayFiles: Array<{ executionSlices?: unknown[] }> }): number {
+  return result.overlayFiles.reduce((count, overlayFile) => count + (overlayFile.executionSlices?.length ?? 0), 0);
+}
+
 export function formatIngestSummary(result: Awaited<ReturnType<typeof ingestRepository>>): string[] {
   const parserDiagnosticCounts = countDiagnostics(result.diagnostics);
   const compositionDiagnosticCounts = countDiagnostics(result.compositionDiagnostics);
@@ -47,6 +51,7 @@ export function formatIngestSummary(result: Awaited<ReturnType<typeof ingestRepo
     ...formatBootstrapSummary(result.discovery.bootstrap),
     `spec files: ${result.discovery.specFileCount}`,
     `overlay files: ${result.discovery.overlayFileCount}`,
+    `execution slices: ${countExecutionSlices(result)}`,
     `parsed nodes: ${result.canonicalNodes.length}`,
     `composed nodes: ${result.composedNodes.length}`,
     `overlay directory detected: ${result.discovery.hasOverlayDirectory ? "yes" : "no"}`,
@@ -79,6 +84,7 @@ export function formatComposeSummary(result: Awaited<ReturnType<typeof composeRe
     ...formatBootstrapSummary(result.discovery.bootstrap),
     `spec files: ${result.discovery.specFileCount}`,
     `overlay files: ${result.discovery.overlayFileCount}`,
+    `execution slices: ${countExecutionSlices(result)}`,
     `parsed nodes: ${result.canonicalNodes.length}`,
     `composed nodes: ${result.composedNodes.length}`,
     `overlay directory detected: ${result.discovery.hasOverlayDirectory ? "yes" : "no"}`,

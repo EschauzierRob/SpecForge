@@ -50,14 +50,36 @@ function scoreParentDistance(sourcePath: string, parentSourcePath: string): numb
   return sourceSegments.length + parentSegments.length - 2 * sharedPrefix;
 }
 
+function scoreNameOverlap(sourcePath: string, node: CanonicalNode): number {
+  const ignoredTokens = new Set(["slice", "epic", "feature", "story", "task", "md"]);
+  const sourceTokens = new Set(
+    path.posix.basename(sourcePath)
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token.length > 2 && !ignoredTokens.has(token)),
+  );
+  const parentTokens = new Set(
+    `${node.title} ${path.posix.basename(node.sourcePath)}`
+      .toLowerCase()
+      .split(/[^a-z0-9]+/)
+      .filter((token) => token.length > 2 && !ignoredTokens.has(token)),
+  );
+  return Array.from(sourceTokens).filter((token) => parentTokens.has(token)).length;
+}
+
 function selectNearestEpicOrFeature(sourcePath: string, nodes: CanonicalNode[]): CanonicalNode | undefined {
   const eligible = nodes.filter((node) => node.type === "epic" || node.type === "feature");
   return eligible
-    .map((node) => ({ node, distance: scoreParentDistance(sourcePath, node.sourcePath) }))
+    .map((node) => ({
+      node,
+      distance: scoreParentDistance(sourcePath, node.sourcePath),
+      nameOverlap: scoreNameOverlap(sourcePath, node),
+    }))
     .sort(
       (left, right) =>
         left.distance - right.distance ||
         (left.node.type === "feature" ? -1 : 1) - (right.node.type === "feature" ? -1 : 1) ||
+        right.nameOverlap - left.nameOverlap ||
         left.node.id.localeCompare(right.node.id),
     )[0]?.node;
 }

@@ -2,6 +2,7 @@ import { FormEvent, useEffect, useMemo, useReducer, useState } from "react";
 
 import { Board } from "./Board";
 import { Detail } from "./Detail";
+import { Slices } from "./Slices";
 import { WarningsPanel } from "./WarningsPanel";
 import { fetchCompose, fetchContext, fetchRecommend, fetchValidate } from "./lib/api";
 import type {
@@ -31,7 +32,7 @@ import {
 const THEME_STORAGE_KEY = "specforge.theme";
 type Theme = "light" | "dark";
 
-const screens: UiScreen[] = ["Overview", "Tree", "Board", "Detail", "Warnings", "Next Work"];
+const screens: UiScreen[] = ["Overview", "Tree", "Board", "Slices", "Detail", "Warnings", "Next Work"];
 
 function MetricCard(props: { label: string; value: number | string }): JSX.Element {
   return (
@@ -549,6 +550,15 @@ export default function App(): JSX.Element {
             onNavigate={(specId) => handleItemSelected(specId, true)}
           />
         </div>
+      );
+    }
+
+    if (state.activeScreen === "Slices") {
+      return (
+        <Slices
+          composeResult={state.composeResult}
+          onOpenSpec={(specId) => handleItemSelected(specId, true)}
+        />
       );
     }
 

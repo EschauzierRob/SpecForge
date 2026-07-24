@@ -11,6 +11,7 @@ import type {
   CanonicalNode,
   CompositionDiagnostic,
   IngestResult,
+  ExecutionSlice,
   OverlayFile,
   ParserDiagnostic,
 } from "../src/index.ts";
@@ -84,6 +85,45 @@ function createIngestResult(overrides: Partial<IngestResult> = {}): IngestResult
     diagnostics: [],
     compositionDiagnostics: [],
     ...overrides,
+  };
+}
+
+function createExecutionSlice(overrides: Partial<ExecutionSlice> = {}): ExecutionSlice {
+  return {
+    sliceId: "SL-0001",
+    title: "Validated slice",
+    planningStatus: "done",
+    resolution: "validated",
+    linkedSpecIds: ["F-0001"],
+    objective: "Prove the behavior.",
+    entryCriteria: [{ criterionId: "EC-001", description: "Ready.", met: true }],
+    scope: { included: ["Behavior proof"], excluded: ["Production rollout"] },
+    work: [{ workId: "PW-001", specId: "F-0001", type: "validation", description: "Run proof." }],
+    exitCriteria: [{ criterionId: "XC-001", description: "Proof recorded.", met: true, evidenceIds: ["OE-001"] }],
+    requiredEvidence: [{ evidenceId: "RE-001", description: "Passing report." }],
+    observedEvidence: [{
+      evidenceId: "OE-001",
+      description: "Passing report.",
+      satisfies: ["RE-001"],
+      assessment: "passed",
+      artifactPath: "reports/proof.json",
+    }],
+    killCriteria: [],
+    dependencySliceIds: [],
+    decisions: [],
+    blockers: [],
+    nextAction: "Use the result for the next decision.",
+    ...overrides,
+  };
+}
+
+function createSliceOverlay(...executionSlices: ExecutionSlice[]): OverlayFile {
+  return {
+    sourcePath: "specforge/overlay/local-dev.overlay.json",
+    version: "0.2",
+    repositoryId: "specforge-local",
+    entries: [],
+    executionSlices,
   };
 }
 
@@ -242,6 +282,10 @@ test("validateIngestResult emits adapter-specific V-007 warning for non-canonica
         ...createIngestResult().discovery,
         specDiscoveryProfile: "bitbetmatic2",
         validationProfile: "bitbetmatic2",
+        discoveredSpecFiles: [
+          "specs/epic-0001-sample/epic.md",
+          "specs/epic-0001-sample/feat-0001-feature.md",
+        ],
       },
       canonicalNodes: [createCanonicalNode(), feature],
       composedNodes: [{ spec: createCanonicalNode() }, { spec: feature }],
@@ -253,7 +297,8 @@ test("validateIngestResult emits adapter-specific V-007 warning for non-canonica
       (finding) =>
         finding.ruleId === "V-007" &&
         finding.specId === "F-0001" &&
-        finding.message.includes("non-canonical but understood"),
+        finding.message.includes("non-canonical") &&
+        finding.message.includes("understood"),
     ),
   );
 });
@@ -304,6 +349,7 @@ test("validateIngestResult maps overlay validation rules from composition diagno
           dependencies: ["F-9999"],
         },
       ],
+      executionSlices: [],
     },
   ];
   const compositionDiagnostics: CompositionDiagnostic[] = [
@@ -343,6 +389,70 @@ test("validateIngestResult maps overlay validation rules from composition diagno
   assert.ok(result.findings.some((finding) => finding.ruleId === "V-102"));
   assert.ok(result.findings.some((finding) => finding.ruleId === "V-103"));
   assert.ok(result.findings.some((finding) => finding.ruleId === "V-104"));
+});
+
+test("validateIngestResult accepts evidence-backed positive and negative slice closure", () => {
+  const disproved = createExecutionSlice({
+    sliceId: "SL-0002",
+    resolution: "disproved",
+    observedEvidence: [{
+      evidenceId: "OE-001",
+      description: "Parity mismatch report.",
+      satisfies: ["RE-001"],
+      assessment: "failed",
+    }],
+  });
+  const firstResult = validateIngestResult(createIngestResult({
+    overlayFiles: [createSliceOverlay(createExecutionSlice())],
+  }));
+  const secondResult = validateIngestResult(createIngestResult({
+    overlayFiles: [createSliceOverlay(disproved)],
+  }));
+
+  assert.equal(firstResult.findings.filter((finding) => finding.ruleId.startsWith("V-2")).length, 0);
+  assert.equal(secondResult.findings.filter((finding) => finding.ruleId.startsWith("V-2")).length, 0);
+});
+
+test("validateIngestResult enforces active slice WIP across in-progress and blocked states", () => {
+  const active = createExecutionSlice({
+    sliceId: "SL-0001",
+    planningStatus: "in_progress",
+    resolution: undefined,
+    exitCriteria: [{ criterionId: "XC-001", description: "Proof recorded.", met: false }],
+    observedEvidence: [],
+  });
+  const blocked = createExecutionSlice({
+    sliceId: "SL-0002",
+    planningStatus: "blocked",
+    resolution: undefined,
+    blockers: [{ blockerId: "B-001", description: "Fixture unavailable.", status: "open" }],
+    exitCriteria: [{ criterionId: "XC-001", description: "Proof recorded.", met: false }],
+    observedEvidence: [],
+  });
+  const result = validateIngestResult(createIngestResult({
+    overlayFiles: [createSliceOverlay(active, blocked)],
+  }));
+
+  assert.ok(result.findings.some((finding) => finding.ruleId === "V-203"));
+});
+
+test("validateIngestResult rejects unsupported closure and slice references", () => {
+  const invalid = createExecutionSlice({
+    linkedSpecIds: ["F-9999"],
+    resolution: "validated",
+    observedEvidence: [{
+      evidenceId: "OE-001",
+      description: "Failed report.",
+      satisfies: ["RE-999"],
+      assessment: "failed",
+    }],
+  });
+  const result = validateIngestResult(createIngestResult({
+    overlayFiles: [createSliceOverlay(invalid)],
+  }));
+
+  assert.ok(result.findings.some((finding) => finding.ruleId === "V-201"));
+  assert.ok(result.findings.some((finding) => finding.ruleId === "V-205"));
 });
 
 test("validateIngestResult maps parser diagnostics into validation findings and summarizes deterministically", () => {

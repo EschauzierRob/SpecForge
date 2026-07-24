@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "repositoryId": "specforge-local",
   "entries": [
     {
@@ -224,5 +224,6 @@
       "specId": "S-0301",
       "planningStatus": "done"
     }
-  ]
+  ],
+  "executionSlices": []
 }

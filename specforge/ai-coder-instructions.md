@@ -18,6 +18,16 @@ Follow these rules for AI-assisted implementation in this repository.
    - `tags`
 7. Run SpecForge parse, compose, and validate checks before finishing when the toolchain is available.
 
+Thematic implementation should be represented by an execution slice when the overlay uses version `0.2`. Small unrelated defects may be fixed without blocking the active slice when their overlay entry is tagged `incidental`. Keep incidental work bounded; do not use it to hide a second active theme.
+
+For an active slice:
+
+- do not copy canonical acceptance criteria into the slice
+- treat `requiredEvidence` as baselined once work starts
+- add actual results to `observedEvidence` and link them through `satisfies`
+- record a decision if the evidence threshold changes
+- close with `resolution: validated`, `disproved`, or `killed`
+
 Preferred local commands:
 
 - `specforge/bin/specforge parse .`

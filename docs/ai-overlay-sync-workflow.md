@@ -6,6 +6,8 @@ Use this workflow whenever AI-assisted implementation changes code, docs, tests,
 
 The goal is to keep `specforge/overlay/local-dev.overlay.json` aligned with actual implementation progress without mutating canonical spec markdown.
 
+When the overlay uses version `0.2`, thematic work also belongs to an execution slice. Keep the active slice's work, evidence, blockers, decisions, and single next action current. A small unrelated repair may stay outside the slice when its ordinary overlay entry is tagged `incidental`.
+
 ## Required Inputs
 
 - the target spec IDs for the slice being implemented
