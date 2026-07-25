@@ -1,5 +1,5 @@
 import { constants } from "node:fs";
-import { access, mkdir, writeFile } from "node:fs/promises";
+import { access, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import type { WorkspaceBootstrapAction, WorkspaceBootstrapSummary } from "../model/types.ts";
@@ -65,6 +65,7 @@ Use \`specforge/overlay/local-dev.overlay.json\` for local planning state.
 - Entries link to specs by stable \`specId\`.
 - Supported planning statuses are \`backlog\`, \`ready\`, \`in_progress\`, \`blocked\`, and \`done\`.
 - Version 0.2 overlays may define first-class \`executionSlices\` for bounded thematic work and evidence.
+- A valid local version 0.1 overlay is upgraded additively to version 0.2 during workspace bootstrap.
 - Tag small out-of-slice maintenance entries with \`incidental\`; incidental work does not consume thematic slice WIP.
 - Keep overlay metadata out of \`/specs\` markdown.
 - AI-assisted implementation must update overlay entries for changed target spec IDs.
@@ -205,11 +206,60 @@ Before AI-assisted implementation, read \`specforge/ai-coder-instructions.md\` a
 function createAction(
   kind: WorkspaceBootstrapAction["kind"],
   relativePath: string,
+  operation?: WorkspaceBootstrapAction["operation"],
+  reason?: string,
 ): WorkspaceBootstrapAction {
   return {
     kind,
     path: normalizePath(relativePath),
+    ...(operation ? { operation } : {}),
+    ...(reason ? { reason } : {}),
   };
+}
+
+async function migrateLocalOverlayToV02(
+  overlayFilePath: string,
+): Promise<WorkspaceBootstrapAction | undefined> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(await readFile(overlayFilePath, "utf8"));
+  } catch {
+    return undefined;
+  }
+
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
+    return undefined;
+  }
+
+  const payload = parsed as Record<string, unknown>;
+  if (payload.version !== "0.1") {
+    return undefined;
+  }
+
+  const supportedKeys = new Set(["version", "repositoryId", "entries", "executionSlices"]);
+  const hasUnknownKeys = Object.keys(payload).some((key) => !supportedKeys.has(key));
+  const hasValidShape =
+    typeof payload.repositoryId === "string"
+    && payload.repositoryId.trim().length > 0
+    && Array.isArray(payload.entries)
+    && (payload.executionSlices === undefined || Array.isArray(payload.executionSlices));
+
+  if (hasUnknownKeys || !hasValidShape) {
+    return createAction(
+      "file",
+      "specforge/overlay/local-dev.overlay.json",
+      "skipped",
+      "v0.1 overlay shape is not safe for automatic migration",
+    );
+  }
+
+  const migrated = {
+    ...payload,
+    version: "0.2",
+    executionSlices: payload.executionSlices ?? [],
+  };
+  await writeFile(overlayFilePath, `${JSON.stringify(migrated, null, 2)}\n`, "utf8");
+  return createAction("file", "specforge/overlay/local-dev.overlay.json", "updated");
 }
 
 export async function bootstrapWorkspace(repoRoot: string): Promise<WorkspaceBootstrapSummary> {
@@ -257,6 +307,11 @@ export async function bootstrapWorkspace(repoRoot: string): Promise<WorkspaceBoo
   if (!await exists(overlayFilePath)) {
     await writeFile(overlayFilePath, createDefaultOverlayFile(repoRoot), "utf8");
     actions.push(createAction("file", "specforge/overlay/local-dev.overlay.json"));
+  } else {
+    const overlayMigrationAction = await migrateLocalOverlayToV02(overlayFilePath);
+    if (overlayMigrationAction) {
+      actions.push(overlayMigrationAction);
+    }
   }
 
   if (!await exists(aiCoderInstructionsPath)) {
@@ -273,6 +328,12 @@ export async function bootstrapWorkspace(repoRoot: string): Promise<WorkspaceBoo
 
   return {
     actions,
-    createdCount: actions.length,
+    createdCount: actions.filter((action) => !action.operation).length,
+    ...(actions.some((action) => action.operation === "updated")
+      ? { updatedCount: actions.filter((action) => action.operation === "updated").length }
+      : {}),
+    ...(actions.some((action) => action.operation === "skipped")
+      ? { skippedCount: actions.filter((action) => action.operation === "skipped").length }
+      : {}),
   };
 }

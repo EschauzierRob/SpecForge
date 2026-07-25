@@ -1,11 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { execFile } from "node:child_process";
 import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
 import { discoverRepository } from "../src/index.ts";
 import { runCli } from "../src/cli.ts";
+import { createCliToolingFileContents } from "../src/core/ingest/cli-tooling.ts";
 import { createRepositoryEdgeFixture } from "./fixtures/repository-edge-fixtures.ts";
 
 async function createTempRepo(): Promise<string> {
@@ -44,6 +46,34 @@ Bootstrap coverage epic.
   );
 
   return root;
+}
+
+async function installGeneratedCli(root: string, version: "0.1.0" | "0.2.0"): Promise<void> {
+  for (const [relativePath, content] of createCliToolingFileContents(version)) {
+    const targetPath = path.join(root, relativePath);
+    await mkdir(path.dirname(targetPath), { recursive: true });
+    await writeFile(targetPath, content, "utf8");
+  }
+}
+
+async function executeLocalCli(
+  root: string,
+  command: string,
+): Promise<{ exitCode: number; stdout: string; stderr: string }> {
+  return new Promise((resolve) => {
+    execFile(
+      process.execPath,
+      [path.join(root, "specforge", "tools", "specforge-cli.mjs"), command, root, "--json"],
+      { encoding: "utf8" },
+      (error, stdout, stderr) => {
+        resolve({
+          exitCode: typeof error?.code === "number" ? error.code : 0,
+          stdout,
+          stderr,
+        });
+      },
+    );
+  });
 }
 
 test("discoverRepository rejects an invalid path", async () => {
@@ -183,7 +213,7 @@ test("discoverRepository bootstraps the overlay directory and seeded local overl
   ]);
   assert.equal(discovery.cliTooling.runtimePath, "specforge/tools/specforge-cli.mjs");
   assert.equal(discovery.cliTooling.manifestPath, "specforge/tools/specforge-cli.manifest.json");
-  assert.equal(discovery.cliTooling.version, "0.1.0");
+  assert.equal(discovery.cliTooling.version, "0.2.0");
 
   const overlayPayload = JSON.parse(
     await readFile(path.join(root, "specforge", "overlay", "local-dev.overlay.json"), "utf8"),
@@ -295,6 +325,144 @@ test("discoverRepository repairs partial local CLI tooling and reports availabil
   ]);
   assert.equal(discovery.cliTooling.status, "available");
   assert.equal(discovery.cliTooling.manifestPath, "specforge/tools/specforge-cli.manifest.json");
+});
+
+test("discoverRepository upgrades an untouched v0.1 consumer to v0.2 idempotently", async () => {
+  const root = await createBootstrapCandidate(true);
+  const legacyEntries = [
+    {
+      specId: "E-0001",
+      planningStatus: "ready",
+      notes: "Preserve this consumer-owned value.",
+    },
+  ];
+  const overlayPath = path.join(root, "specforge", "overlay", "local-dev.overlay.json");
+  await writeFile(
+    overlayPath,
+    `${JSON.stringify({ version: "0.1", repositoryId: "legacy-consumer", entries: legacyEntries }, null, 2)}\n`,
+  );
+  await installGeneratedCli(root, "0.1.0");
+
+  const first = await discoverRepository(root);
+  const migratedOverlay = JSON.parse(await readFile(overlayPath, "utf8"));
+  const migratedManifest = JSON.parse(
+    await readFile(path.join(root, "specforge", "tools", "specforge-cli.manifest.json"), "utf8"),
+  );
+
+  assert.equal(migratedOverlay.version, "0.2");
+  assert.equal(migratedOverlay.repositoryId, "legacy-consumer");
+  assert.deepEqual(migratedOverlay.entries, legacyEntries);
+  assert.deepEqual(migratedOverlay.executionSlices, []);
+  assert.equal(migratedManifest.version, "0.2.0");
+  assert.deepEqual(
+    Object.keys(migratedManifest.managedFiles).sort(),
+    [
+      "specforge/bin/specforge",
+      "specforge/bin/specforge.cmd",
+      "specforge/bin/specforge.ps1",
+      "specforge/tools/README.md",
+      "specforge/tools/specforge-cli.mjs",
+    ],
+  );
+  assert.equal(first.cliTooling.status, "available");
+  assert.equal(first.cliTooling.version, "0.2.0");
+  assert.ok(first.bootstrap.actions.some(
+    (action) => action.path === "specforge/overlay/local-dev.overlay.json" && action.operation === "updated",
+  ));
+  assert.ok(first.bootstrap.actions.some(
+    (action) => action.path === "specforge/tools/specforge-cli.manifest.json" && action.operation === "updated",
+  ));
+
+  const compose = await executeLocalCli(root, "compose");
+  assert.equal(compose.exitCode, 0, compose.stderr);
+  assert.deepEqual(JSON.parse(compose.stdout).overlayFiles[0].executionSlices, []);
+
+  migratedOverlay.executionSlices = [
+    { sliceId: "SL-0001", planningStatus: "in_progress" },
+    { sliceId: "SL-0002", planningStatus: "blocked" },
+  ];
+  await writeFile(overlayPath, `${JSON.stringify(migratedOverlay, null, 2)}\n`);
+  const validate = await executeLocalCli(root, "validate");
+  assert.equal(validate.exitCode, 1);
+  assert.equal(JSON.parse(validate.stdout).summary.byRuleId["V-203"], 1);
+
+  migratedOverlay.executionSlices = [];
+  await writeFile(overlayPath, `${JSON.stringify(migratedOverlay, null, 2)}\n`);
+  const second = await discoverRepository(root);
+  assert.deepEqual(second.bootstrap.actions, []);
+  assert.equal(second.bootstrap.createdCount, 0);
+});
+
+test("discoverRepository preserves customized v0.1 CLI artifacts and reports the skipped upgrade", async () => {
+  const root = await createBootstrapCandidate(true);
+  const overlayPath = path.join(root, "specforge", "overlay", "local-dev.overlay.json");
+  await writeFile(
+    overlayPath,
+    `${JSON.stringify({ version: "0.1", repositoryId: "custom-consumer", entries: [] }, null, 2)}\n`,
+  );
+  await installGeneratedCli(root, "0.1.0");
+  const runtimePath = path.join(root, "specforge", "tools", "specforge-cli.mjs");
+  const customizedRuntime = `${await readFile(runtimePath, "utf8")}\n// consumer customization\n`;
+  await writeFile(runtimePath, customizedRuntime);
+
+  const discovery = await discoverRepository(root);
+  const manifest = JSON.parse(
+    await readFile(path.join(root, "specforge", "tools", "specforge-cli.manifest.json"), "utf8"),
+  );
+
+  assert.equal(await readFile(runtimePath, "utf8"), customizedRuntime);
+  assert.equal(manifest.version, "0.1.0");
+  assert.equal(discovery.cliTooling.status, "customized");
+  assert.equal(discovery.cliTooling.version, "0.1.0");
+  assert.ok(discovery.bootstrap.actions.some(
+    (action) =>
+      action.path === "specforge/tools/specforge-cli.manifest.json"
+      && action.operation === "skipped"
+      && action.reason?.includes("customized"),
+  ));
+  assert.equal(JSON.parse(await readFile(overlayPath, "utf8")).version, "0.2");
+});
+
+test("discoverRepository does not promote a customized v0.1 manifest", async () => {
+  const root = await createBootstrapCandidate(true);
+  await installGeneratedCli(root, "0.1.0");
+  const manifestPath = path.join(root, "specforge", "tools", "specforge-cli.manifest.json");
+  const customizedManifest = JSON.parse(await readFile(manifestPath, "utf8"));
+  customizedManifest.consumerNote = "keep this";
+  const customizedContent = `${JSON.stringify(customizedManifest, null, 2)}\n`;
+  await writeFile(manifestPath, customizedContent);
+
+  const discovery = await discoverRepository(root);
+
+  assert.equal(await readFile(manifestPath, "utf8"), customizedContent);
+  assert.equal(discovery.cliTooling.status, "customized");
+  assert.ok(discovery.bootstrap.actions.some(
+    (action) => action.path === "specforge/tools/specforge-cli.manifest.json"
+      && action.operation === "skipped",
+  ));
+});
+
+test("discoverRepository leaves unsupported v0.1 overlays untouched and reports the skipped migration", async () => {
+  const root = await createBootstrapCandidate(true);
+  const overlayPath = path.join(root, "specforge", "overlay", "local-dev.overlay.json");
+  const unsupportedOverlay = {
+    version: "0.1",
+    repositoryId: "legacy-consumer",
+    entries: [],
+    consumerExtension: { owner: "consumer" },
+  };
+  const originalContent = `${JSON.stringify(unsupportedOverlay, null, 2)}\n`;
+  await writeFile(overlayPath, originalContent);
+
+  const discovery = await discoverRepository(root);
+
+  assert.equal(await readFile(overlayPath, "utf8"), originalContent);
+  assert.ok(discovery.bootstrap.actions.some(
+    (action) =>
+      action.path === "specforge/overlay/local-dev.overlay.json"
+      && action.operation === "skipped"
+      && action.reason?.includes("not safe"),
+  ));
 });
 
 test("bootstrapped local CLI tooling is detectable and command-compatible", async () => {

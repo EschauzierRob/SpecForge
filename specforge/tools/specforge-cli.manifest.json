@@ -1,6 +1,6 @@
 {
   "name": "specforge-local-cli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "runtime": "specforge/tools/specforge-cli.mjs",
   "launchers": [
     "specforge/bin/specforge.ps1",
@@ -13,5 +13,12 @@
     "ingest",
     "validate"
   ],
-  "node": ">=22.0.0"
+  "node": ">=22.0.0",
+  "managedFiles": {
+    "specforge/bin/specforge": "e097b03dd0341a4589b9116053463929ffe32e92fbfb8b089fa83d97bd449ee0",
+    "specforge/bin/specforge.cmd": "16b1835fc67d15fac0a402db1743be2c7883e1cdc0f03a4b5ba7e442912511e0",
+    "specforge/bin/specforge.ps1": "3e1afa63d70ea82ad8970dc322c76f32b0c851153787912554fb9903d24d7427",
+    "specforge/tools/README.md": "6696c89c287bc85998416fc4ff8c83b9d46445b5faf18f608ca6aec4d4923264",
+    "specforge/tools/specforge-cli.mjs": "2c82f7cbb915bec66e3cda37e8722e72909b5563d8e4b88463086ad22eb5309b"
+  }
 }

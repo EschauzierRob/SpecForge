@@ -28,13 +28,15 @@ function countDiagnostics(
 }
 
 function formatBootstrapSummary(bootstrap: WorkspaceBootstrapSummary): string[] {
-  if (bootstrap.createdCount === 0) {
+  if (bootstrap.actions.length === 0) {
     return [];
   }
 
   return [
-    `bootstrap created artifacts: ${bootstrap.createdCount}`,
-    ...bootstrap.actions.map((action) => `bootstrap created ${action.kind}: ${action.path}`),
+    `bootstrap artifacts: created=${bootstrap.createdCount}, updated=${bootstrap.updatedCount ?? 0}, skipped=${bootstrap.skippedCount ?? 0}`,
+    ...bootstrap.actions.map((action) =>
+      `bootstrap ${action.operation ?? "created"} ${action.kind}: ${action.path}${action.reason ? ` (${action.reason})` : ""}`
+    ),
   ];
 }
 

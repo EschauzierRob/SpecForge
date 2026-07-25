@@ -10,6 +10,8 @@ Overlay files store planning and execution metadata independent of product specs
 - version `0.2` overlays may contain `executionSlices`
 - version `0.1` overlays remain readable and compose with an empty slice collection
 
+When a repository is opened, a valid local version `0.1` overlay is upgraded in place to `0.2` by preserving `repositoryId` and `entries` and adding `executionSlices`. Unsupported or extended version `0.1` shapes are left untouched and reported as skipped.
+
 ## Execution Slices
 
 Execution slices are bounded thematic work packages. They link to canonical specs without becoming part of the `Epic -> Feature -> Story -> Task` hierarchy. A slice owns its planned execution work, scope, entry and exit criteria, required and observed evidence, decisions, blockers, and one concrete next action.

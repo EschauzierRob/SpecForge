@@ -10,7 +10,7 @@ export type InferenceStrategyId = "naming" | "directory-adjacency" | "content-re
 export type InferenceCandidateState = "selected" | "candidate" | "ambiguous" | "rejected";
 export type InferenceRelationshipState = "explicit" | "inferred" | "ambiguous" | "unresolved";
 export type SpecDiscoveryAdapterProfile = "canonical" | "bitbetmatic2";
-export type SpecForgeCliToolingAvailability = "available" | "missing" | "partial";
+export type SpecForgeCliToolingAvailability = "available" | "missing" | "partial" | "outdated" | "customized";
 
 export interface ParserDiagnostic {
   severity: DiagnosticSeverity;
@@ -42,11 +42,15 @@ export interface RepositoryDiscovery {
 export interface WorkspaceBootstrapAction {
   kind: "directory" | "file";
   path: string;
+  operation?: "updated" | "skipped";
+  reason?: string;
 }
 
 export interface WorkspaceBootstrapSummary {
   actions: WorkspaceBootstrapAction[];
   createdCount: number;
+  updatedCount?: number;
+  skippedCount?: number;
 }
 
 export interface SpecForgeCliToolingStatus {

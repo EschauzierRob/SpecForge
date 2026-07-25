@@ -35,13 +35,14 @@ If the file is missing, create it at the required path with the minimum valid sh
 
 ```json
 {
-  "version": "0.1",
+  "version": "0.2",
   "repositoryId": "specforge-local",
-  "entries": []
+  "entries": [],
+  "executionSlices": []
 }
 ```
 
-If the file exists but is invalid, repair the JSON or unsupported fields before continuing. Do not move planning state into `/specs`.
+Workspace bootstrap upgrades a valid version `0.1` local overlay additively to `0.2`. If an existing file has an unsupported shape, bootstrap preserves it and reports a skipped migration; repair it deliberately before continuing. Do not move planning state into `/specs`.
 
 ### 3. Ensure every target spec ID has an overlay entry
 

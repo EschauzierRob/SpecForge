@@ -1,5 +1,5 @@
 {
-  "version": "0.1",
+  "version": "0.2",
   "repositoryId": "sample-spec-repo",
   "entries": [
     {
@@ -9,7 +9,10 @@
       "blocked": false,
       "dependencies": [],
       "notes": "Sample external repo entry",
-      "tags": ["example"]
+      "tags": [
+        "example"
+      ]
     }
-  ]
+  ],
+  "executionSlices": []
 }

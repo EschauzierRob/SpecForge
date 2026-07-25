@@ -87,8 +87,8 @@ test("compose CLI routes separately from ingest and keeps ingest compatibility",
   assert.equal(ingestExitCode, 0);
   assert.ok(composeOutputLines.includes("overlay files: 1"));
   assert.ok(ingestOutputLines.includes("overlay files: 1"));
-  assert.ok(composeOutputLines.includes("execution slices: 1"));
-  assert.ok(ingestOutputLines.includes("execution slices: 1"));
+  assert.ok(composeOutputLines.includes("execution slices: 2"));
+  assert.ok(ingestOutputLines.includes("execution slices: 2"));
 });
 
 test("CLI writes JSON artifacts and creates nested output directories", async () => {
@@ -145,7 +145,7 @@ test("compose CLI reports bootstrap actions when required artifacts are created"
 
   assert.equal(exitCode, 0);
   assert.deepEqual(errorLines, []);
-  assert.ok(outputLines.includes("bootstrap created artifacts: 15"));
+  assert.ok(outputLines.includes("bootstrap artifacts: created=15, updated=0, skipped=0"));
   assert.ok(outputLines.includes("bootstrap created directory: specforge"));
   assert.ok(outputLines.includes("bootstrap created directory: specforge/overlay"));
   assert.ok(outputLines.includes("bootstrap created directory: specforge/bin"));

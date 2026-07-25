@@ -1137,6 +1137,41 @@
       "specId": "T-0703",
       "planningStatus": "done",
       "dependencies": ["T-0702"]
+    },
+    {
+      "specId": "F-0025",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": ["F-0014", "F-0022", "F-0023"],
+      "notes": "Valid v0.1 overlays and verified managed CLI artifacts now upgrade safely and idempotently to v0.2.",
+      "tags": ["consumer-upgrade", "execution-slices"]
+    },
+    {
+      "specId": "S-0704",
+      "planningStatus": "done",
+      "blocked": false,
+      "notes": "Bootstrap migrates supported local overlays additively and reports unsupported shapes as skipped.",
+      "dependencies": ["F-0023"]
+    },
+    {
+      "specId": "T-0704",
+      "planningStatus": "done",
+      "blocked": false,
+      "notes": "Implemented v0.1-to-v0.2 overlay migration with entry preservation and idempotency coverage."
+    },
+    {
+      "specId": "S-0705",
+      "planningStatus": "done",
+      "blocked": false,
+      "notes": "Verified managed consumer CLI artifacts upgrade to hashed v0.2 tooling; customizations remain untouched.",
+      "dependencies": ["F-0022", "S-0704"]
+    },
+    {
+      "specId": "T-0705",
+      "planningStatus": "done",
+      "blocked": false,
+      "notes": "Implemented versioned artifact identity, safe replacement, partial repair, status reporting, and consumer CLI regression tests.",
+      "dependencies": ["T-0704"]
     }
   ],
   "executionSlices": [
@@ -1272,6 +1307,135 @@
       ],
       "blockers": [],
       "nextAction": "Review the implementation and choose the next execution slice."
+    },
+    {
+      "sliceId": "SL-0002",
+      "title": "Consumer upgrade to slice-capable overlay v0.2",
+      "planningStatus": "done",
+      "resolution": "validated",
+      "linkedSpecIds": ["F-0025", "F-0014", "F-0022", "F-0023"],
+      "objective": "Upgrade an existing untouched SpecForge v0.1 consumer to overlay and local CLI v0.2 in one safe, idempotent bootstrap pass.",
+      "hypothesis": "Managed artifact identity and additive overlay migration can make upgrades automatic without overwriting consumer customizations.",
+      "entryCriteria": [
+        {
+          "criterionId": "EC-001",
+          "description": "Overlay v0.2 loading and slice validation are already implemented.",
+          "met": true
+        },
+        {
+          "criterionId": "EC-002",
+          "description": "The current v0.1 bootstrap and manifest behavior is characterized.",
+          "met": true
+        }
+      ],
+      "scope": {
+        "included": [
+          "Additive local overlay v0.1 to v0.2 migration",
+          "Versioned managed CLI artifact hashes",
+          "Verified legacy CLI upgrade and partial repair",
+          "Customized artifact conflict preservation and reporting",
+          "Migration tests and consumer workflow documentation"
+        ],
+        "excluded": [
+          "Interactive force replacement of customized tooling",
+          "Third-party overlay migration",
+          "Team and personal overlay layers"
+        ]
+      },
+      "work": [
+        {
+          "workId": "PW-001",
+          "specId": "T-0704",
+          "type": "implementation",
+          "description": "Implement safe overlay migration and bootstrap action semantics."
+        },
+        {
+          "workId": "PW-002",
+          "specId": "T-0705",
+          "type": "implementation",
+          "description": "Implement hashed managed CLI upgrades, detection, and conflict handling."
+        },
+        {
+          "workId": "PW-003",
+          "specId": "T-0705",
+          "type": "validation",
+          "description": "Prove upgrade, idempotency, partial repair, customization preservation, and local slice support."
+        }
+      ],
+      "exitCriteria": [
+        {
+          "criterionId": "XC-001",
+          "description": "An untouched v0.1 consumer becomes overlay and CLI v0.2 in one load.",
+          "met": true,
+          "evidenceIds": ["OE-001", "OE-002"]
+        },
+        {
+          "criterionId": "XC-002",
+          "description": "A second load is idempotent and a customized runtime is preserved.",
+          "met": true,
+          "evidenceIds": ["OE-001"]
+        },
+        {
+          "criterionId": "XC-003",
+          "description": "The upgraded consumer CLI composes and validates execution slices.",
+          "met": true,
+          "evidenceIds": ["OE-002"]
+        }
+      ],
+      "requiredEvidence": [
+        {
+          "evidenceId": "RE-001",
+          "description": "Automated migration tests cover success, idempotency, partial repair, and customization conflict."
+        },
+        {
+          "evidenceId": "RE-002",
+          "description": "A bootstrapped consumer CLI reports version 0.2 and processes executionSlices."
+        },
+        {
+          "evidenceId": "RE-003",
+          "description": "Full tests, UI build, parse, compose, and validate pass."
+        }
+      ],
+      "observedEvidence": [
+        {
+          "evidenceId": "OE-001",
+          "description": "Migration regression tests prove additive overlay conversion, verified CLI upgrade, idempotency, partial repair, unsupported-overlay reporting, and customized-runtime preservation.",
+          "satisfies": ["RE-001"],
+          "assessment": "passed",
+          "command": "npm test",
+          "observedAt": "2026-07-25T00:00:00Z"
+        },
+        {
+          "evidenceId": "OE-002",
+          "description": "The upgraded repository-local CLI reports v0.2, composes executionSlices, and emits V-203 for two active thematic slices.",
+          "satisfies": ["RE-002"],
+          "assessment": "passed",
+          "command": "node specforge/tools/specforge-cli.mjs compose|validate <consumer> --json",
+          "observedAt": "2026-07-25T00:00:00Z"
+        },
+        {
+          "evidenceId": "OE-003",
+          "description": "All 114 tests and the UI production build pass; repository parse and compose have zero diagnostics and validate has zero findings.",
+          "satisfies": ["RE-003"],
+          "assessment": "passed",
+          "command": "npm test; npm --prefix ui run build; npm run parse; npm run compose; npm run validate",
+          "observedAt": "2026-07-25T00:00:00Z"
+        }
+      ],
+      "killCriteria": [
+        "Safe upgrade requires overwriting unverified consumer modifications.",
+        "Overlay entry preservation cannot be made deterministic."
+      ],
+      "dependencySliceIds": ["SL-0001"],
+      "decisions": [
+        {
+          "decisionId": "D-001",
+          "decision": "Upgrade automatically only when managed identity is verified.",
+          "reason": "Consumer customizations have higher priority than automatic version convergence."
+        }
+      ],
+      "blockers": [],
+      "nextAction": "Review the validated consumer upgrade and select the next execution slice."
     }
   ]
 }

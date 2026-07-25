@@ -1,4 +1,5 @@
 import { constants } from "node:fs";
+import { createHash } from "node:crypto";
 import { access, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
@@ -7,7 +8,8 @@ import type {
   WorkspaceBootstrapAction,
 } from "../model/types.ts";
 
-const cliToolingVersion = "0.1.0";
+const cliToolingVersion = "0.2.0";
+const legacyCliToolingVersion = "0.1.0";
 
 const requiredLauncherPaths = [
   "specforge/bin/specforge.ps1",
@@ -34,11 +36,21 @@ async function exists(targetPath: string): Promise<boolean> {
   }
 }
 
-function createAction(relativePath: string): WorkspaceBootstrapAction {
+function createAction(
+  relativePath: string,
+  operation?: WorkspaceBootstrapAction["operation"],
+  reason?: string,
+): WorkspaceBootstrapAction {
   return {
     kind: "file",
     path: normalizePath(relativePath),
+    ...(operation ? { operation } : {}),
+    ...(reason ? { reason } : {}),
   };
+}
+
+function hashContent(content: string): string {
+  return createHash("sha256").update(content).digest("hex");
 }
 
 function createPowerShellLauncher(): string {
@@ -66,22 +78,29 @@ exec node "$SCRIPT_DIR/../tools/specforge-cli.mjs" "$@"
 `;
 }
 
-function createManifest(): string {
+function createManifest(
+  managedFiles: Record<string, string> | undefined,
+  version = cliToolingVersion,
+): string {
   return `${JSON.stringify(
     {
       name: "specforge-local-cli",
-      version: cliToolingVersion,
+      version,
       runtime: "specforge/tools/specforge-cli.mjs",
       launchers: requiredLauncherPaths,
       commands: ["parse", "compose", "ingest", "validate"],
       node: ">=22.0.0",
+      ...(managedFiles ? { managedFiles } : {}),
     },
     null,
     2,
   )}\n`;
 }
 
-function createToolsReadme(): string {
+function createToolsReadme(version = cliToolingVersion): string {
+  const managementNote = version === legacyCliToolingVersion
+    ? ""
+    : "\nThe manifest records hashes for managed artifacts. SpecForge upgrades recognized generated versions automatically, repairs missing trusted files, and preserves customized files with a skipped-upgrade report.\n";
   return `# SpecForge Local CLI
 
 This directory contains the vendored SpecForge CLI runtime for this repository.
@@ -93,10 +112,10 @@ Use the launchers in \`specforge/bin/\`:
 - \`specforge/bin/specforge validate .\`
 
 The runtime is bootstrapped by SpecForge and should not be edited by hand.
-`;
+${managementNote}`;
 }
 
-function createRuntime(): string {
+function createRuntime(version = cliToolingVersion): string {
   return `#!/usr/bin/env node
 import { constants } from "node:fs";
 import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
@@ -326,7 +345,7 @@ async function discoverRepository(repoPath, adapterProfile) {
       launchers: ["specforge/bin/specforge.ps1", "specforge/bin/specforge.cmd", "specforge/bin/specforge"],
       runtimePath: "specforge/tools/specforge-cli.mjs",
       manifestPath: "specforge/tools/specforge-cli.manifest.json",
-      version: "${cliToolingVersion}",
+      version: "${version}",
     },
     specDiscoveryProfile: adapterProfile,
     validationProfile: adapterProfile,
@@ -573,14 +592,121 @@ main().catch((error) => {
 `;
 }
 
-async function readManifestVersion(repoRoot: string): Promise<string | undefined> {
+interface CliToolingManifest {
+  name?: string;
+  version?: string;
+  managedFiles?: Record<string, string>;
+}
+
+function createManagedFileContents(version: string): Map<string, string> {
+  return new Map<string, string>([
+    ["specforge/bin/specforge.ps1", createPowerShellLauncher()],
+    ["specforge/bin/specforge.cmd", createCmdLauncher()],
+    ["specforge/bin/specforge", createShellLauncher()],
+    ["specforge/tools/specforge-cli.mjs", createRuntime(version)],
+    ["specforge/tools/README.md", createToolsReadme(version)],
+  ]);
+}
+
+function toManagedHashes(fileContents: Map<string, string>): Record<string, string> {
+  return Object.fromEntries(
+    Array.from(fileContents.entries())
+      .map(([relativePath, content]) => [relativePath, hashContent(content)])
+      .sort(([left], [right]) => left.localeCompare(right)),
+  );
+}
+
+function hasExpectedManagedPaths(managedFiles: Record<string, string> | undefined): boolean {
+  if (!managedFiles) {
+    return false;
+  }
+  const expectedPaths = Array.from(createManagedFileContents(cliToolingVersion).keys()).sort();
+  return JSON.stringify(Object.keys(managedFiles).sort()) === JSON.stringify(expectedPaths);
+}
+
+export function createCliToolingFileContents(
+  version: typeof cliToolingVersion | typeof legacyCliToolingVersion,
+): Map<string, string> {
+  const managedFiles = createManagedFileContents(version);
+  const toolsReadme = managedFiles.get("specforge/tools/README.md") ?? "";
+  return new Map([
+    ...Array.from(managedFiles.entries()).filter(([relativePath]) => relativePath !== "specforge/tools/README.md"),
+    [
+      "specforge/tools/specforge-cli.manifest.json",
+      createManifest(version === legacyCliToolingVersion ? undefined : toManagedHashes(managedFiles), version),
+    ],
+    ["specforge/tools/README.md", toolsReadme],
+  ]);
+}
+
+function createCurrentFileContents(): Map<string, string> {
+  return createCliToolingFileContents(cliToolingVersion);
+}
+
+async function readManifest(repoRoot: string): Promise<CliToolingManifest | undefined> {
   const manifestPath = path.join(repoRoot, "specforge", "tools", "specforge-cli.manifest.json");
   try {
-    const payload = JSON.parse(await readFile(manifestPath, "utf8")) as { version?: unknown };
-    return typeof payload.version === "string" ? payload.version : undefined;
+    const payload = JSON.parse(await readFile(manifestPath, "utf8")) as Record<string, unknown>;
+    const managedFiles = payload.managedFiles;
+    return {
+      name: typeof payload.name === "string" ? payload.name : undefined,
+      version: typeof payload.version === "string" ? payload.version : undefined,
+      managedFiles:
+        managedFiles && typeof managedFiles === "object" && !Array.isArray(managedFiles)
+          ? Object.fromEntries(
+              Object.entries(managedFiles).filter(
+                (entry): entry is [string, string] => typeof entry[1] === "string",
+              ),
+            )
+          : undefined,
+    };
   } catch {
     return undefined;
   }
+}
+
+async function hasKnownLegacyManifestIdentity(repoRoot: string): Promise<boolean> {
+  const manifestPath = path.join(repoRoot, "specforge", "tools", "specforge-cli.manifest.json");
+  try {
+    return hashContent(await readFile(manifestPath, "utf8"))
+      === hashContent(createManifest(undefined, legacyCliToolingVersion));
+  } catch {
+    return false;
+  }
+}
+
+async function verifyPresentManagedFiles(
+  repoRoot: string,
+  expectedHashes: Record<string, string>,
+): Promise<boolean> {
+  for (const [relativePath, expectedHash] of Object.entries(expectedHashes)) {
+    const fullPath = path.join(repoRoot, relativePath);
+    if (!await exists(fullPath)) {
+      continue;
+    }
+    if (hashContent(await readFile(fullPath, "utf8")) !== expectedHash) {
+      return false;
+    }
+  }
+  return true;
+}
+
+function isFutureVersion(version: string): boolean {
+  const parse = (value: string): number[] | undefined => {
+    const match = value.match(/^(\d+)\.(\d+)\.(\d+)$/);
+    return match ? match.slice(1).map(Number) : undefined;
+  };
+  const candidate = parse(version);
+  const current = parse(cliToolingVersion);
+  if (!candidate || !current) {
+    return false;
+  }
+  for (let index = 0; index < current.length; index += 1) {
+    if (candidate[index] !== current[index]) {
+      return candidate[index] > current[index];
+    }
+  }
+  return false;
 }
 
 export async function detectSpecForgeCliTooling(repoRoot: string): Promise<SpecForgeCliToolingStatus> {
@@ -599,12 +725,38 @@ export async function detectSpecForgeCliTooling(repoRoot: string): Promise<SpecF
   const presentCount = presentLaunchers.length + Number(hasRuntime) + Number(hasManifest);
   const requiredCount = requiredLauncherPaths.length + 2;
 
+  const manifest = hasManifest ? await readManifest(repoRoot) : undefined;
+  let status: SpecForgeCliToolingStatus["status"] =
+    presentCount === 0 ? "missing" : presentCount === requiredCount ? "available" : "partial";
+
+  if (hasManifest && manifest?.version === cliToolingVersion) {
+    const hasManagedIdentity =
+      manifest.name === "specforge-local-cli"
+      && hasExpectedManagedPaths(manifest.managedFiles);
+    if (!hasManagedIdentity || !await verifyPresentManagedFiles(repoRoot, manifest.managedFiles ?? {})) {
+      status = "customized";
+    } else if (presentCount === requiredCount) {
+      status = "available";
+    }
+  } else if (hasManifest && manifest?.version) {
+    const expectedHashes = manifest.version === legacyCliToolingVersion
+      ? toManagedHashes(createManagedFileContents(legacyCliToolingVersion))
+      : manifest.managedFiles;
+    const hasTrustedManifest = manifest.version !== legacyCliToolingVersion
+      || await hasKnownLegacyManifestIdentity(repoRoot);
+    status = hasTrustedManifest
+      && expectedHashes
+      && await verifyPresentManagedFiles(repoRoot, expectedHashes)
+      ? "outdated"
+      : "customized";
+  }
+
   return {
-    status: presentCount === 0 ? "missing" : presentCount === requiredCount ? "available" : "partial",
+    status,
     launchers: presentLaunchers,
     runtimePath: hasRuntime ? runtimePath : undefined,
     manifestPath: hasManifest ? manifestPath : undefined,
-    version: hasManifest ? await readManifestVersion(repoRoot) : undefined,
+    version: manifest?.version,
   };
 }
 
@@ -643,21 +795,95 @@ async function addPackageScriptsIfSafe(repoRoot: string): Promise<WorkspaceBoots
 }
 
 export async function bootstrapSpecForgeCliTooling(repoRoot: string): Promise<WorkspaceBootstrapAction[]> {
-  const fileContents = new Map<string, string>([
-    ["specforge/bin/specforge.ps1", createPowerShellLauncher()],
-    ["specforge/bin/specforge.cmd", createCmdLauncher()],
-    ["specforge/bin/specforge", createShellLauncher()],
-    ["specforge/tools/specforge-cli.mjs", createRuntime()],
-    ["specforge/tools/specforge-cli.manifest.json", createManifest()],
-    ["specforge/tools/README.md", createToolsReadme()],
-  ]);
+  const fileContents = createCurrentFileContents();
+  const managedFileContents = createManagedFileContents(cliToolingVersion);
+  const desiredHashes = toManagedHashes(managedFileContents);
+  const legacyHashes = toManagedHashes(createManagedFileContents(legacyCliToolingVersion));
+  const manifest = await readManifest(repoRoot);
+  const manifestPath = "specforge/tools/specforge-cli.manifest.json";
   const actions: WorkspaceBootstrapAction[] = [];
+
+  const presentManagedPaths: string[] = [];
+  for (const relativePath of managedFileContents.keys()) {
+    if (await exists(path.join(repoRoot, relativePath))) {
+      presentManagedPaths.push(relativePath);
+    }
+  }
+
+  let expectedExistingHashes: Record<string, string> | undefined;
+  if (manifest?.version === cliToolingVersion) {
+    const manifestIsCurrent =
+      manifest.name === "specforge-local-cli"
+      && hasExpectedManagedPaths(manifest.managedFiles);
+    expectedExistingHashes = manifestIsCurrent ? manifest.managedFiles : undefined;
+  } else if (manifest?.version === legacyCliToolingVersion) {
+    expectedExistingHashes = await hasKnownLegacyManifestIdentity(repoRoot)
+      ? legacyHashes
+      : undefined;
+  } else if (manifest?.version && !isFutureVersion(manifest.version)) {
+    expectedExistingHashes = manifest.managedFiles;
+  } else if (!manifest) {
+    const presentMatchesCurrent = await verifyPresentManagedFiles(repoRoot, desiredHashes);
+    const presentMatchesLegacy = await verifyPresentManagedFiles(repoRoot, legacyHashes);
+    expectedExistingHashes = presentMatchesCurrent
+      ? desiredHashes
+      : presentMatchesLegacy
+        ? legacyHashes
+        : undefined;
+  }
+
+  const existingFilesAreManaged =
+    expectedExistingHashes !== undefined
+    && await verifyPresentManagedFiles(repoRoot, expectedExistingHashes);
+  const hasExistingTooling = presentManagedPaths.length > 0
+    || await exists(path.join(repoRoot, manifestPath));
+
+  if (hasExistingTooling && !existingFilesAreManaged) {
+    actions.push(
+      createAction(
+        manifestPath,
+        "skipped",
+        "existing CLI artifacts are customized, corrupt, or from an unsupported version",
+      ),
+    );
+    actions.push(...await addPackageScriptsIfSafe(repoRoot));
+    return actions;
+  }
+
+  if (manifest?.version === cliToolingVersion) {
+    for (const [relativePath, content] of fileContents) {
+      const fullPath = path.join(repoRoot, relativePath);
+      if (await exists(fullPath)) {
+        continue;
+      }
+      if (
+        relativePath !== manifestPath
+        && manifest.managedFiles?.[relativePath] !== hashContent(content)
+      ) {
+        actions.push(
+          createAction(relativePath, "skipped", "current manifest describes a customized missing artifact"),
+        );
+        continue;
+      }
+      await writeFile(fullPath, content, "utf8");
+      actions.push(createAction(relativePath));
+    }
+    actions.push(...await addPackageScriptsIfSafe(repoRoot));
+    return actions;
+  }
 
   for (const [relativePath, content] of fileContents) {
     const fullPath = path.join(repoRoot, relativePath);
     if (!await exists(fullPath)) {
       await writeFile(fullPath, content, "utf8");
       actions.push(createAction(relativePath));
+      continue;
+    }
+
+    const existingContent = await readFile(fullPath, "utf8");
+    if (existingContent !== content) {
+      await writeFile(fullPath, content, "utf8");
+      actions.push(createAction(relativePath, "updated"));
     }
   }
 

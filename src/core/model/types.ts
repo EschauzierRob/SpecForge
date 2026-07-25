@@ -52,14 +52,23 @@ export interface RepositoryDiscovery {
 export interface WorkspaceBootstrapAction {
   kind: "directory" | "file";
   path: string;
+  operation?: "updated" | "skipped";
+  reason?: string;
 }
 
 export interface WorkspaceBootstrapSummary {
   actions: WorkspaceBootstrapAction[];
   createdCount: number;
+  updatedCount?: number;
+  skippedCount?: number;
 }
 
-export type SpecForgeCliToolingAvailability = "available" | "missing" | "partial";
+export type SpecForgeCliToolingAvailability =
+  | "available"
+  | "missing"
+  | "partial"
+  | "outdated"
+  | "customized";
 
 export interface SpecForgeCliToolingStatus {
   status: SpecForgeCliToolingAvailability;
