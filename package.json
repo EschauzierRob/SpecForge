@@ -17,9 +17,13 @@
     "ui:server": "node --experimental-strip-types ./src/server.ts",
     "ui:client": "npm --prefix ui run dev",
     "ui:build": "npm --prefix ui run build",
-    "test": "node --experimental-strip-types --experimental-test-isolation=none --test ./tests/discovery.test.ts ./tests/parser.test.ts ./tests/overlay.test.ts ./tests/validation.test.ts ./tests/ingest.test.ts ./tests/inference.test.ts ./tests/drift-fixtures.test.ts ./tests/cli.test.ts ./tests/api.test.ts ./tests/ui-state.test.ts ./tests/recommendation.test.ts"
+    "test": "node --experimental-strip-types --experimental-test-isolation=none --test ./tests/discovery.test.ts ./tests/parser.test.ts ./tests/overlay.test.ts ./tests/validation.test.ts ./tests/ingest.test.ts ./tests/inference.test.ts ./tests/drift-fixtures.test.ts ./tests/cli.test.ts ./tests/api.test.ts ./tests/ui-state.test.ts ./tests/recommendation.test.ts",
+    "ui": "concurrently --kill-others --names SERVER,CLIENT \"npm run ui:server\" \"npm run ui:client\""
   },
   "engines": {
     "node": ">=22.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.4"
   }
 }
