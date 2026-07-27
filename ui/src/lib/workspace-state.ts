@@ -10,6 +10,7 @@ import type {
 export type UiWorkspaceAction =
   | { type: "contextLoaded"; repoPath: string }
   | { type: "repoPathChanged"; repoPath: string }
+  | { type: "workspaceRestored"; repoPath?: string; screen: UiScreen; selectedItemId?: string }
   | { type: "screenChanged"; screen: UiScreen }
   | { type: "itemSelected"; specId?: string }
   | { type: "loadStarted" }
@@ -20,6 +21,7 @@ export type UiWorkspaceAction =
     composeResult: ComposeRepositoryResult;
     validationResult: ValidationResult;
     recommendationResult: RecommendationResult;
+    selectedItemId?: string;
   }
   | { type: "loadFailed"; message: string };
 
@@ -70,6 +72,15 @@ export function workspaceReducer(
     };
   }
 
+  if (action.type === "workspaceRestored") {
+    return {
+      ...state,
+      repoPath: action.repoPath ?? "",
+      activeScreen: action.screen,
+      selectedItemId: action.selectedItemId,
+    };
+  }
+
   if (action.type === "screenChanged") {
     return {
       ...state,
@@ -102,7 +113,7 @@ export function workspaceReducer(
       recommendationResult: action.recommendationResult,
       loadState: "success",
       errorMessage: undefined,
-      selectedItemId: getNextSelectedItemId(state.selectedItemId, action.composeResult),
+      selectedItemId: action.selectedItemId ?? getNextSelectedItemId(state.selectedItemId, action.composeResult),
     };
   }
 

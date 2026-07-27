@@ -25,6 +25,10 @@ import {
   toParseResult,
   workspaceReducer,
 } from "../ui/src/lib/workspace-state.ts";
+import {
+  createWorkspaceUrl,
+  readWorkspaceUrlState,
+} from "../ui/src/lib/workspace-url-state.ts";
 
 const composeFixture: ComposeRepositoryResult = {
   discovery: {
@@ -243,6 +247,36 @@ test("context loading prefills the repo path only when empty", () => {
   assert.equal(secondState.repoPath, "D:/custom");
 });
 
+test("workspace URL state restores an encoded repository, tab, and selected item", () => {
+  const state = readWorkspaceUrlState(
+    "http://localhost:4173/?repo=C%3A%5CCode%5CSpecForge%5CRepo%5CSpecForge&tab=next-work&item=S-0202",
+  );
+
+  assert.deepEqual(state, {
+    repoPath: "C:\\Code\\SpecForge\\Repo\\SpecForge",
+    activeScreen: "Next Work",
+    selectedItemId: "S-0202",
+  });
+});
+
+test("workspace URL state falls back to Overview for a missing or unknown tab", () => {
+  assert.equal(readWorkspaceUrlState("http://localhost:4173/?repo=C%3A%2Frepo").activeScreen, "Overview");
+  assert.equal(readWorkspaceUrlState("http://localhost:4173/?tab=timeline").activeScreen, "Overview");
+});
+
+test("workspace URL serialization preserves unrelated query parameters", () => {
+  const url = createWorkspaceUrl("http://localhost:4173/?source=bookmark&tab=tree&item=old", {
+    repoPath: "C:\\Code\\SpecForge\\Repo\\SpecForge",
+    activeScreen: "Detail",
+    selectedItemId: "F-0026",
+  });
+
+  assert.equal(
+    url,
+    "/?source=bookmark&repo=C%3A%5CCode%5CSpecForge%5CRepo%5CSpecForge&tab=detail&item=F-0026",
+  );
+});
+
 test("load success stores compose and validation payloads and selects the first item", () => {
   const state = workspaceReducer(initialWorkspaceState, {
     type: "loadSucceeded",
@@ -300,6 +334,30 @@ test("selected item is preserved across reloads when it still exists", () => {
   });
 
   assert.equal(nextState.selectedItemId, "feature-0001");
+});
+
+test("restored URL selection is retained when it exists in the loaded workspace", () => {
+  const state = workspaceReducer(
+    initialWorkspaceState,
+    {
+      type: "workspaceRestored",
+      repoPath: "C:/repo",
+      screen: "Detail",
+      selectedItemId: "feature-0001",
+    },
+  );
+  const loadedState = workspaceReducer(state, {
+    type: "loadSucceeded",
+    repoPath: "C:/repo",
+    parseResult: toParseResult(composeFixture),
+    composeResult: composeFixture,
+    validationResult: validationFixture,
+    recommendationResult: recommendationFixture,
+    selectedItemId: "feature-0001",
+  });
+
+  assert.equal(loadedState.activeScreen, "Detail");
+  assert.equal(loadedState.selectedItemId, "feature-0001");
 });
 
 test("load failure keeps the shell stable and exposes the error message", () => {

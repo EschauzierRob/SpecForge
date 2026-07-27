@@ -1077,6 +1077,50 @@
       "planningStatus": "done"
     },
     {
+      "specId": "F-0026",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0009"
+      ],
+      "notes": "Workspace URLs now restore the local repository, active tab, and selected spec item; browser history is synchronized.",
+      "tags": [
+        "ui",
+        "navigation",
+        "bookmarks",
+        "url-state"
+      ]
+    },
+    {
+      "specId": "S-0202",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "F-0026"
+      ],
+      "notes": "Bookmark and refresh recovery automatically loads the requested local repository and safely restores navigation context.",
+      "tags": [
+        "ui",
+        "navigation",
+        "story"
+      ]
+    },
+    {
+      "specId": "T-0202",
+      "planningStatus": "done",
+      "blocked": false,
+      "dependencies": [
+        "S-0202"
+      ],
+      "notes": "Pure URL-state parsing/serialization, history synchronization, stale-load protection, and regression coverage delivered.",
+      "tags": [
+        "ui",
+        "url-state",
+        "tests",
+        "task"
+      ]
+    },
+    {
       "specId": "E-0004",
       "planningStatus": "done"
     },
@@ -1436,6 +1480,117 @@
       ],
       "blockers": [],
       "nextAction": "Review the validated consumer upgrade and select the next execution slice."
+    },
+    {
+      "sliceId": "SL-0003",
+      "title": "Bookmarkable workspace URL state",
+      "planningStatus": "done",
+      "resolution": "validated",
+      "linkedSpecIds": [
+        "F-0026",
+        "S-0202",
+        "T-0202"
+      ],
+      "objective": "Make local workspace context recoverable and bookmarkable through the browser URL.",
+      "hypothesis": "A small, pure URL-state contract can restore repository, tab, and selection without changing the repository API.",
+      "entryCriteria": [
+        {
+          "criterionId": "EC-001",
+          "description": "The existing workspace reducer and browser shell have stable repository, screen, and selection state.",
+          "met": true
+        }
+      ],
+      "scope": {
+        "included": [
+          "Query-string URL state",
+          "Automatic URL workspace loading",
+          "Browser history restoration",
+          "URL-state regression tests"
+        ],
+        "excluded": [
+          "Named bookmark storage",
+          "Server-side repository registration",
+          "API contract changes"
+        ]
+      },
+      "work": [
+        {
+          "workId": "PW-001",
+          "specId": "T-0202",
+          "type": "implementation",
+          "description": "Implement the URL-state module and synchronize it with workspace loading and navigation."
+        },
+        {
+          "workId": "PW-002",
+          "specId": "T-0202",
+          "type": "validation",
+          "description": "Add URL-state regression coverage and run the UI build, full tests, parse, compose, and validate checks."
+        }
+      ],
+      "exitCriteria": [
+        {
+          "criterionId": "XC-001",
+          "description": "A URL with a repository path restores the requested tab and selected item safely.",
+          "met": true,
+          "evidenceIds": [
+            "OE-001"
+          ]
+        },
+        {
+          "criterionId": "XC-002",
+          "description": "The repository checks and UI production build pass with the feature enabled.",
+          "met": true,
+          "evidenceIds": [
+            "OE-002"
+          ]
+        }
+      ],
+      "requiredEvidence": [
+        {
+          "evidenceId": "RE-001",
+          "description": "Automated tests cover URL parsing, serialization, tab fallback, and selection restoration."
+        },
+        {
+          "evidenceId": "RE-002",
+          "description": "Full repository tests, UI build, parse, compose, and validate checks succeed."
+        }
+      ],
+      "observedEvidence": [
+        {
+          "evidenceId": "OE-001",
+          "description": "The UI-state suite covers encoded Windows paths, stable tab mappings, query preservation, and restored selection.",
+          "satisfies": [
+            "RE-001"
+          ],
+          "assessment": "passed",
+          "command": "node --experimental-strip-types --experimental-test-isolation=none --test tests/ui-state.test.ts",
+          "observedAt": "2026-07-27T00:00:00Z"
+        },
+        {
+          "evidenceId": "OE-002",
+          "description": "The full suite, UI production build, and SpecForge repository checks pass after URL-state integration.",
+          "satisfies": [
+            "RE-002"
+          ],
+          "assessment": "passed",
+          "command": "npm test; npm --prefix ui run build; npm run parse; npm run compose; npm run validate",
+          "observedAt": "2026-07-27T00:00:00Z"
+        }
+      ],
+      "killCriteria": [
+        "Repository loading requires a server-side bookmark registry.",
+        "Browser history cannot preserve a coherent workspace state."
+      ],
+      "dependencySliceIds": [],
+      "decisions": [
+        {
+          "decisionId": "D-001",
+          "decision": "Use query parameters for repository, tab, and item state.",
+          "reason": "The URL is directly bookmarkable and was chosen explicitly for this workspace flow."
+        }
+      ],
+      "blockers": [],
+      "nextAction": "Use a bookmark URL to resume a local workspace."
     }
   ]
 }

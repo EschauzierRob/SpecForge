@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useMemo, useReducer, useState } from "react";
+import { FormEvent, useEffect, useMemo, useReducer, useRef, useState } from "react";
 
 import { Board } from "./Board";
 import { Detail } from "./Detail";
@@ -10,6 +10,7 @@ import type {
   DiagnosticSeverity,
   RecommendationResult,
   UiScreen,
+  UiWorkspaceState,
   ValidationResult,
 } from "./lib/contracts";
 import {
@@ -28,6 +29,11 @@ import {
   toParseResult,
   workspaceReducer,
 } from "./lib/workspace-state";
+import {
+  createWorkspaceUrl,
+  readWorkspaceUrlState,
+  type WorkspaceUrlState,
+} from "./lib/workspace-url-state";
 
 const THEME_STORAGE_KEY = "specforge.theme";
 type Theme = "light" | "dark";
@@ -382,9 +388,29 @@ function SelectionContextHeader(props: {
 }
 
 export default function App(): JSX.Element {
-  const [state, dispatch] = useReducer(workspaceReducer, initialWorkspaceState);
+  const [state, dispatch] = useReducer(workspaceReducer, initialWorkspaceState, () => {
+    if (typeof window === "undefined") {
+      return initialWorkspaceState;
+    }
+
+    const urlState = readWorkspaceUrlState(window.location.href);
+    return {
+      ...initialWorkspaceState,
+      repoPath: urlState.repoPath ?? "",
+      activeScreen: urlState.activeScreen,
+      selectedItemId: urlState.selectedItemId,
+    } satisfies UiWorkspaceState;
+  });
   const [isBoardDetailOpen, setIsBoardDetailOpen] = useState(false);
   const [warningsFilters, setWarningsFilters] = useState<WarningsFilters>(() => createWarningsFilters());
+  const stateRef = useRef(state);
+  const workspaceUrlStateRef = useRef<WorkspaceUrlState>({
+    repoPath: state.repoPath || undefined,
+    activeScreen: state.activeScreen,
+    selectedItemId: state.selectedItemId,
+  });
+  const loadVersionRef = useRef(0);
+  const initialUrlLoadStartedRef = useRef(false);
   const [theme, setTheme] = useState<Theme>(() => {
     if (typeof window === "undefined") {
       return "light";
@@ -402,6 +428,88 @@ export default function App(): JSX.Element {
     document.documentElement.dataset.theme = theme;
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+
+  function writeWorkspaceHistory(urlState: WorkspaceUrlState, mode: "push" | "replace"): void {
+    const nextUrl = createWorkspaceUrl(window.location.href, urlState);
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+
+    if (nextUrl === currentUrl) {
+      return;
+    }
+
+    if (mode === "push") {
+      window.history.pushState(null, "", nextUrl);
+      return;
+    }
+
+    window.history.replaceState(null, "", nextUrl);
+  }
+
+  async function loadWorkspace(repoPath: string, historyMode: "push" | "replace" | "none"): Promise<void> {
+    const requestedState: WorkspaceUrlState = {
+      ...workspaceUrlStateRef.current,
+      repoPath,
+    };
+    workspaceUrlStateRef.current = requestedState;
+
+    const loadVersion = loadVersionRef.current + 1;
+    loadVersionRef.current = loadVersion;
+    dispatch({ type: "loadStarted" });
+
+    try {
+      const [composeResult, validationResult, recommendationResult] = await Promise.all([
+        fetchCompose(repoPath),
+        fetchValidate(repoPath),
+        fetchRecommend(repoPath),
+      ]);
+
+      if (loadVersion !== loadVersionRef.current || workspaceUrlStateRef.current.repoPath !== repoPath) {
+        return;
+      }
+
+      const requestedItemId = workspaceUrlStateRef.current.selectedItemId;
+      const selectedItemId = composeResult.composedNodes.some((node) => node.spec.id === requestedItemId)
+        ? requestedItemId
+        : composeResult.composedNodes[0]?.spec.id;
+      const resolvedUrlState: WorkspaceUrlState = {
+        ...workspaceUrlStateRef.current,
+        repoPath,
+        selectedItemId,
+      };
+      workspaceUrlStateRef.current = resolvedUrlState;
+
+      dispatch({
+        type: "loadSucceeded",
+        repoPath,
+        parseResult: toParseResult(composeResult),
+        composeResult,
+        validationResult,
+        recommendationResult,
+        selectedItemId,
+      });
+
+      if (historyMode === "push" || historyMode === "replace") {
+        writeWorkspaceHistory(resolvedUrlState, historyMode);
+      } else {
+        const canonicalUrl = createWorkspaceUrl(window.location.href, resolvedUrlState);
+        const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        if (canonicalUrl !== currentUrl) {
+          writeWorkspaceHistory(resolvedUrlState, "replace");
+        }
+      }
+    } catch (error) {
+      if (loadVersion !== loadVersionRef.current) {
+        return;
+      }
+
+      const message = error instanceof Error ? error.message : String(error);
+      dispatch({ type: "loadFailed", message });
+    }
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -422,27 +530,69 @@ export default function App(): JSX.Element {
     };
   }, []);
 
+  useEffect(() => {
+    if (initialUrlLoadStartedRef.current || typeof window === "undefined") {
+      return;
+    }
+
+    initialUrlLoadStartedRef.current = true;
+    const urlState = readWorkspaceUrlState(window.location.href);
+    workspaceUrlStateRef.current = urlState;
+
+    if (urlState.repoPath) {
+      void loadWorkspace(urlState.repoPath, "replace");
+    }
+  }, []);
+
+  useEffect(() => {
+    function restoreWorkspaceFromHistory(): void {
+      const urlState = readWorkspaceUrlState(window.location.href);
+      workspaceUrlStateRef.current = urlState;
+      dispatch({
+        type: "workspaceRestored",
+        repoPath: urlState.repoPath,
+        screen: urlState.activeScreen,
+        selectedItemId: urlState.selectedItemId,
+      });
+
+      const currentState = stateRef.current;
+      const hasRequestedWorkspaceLoaded =
+        Boolean(urlState.repoPath) &&
+        currentState.loadState === "success" &&
+        currentState.repoPath === urlState.repoPath &&
+        Boolean(currentState.composeResult);
+
+      if (hasRequestedWorkspaceLoaded && currentState.composeResult) {
+        const selectedItemId = currentState.composeResult.composedNodes.some(
+          (node) => node.spec.id === urlState.selectedItemId,
+        )
+          ? urlState.selectedItemId
+          : currentState.composeResult.composedNodes[0]?.spec.id;
+        const resolvedUrlState = { ...urlState, selectedItemId };
+
+        if (selectedItemId !== urlState.selectedItemId) {
+          workspaceUrlStateRef.current = resolvedUrlState;
+          dispatch({ type: "itemSelected", specId: selectedItemId });
+          writeWorkspaceHistory(resolvedUrlState, "replace");
+        }
+      }
+
+      if (urlState.repoPath && !hasRequestedWorkspaceLoaded) {
+        void loadWorkspace(urlState.repoPath, "none");
+      }
+
+      if (!urlState.repoPath) {
+        loadVersionRef.current += 1;
+      }
+    }
+
+    window.addEventListener("popstate", restoreWorkspaceFromHistory);
+    return () => window.removeEventListener("popstate", restoreWorkspaceFromHistory);
+  }, []);
+
   async function handleLoad(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    dispatch({ type: "loadStarted" });
-
-    try {
-      const composeResult = await fetchCompose(state.repoPath);
-      const validationResult = await fetchValidate(state.repoPath);
-      const recommendationResult = await fetchRecommend(state.repoPath);
-
-      dispatch({
-        type: "loadSucceeded",
-        repoPath: state.repoPath,
-        parseResult: toParseResult(composeResult),
-        composeResult,
-        validationResult,
-        recommendationResult,
-      });
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      dispatch({ type: "loadFailed", message });
-    }
+    await loadWorkspace(state.repoPath, "push");
   }
 
   const selectedNode = getSelectedComposedNode(state.composeResult, state.selectedItemId);
@@ -457,10 +607,27 @@ export default function App(): JSX.Element {
   }, [state.activeScreen]);
 
   function handleItemSelected(specId: string, switchToDetail = false): void {
+    const nextUrlState: WorkspaceUrlState = {
+      ...workspaceUrlStateRef.current,
+      activeScreen: switchToDetail ? "Detail" : stateRef.current.activeScreen,
+      selectedItemId: specId,
+    };
+    workspaceUrlStateRef.current = nextUrlState;
     dispatch({ type: "itemSelected", specId });
     if (switchToDetail) {
       dispatch({ type: "screenChanged", screen: "Detail" });
     }
+    writeWorkspaceHistory(nextUrlState, "push");
+  }
+
+  function handleScreenChanged(screen: UiScreen): void {
+    const nextUrlState: WorkspaceUrlState = {
+      ...workspaceUrlStateRef.current,
+      activeScreen: screen,
+    };
+    workspaceUrlStateRef.current = nextUrlState;
+    dispatch({ type: "screenChanged", screen });
+    writeWorkspaceHistory(nextUrlState, "push");
   }
 
   const activePanel = (() => {
@@ -619,7 +786,7 @@ export default function App(): JSX.Element {
                   type="button"
                   key={screen}
                   className={screen === state.activeScreen ? "screen-tab screen-tab--active" : "screen-tab"}
-                  onClick={() => dispatch({ type: "screenChanged", screen })}
+                  onClick={() => handleScreenChanged(screen)}
                 >
                   {screen}
                 </button>
