@@ -29,6 +29,7 @@ import {
   createWorkspaceUrl,
   readWorkspaceUrlState,
 } from "../ui/src/lib/workspace-url-state.ts";
+import { getWorkspaceDocumentTitle } from "../ui/src/lib/workspace-title.ts";
 
 const composeFixture: ComposeRepositoryResult = {
   discovery: {
@@ -275,6 +276,15 @@ test("workspace URL serialization preserves unrelated query parameters", () => {
     url,
     "/?source=bookmark&repo=C%3A%5CCode%5CSpecForge%5CRepo%5CSpecForge&tab=detail&item=F-0026",
   );
+});
+
+test("workspace document title uses the loaded repository's final path node", () => {
+  assert.equal(
+    getWorkspaceDocumentTitle("C:\\Code\\BitBetMatic 2.0\\Repo\\BitBetMatic_2.0"),
+    "SpecForge UI - BitBetMatic_2.0",
+  );
+  assert.equal(getWorkspaceDocumentTitle("/projects/specforge/"), "SpecForge UI - specforge");
+  assert.equal(getWorkspaceDocumentTitle(undefined), "SpecForge UI");
 });
 
 test("load success stores compose and validation payloads and selects the first item", () => {

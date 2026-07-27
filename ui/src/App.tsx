@@ -34,6 +34,7 @@ import {
   readWorkspaceUrlState,
   type WorkspaceUrlState,
 } from "./lib/workspace-url-state";
+import { getWorkspaceDocumentTitle } from "./lib/workspace-title";
 
 const THEME_STORAGE_KEY = "specforge.theme";
 type Theme = "light" | "dark";
@@ -599,6 +600,12 @@ export default function App(): JSX.Element {
   const selectedLineage = getSelectedLineageToEpic(state.composeResult, state.selectedItemId);
   const selectedTitle = selectedNode?.spec.title ?? "No item selected";
   const selectedSummary = selectedNode?.spec.summary ?? "Select a node to keep later detail views grounded in real runtime data.";
+
+  useEffect(() => {
+    document.title = getWorkspaceDocumentTitle(
+      state.loadState === "success" ? state.composeResult?.discovery.repoRoot : undefined,
+    );
+  }, [state.composeResult?.discovery.repoRoot, state.loadState]);
 
   useEffect(() => {
     if (state.activeScreen !== "Board") {
