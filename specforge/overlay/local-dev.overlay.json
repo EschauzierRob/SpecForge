@@ -15,9 +15,11 @@
       "specId": "E-0002",
       "planningStatus": "done",
       "blocked": false,
-      "notes": "Ingestion/composition pipeline, parser, and overlay runtime are implemented.",
+      "notes": "Ingestion/composition supports a source-acquisition boundary for both local-filesystem and planned read-only Git-backed projects.",
       "tags": [
-        "completed"
+        "completed",
+        "ingestion",
+        "project-sources"
       ]
     },
     {
@@ -138,10 +140,11 @@
         "F-0004",
         "F-0006"
       ],
-      "notes": "Workspace load now bootstraps missing overlay essentials and reports created artifacts.",
+      "notes": "Workspace bootstrap remains local/write-capable behavior and must skip read-only Git-backed working copies with an explicit diagnostic.",
       "tags": [
         "bootstrap",
-        "ingestion"
+        "ingestion",
+        "source-capabilities"
       ]
     },
     {
@@ -1217,6 +1220,38 @@
       "blocked": false,
       "notes": "Implemented versioned artifact identity, safe replacement, partial repair, status reporting, and consumer CLI regression tests.",
       "dependencies": ["T-0704"]
+    },
+    {
+      "specId": "F-0027",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": ["F-0004", "F-0005", "F-0006", "F-0014"],
+      "notes": "Defines the initial read-only Git-backed project source, credential safety, atomic refresh, freshness reporting, and source-parity boundary.",
+      "tags": ["git", "repository-source", "ingestion", "security"]
+    },
+    {
+      "specId": "S-0801",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": ["F-0004"],
+      "notes": "Define Git source configuration, provenance, capability reporting, and atomic server-side acquisition.",
+      "tags": ["git", "acquisition", "story"]
+    },
+    {
+      "specId": "S-0802",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": ["S-0801"],
+      "notes": "Define opaque private-repository credentials, authorization, least privilege, and secret redaction.",
+      "tags": ["git", "credentials", "security", "story"]
+    },
+    {
+      "specId": "S-0803",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": ["S-0801", "F-0005", "F-0006"],
+      "notes": "Define explicit atomic refresh, revision/freshness reporting, stale fallback, and source-agnostic ingestion parity.",
+      "tags": ["git", "synchronization", "ingestion", "story"]
     }
   ],
   "executionSlices": [
