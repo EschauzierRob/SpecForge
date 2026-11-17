@@ -1,4 +1,5 @@
-import { constants } from "node:fs";
+import { constants, readFileSync } from "node:fs";
+import { stripTypeScriptTypes } from "node:module";
 import { createHash } from "node:crypto";
 import { access, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
@@ -8,7 +9,7 @@ import type {
   WorkspaceBootstrapAction,
 } from "../model/types.ts";
 
-const cliToolingVersion = "0.2.0";
+const cliToolingVersion = "0.2.1";
 const legacyCliToolingVersion = "0.1.0";
 
 const requiredLauncherPaths = [
@@ -115,7 +116,7 @@ The runtime is bootstrapped by SpecForge and should not be edited by hand.
 ${managementNote}`;
 }
 
-function createRuntime(version = cliToolingVersion): string {
+function createLegacyRuntime(version = cliToolingVersion): string {
   return `#!/usr/bin/env node
 import { constants } from "node:fs";
 import { access, mkdir, readFile, readdir, writeFile } from "node:fs/promises";
@@ -592,6 +593,39 @@ main().catch((error) => {
 `;
 }
 
+// Embed the source implementation so the standalone CLI uses the API overlay contract.
+function inlineOverlayModule(file: string, exports: string[]): string {
+  const source = readFileSync(new URL("../overlay/" + file, import.meta.url), "utf8").replace(/\r\n/g, "\n");
+  const javascript = stripTypeScriptTypes(source, { mode: "strip" })
+    .replace(/^import .*?;\s*/gms, "").replace(/^export /gm, "").replace(/[ \t]+$/gm, "");
+  return '(() => {\n' + javascript + '\nreturn { ' + exports.join(', ') + ' };\n})()';
+}
+
+function createRuntime(version = cliToolingVersion): string {
+  const legacy = createLegacyRuntime(version);
+  if (version !== cliToolingVersion) return legacy;
+  const start = legacy.indexOf('async function loadOverlayFile(');
+  const end = legacy.indexOf('function validateResult(', start);
+  const shared = 'const { loadOverlayFile } = ' + inlineOverlayModule('loader.ts', ['loadOverlayFile']) + ';\n'
+    + 'const { buildOverlayIndex, composeNodes } = ' + inlineOverlayModule('compose.ts', ['buildOverlayIndex', 'composeNodes']) + ';\n'
+    + 'const { overlayDiagnosticToFinding } = ' + inlineOverlayModule('diagnostics.ts', ['overlayDiagnosticToFinding']) + ';\n';
+  const compose = `async function composeRepository(repoPath, adapterProfile) {
+  const parseResult = await parseRepository(repoPath, adapterProfile);
+  const loaded = await Promise.all(parseResult.discovery.discoveredOverlayFiles.map(
+    (relativePath) => loadOverlayFile(path.join(parseResult.discovery.repoRoot, relativePath), parseResult.discovery.repoRoot)));
+  const overlayFiles = loaded.flatMap((result) => result.overlayFile ? [result.overlayFile] : []);
+  const index = buildOverlayIndex(overlayFiles);
+  const composed = composeNodes(parseResult.canonicalNodes, index.index);
+  return { ...parseResult, overlayFiles, composedNodes: composed.composedNodes,
+    compositionDiagnostics: loaded.flatMap((result) => result.diagnostics).concat(index.diagnostics, composed.diagnostics) };
+}
+
+`;
+  return (legacy.slice(0, start) + shared + compose + legacy.slice(end)).replace(
+    '  const findings = [];',
+    '  const findings = composeResult.compositionDiagnostics.map(overlayDiagnosticToFinding).filter(Boolean);');
+}
+
 interface CliToolingManifest {
   name?: string;
   version?: string;
@@ -625,7 +659,7 @@ function hasExpectedManagedPaths(managedFiles: Record<string, string> | undefine
 }
 
 export function createCliToolingFileContents(
-  version: typeof cliToolingVersion | typeof legacyCliToolingVersion,
+  version: typeof cliToolingVersion | typeof legacyCliToolingVersion | "0.2.0",
 ): Map<string, string> {
   const managedFiles = createManagedFileContents(version);
   const toolsReadme = managedFiles.get("specforge/tools/README.md") ?? "";

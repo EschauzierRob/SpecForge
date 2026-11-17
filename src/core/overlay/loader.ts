@@ -396,7 +396,12 @@ function validateEntry(
     return { diagnostics };
   }
 
-  const blockedReason = entry.blockedReason;
+  // Empty form/AI output means no reason when the entry is not blocked.
+  const blockedReason = typeof entry.blockedReason === "string"
+    && entry.blockedReason.trim().length === 0
+    && blocked !== true && planningStatus !== "blocked"
+    ? undefined
+    : entry.blockedReason;
   if (
     blockedReason !== undefined &&
     (typeof blockedReason !== "string" || blockedReason.trim().length === 0)
