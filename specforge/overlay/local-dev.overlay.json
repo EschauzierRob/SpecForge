@@ -4,26 +4,26 @@
   "entries": [
     {
       "specId": "S-0207",
-      "planningStatus": "in_progress",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["S-0204", "S-0205"],
-      "notes": "Specified default hiding of done cards only within done Feature rows, retaining open children and completed work under ongoing Features. Implementation has not started; use a new execution slice rather than reopening SL-0004.",
+      "notes": "Implemented and validated in SL-0005: default-off checkbox hides only done cards in done Features; open children, ongoing-Feature completed children, progress, context, and filter lifecycle preserved.",
       "tags": ["ui", "board", "filtering"]
     },
     {
       "specId": "T-0208",
-      "planningStatus": "in_progress",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["T-0204", "T-0205"],
-      "notes": "Implement the completed-Feature work checkbox and hierarchy-aware card predicate with regression coverage. Specs only; no implementation evidence collected.",
+      "notes": "Delivered in SL-0005. Nine Board tests pass, including both checkbox states across 64 filter combinations; 22 browser checks and a mobile layout check pass. Build/typecheck and SpecForge checks pass. Full suite 131/132 with the pre-existing document-title assertion failure explicitly recorded.",
       "tags": ["ui", "board", "filtering"]
     },
     {
       "specId": "F-0028",
-      "planningStatus": "in_progress",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["F-0008", "F-0009"],
-      "notes": "Original Board hierarchy delivered and validated in SL-0004; see docs/reports/board-hierarchy/validation.md. Reopened as ready for the additional S-0207 completed-Feature work filter, whose implementation is pending. SL-0004 and its evidence remain unchanged.",
+      "notes": "Board hierarchy delivered in SL-0004 and additional S-0207 completed-Feature work filter delivered in SL-0005. Both slices validated; see docs/reports/board-hierarchy/validation.md and completed-feature-filter.md. No pending work within this Feature.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
@@ -1902,7 +1902,7 @@
     {
       "sliceId": "SL-0005",
       "title": "Completed Feature work filter",
-      "planningStatus": "in_progress",
+      "planningStatus": "done",
       "linkedSpecIds": [
         "F-0028",
         "S-0207",
@@ -1948,17 +1948,26 @@
         {
           "criterionId": "XC-001",
           "description": "Automated regressions establish visibility and progress across filter combinations.",
-          "met": false
+          "met": true,
+          "evidenceIds": [
+            "OE-001"
+          ]
         },
         {
           "criterionId": "XC-002",
           "description": "Browser review establishes checkbox behavior and lifecycle.",
-          "met": false
+          "met": true,
+          "evidenceIds": [
+            "OE-002"
+          ]
         },
         {
           "criterionId": "XC-003",
           "description": "Integration results are recorded with no introduced failures.",
-          "met": false
+          "met": true,
+          "evidenceIds": [
+            "OE-003"
+          ]
         }
       ],
       "requiredEvidence": [
@@ -1975,7 +1984,41 @@
           "description": "Full tests, UI build/typecheck, and SpecForge parse/compose/validate results are recorded; any proven pre-existing failure is explicitly identified."
         }
       ],
-      "observedEvidence": [],
+      "observedEvidence": [
+        {
+          "evidenceId": "OE-001",
+          "description": "Nine Board tests pass. New regressions cover both checkbox values over 64 type/quick-filter combinations, exact counts, retained open descendants, unfiltered progress, unresolved references, missing statuses, refresh, and source immutability.",
+          "satisfies": [
+            "RE-001"
+          ],
+          "assessment": "passed",
+          "command": "node --experimental-strip-types --experimental-test-isolation=none --test --test-name-pattern=Board tests/ui-state.test.ts",
+          "artifactPath": "docs/reports/board-hierarchy/completed-feature-filter.md",
+          "observedAt": "2026-11-18T18:52:05.186Z"
+        },
+        {
+          "evidenceId": "OE-002",
+          "description": "22 Chrome browser checks pass for default/mouse/keyboard behavior, retained selection and details, stable Done column and progress, refresh retention, and reset on Board re-entry, repository switch, and reload. Additional 375px geometry check confirms the checkbox fits without page overflow.",
+          "satisfies": [
+            "RE-002"
+          ],
+          "assessment": "passed",
+          "command": "Chrome CDP review: node node_modules/.cache/review-completed-filter.mjs; 375px geometry check",
+          "artifactPath": "docs/reports/board-hierarchy/completed-feature-filter.md",
+          "observedAt": "2026-11-18T18:52:05.186Z"
+        },
+        {
+          "evidenceId": "OE-003",
+          "description": "Integration results recorded with no introduced failures: UI build/typecheck and SpecForge parse/compose/validate pass. Full test suite is 131/132, with the known unchanged document-title expectation mismatch documented; the full suite is not reported as passing.",
+          "satisfies": [
+            "RE-003"
+          ],
+          "assessment": "passed",
+          "command": "npm test; npm --prefix ui run build; ui/node_modules/.bin/tsc --noEmit -p ui/tsconfig.json; node --experimental-strip-types src/cli.ts parse|compose|validate .",
+          "artifactPath": "docs/reports/board-hierarchy/completed-feature-filter.md",
+          "observedAt": "2026-11-18T18:52:05.186Z"
+        }
+      ],
       "killCriteria": [
         "Correct visibility requires mutating canonical hierarchy or explicit planning statuses."
       ],
@@ -1990,7 +2033,8 @@
         }
       ],
       "blockers": [],
-      "nextAction": "Implement the checkbox and predicate, then validate the new behavior."
+      "nextAction": "Review the completed Feature-scoped filter; the pre-existing document-title assertion mismatch remains outside this slice.",
+      "resolution": "validated"
     }
   ]
 }

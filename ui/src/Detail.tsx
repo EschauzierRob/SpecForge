@@ -20,7 +20,7 @@ function FieldList(props: { title: string; items: string[] }): JSX.Element {
   );
 }
 
-function OverlayField(props: { label: string; value?: string | number | boolean | string[] }): JSX.Element {
+function OverlayField(props: { label: string; value?: string | number | boolean | string[]; fullWidth?: boolean }): JSX.Element {
   let displayValue = "not set";
 
   if (Array.isArray(props.value)) {
@@ -30,7 +30,7 @@ function OverlayField(props: { label: string; value?: string | number | boolean 
   }
 
   return (
-    <div className="detail-overlay-row">
+    <div className={props.fullWidth ? "detail-overlay-row detail-overlay-row--full-width" : "detail-overlay-row"}>
       <dt>{props.label}</dt>
       <dd>{displayValue}</dd>
     </div>
@@ -145,7 +145,7 @@ export function Detail(props: {
           <OverlayField label="Blocked reason" value={selectedNode.overlay?.blockedReason} />
           <OverlayField label="Dependency refs" value={selectedNode.overlay?.dependencies?.length ?? 0} />
           <OverlayField label="Tags" value={selectedNode.overlay?.tags} />
-          <OverlayField label="Notes" value={selectedNode.overlay?.notes} />
+          <OverlayField label="Notes" value={selectedNode.overlay?.notes} fullWidth />
         </dl>
       </section>
 
