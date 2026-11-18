@@ -414,7 +414,8 @@ test("CLI summary reflects overlay and composition counts", async () => {
   assert.equal(exitCode, 0);
   assert.deepEqual(errorLines, []);
   assert.ok(outputLines.includes("overlay files: 1"));
-  assert.ok(outputLines.includes("execution slices: 3"));
+  const sliceCount = currentRepoResult.overlayFiles.reduce((count, file) => count + file.executionSlices.length, 0);
+  assert.ok(outputLines.includes(`execution slices: ${sliceCount}`));
   assert.ok(outputLines.includes(`composed nodes: ${currentRepoResult.composedNodes.length}`));
   assert.ok(outputLines.some((line) => line.startsWith("composition diagnostics: ")));
 });

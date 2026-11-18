@@ -4,6 +4,7 @@ import type {
   DiagnosticSeverity,
   ExecutionSlice,
   PlanningStatus,
+  SpecNodeType,
   UiWorkspaceState,
   ValidationFinding,
   ValidationResult,
@@ -52,6 +53,117 @@ export interface BoardLane {
 export interface BoardFilters {
   blockedOnly: boolean;
   hasDependencies: boolean;
+  selectedTypes?: readonly SpecNodeType[];
+  showDoneInCompletedFeatures?: boolean;
+}
+
+export const BOARD_ITEM_TYPES: readonly SpecNodeType[] = ["epic", "feature", "story", "task"];
+
+export function createBoardFilters(): BoardFilters {
+  return { blockedOnly: false, hasDependencies: false, selectedTypes: ["feature", "story"], showDoneInCompletedFeatures: false };
+}
+
+export interface BoardProgress {
+  completed: number;
+  total: number;
+}
+
+export interface BoardParentContext {
+  type: SpecNodeType;
+  id?: string;
+  node?: ComposedNode;
+}
+
+export interface BoardCard {
+  node: ComposedNode;
+  parent?: BoardParentContext;
+  progress?: BoardProgress;
+}
+
+export interface BoardGroup {
+  id: string;
+  title: string;
+  feature?: ComposedNode;
+  parent?: BoardParentContext;
+  progress?: BoardProgress;
+  lanes: Array<{ status: BoardLane["status"]; cards: BoardCard[] }>;
+}
+
+export interface BoardModel {
+  lanes: Array<{ status: BoardLane["status"]; count: number }>;
+  groups: BoardGroup[];
+}
+
+function toBoardStatus(status?: PlanningStatus): BoardLane["status"] {
+  return status === "blocked" ? "in_progress" : status ?? "unplanned";
+}
+
+/** Relationships and progress always use the full model; filters affect cards only. */
+export function getBoardModel(
+  composeResult?: ComposeRepositoryResult,
+  filters: BoardFilters = createBoardFilters(),
+): BoardModel {
+  const nodes = composeResult?.composedNodes ?? [];
+  const byId = new Map(nodes.map((node) => [node.spec.id, node]));
+  const progress = new Map<string, BoardProgress>();
+  const expectedParent: Partial<Record<SpecNodeType, SpecNodeType>> = {
+    feature: "epic", story: "feature", task: "story",
+  };
+  const parentOf = (node: ComposedNode): BoardParentContext | undefined => {
+    const type = expectedParent[node.spec.type];
+    if (!type) return undefined;
+    const parent = node.spec.parentId ? byId.get(node.spec.parentId) : undefined;
+    return { type, id: node.spec.parentId, node: parent?.spec.type === type ? parent : undefined };
+  };
+  for (const node of nodes) {
+    if (node.spec.type !== "story" && node.spec.type !== "task") continue;
+    const parent = parentOf(node)?.node;
+    if (!parent) continue;
+    const count = progress.get(parent.spec.id) ?? { completed: 0, total: 0 };
+    count.total += 1;
+    if (node.overlay?.planningStatus === "done") count.completed += 1;
+    progress.set(parent.spec.id, count);
+  }
+  const childProgress = (id: string): BoardProgress => progress.get(id) ?? { completed: 0, total: 0 };
+  const makeGroup = (id: string, title: string): BoardGroup => ({
+    id, title, lanes: PLANNING_STATUS_LANE_ORDER.map((status) => ({ status, cards: [] })),
+  });
+  const epics = makeGroup("epics", "Epics");
+  const unresolved = makeGroup("unresolved", "Unassigned / unresolved hierarchy");
+  const features = new Map<string, BoardGroup>();
+  for (const node of nodes) {
+    if (node.spec.type !== "feature") continue;
+    features.set(node.spec.id, {
+      ...makeGroup(node.spec.id, node.spec.title), feature: node,
+      parent: parentOf(node), progress: childProgress(node.spec.id),
+    });
+  }
+  const lanes = PLANNING_STATUS_LANE_ORDER.map((status) => ({ status, count: 0 }));
+  const visible = filterBoardNodes(nodes, filters).sort((a, b) => a.spec.id.localeCompare(b.spec.id));
+  for (const node of visible) {
+    const parent = parentOf(node);
+    // Only follow the two type-checked links needed for Task -> Story -> Feature.
+    // Invalid and cyclic chains cannot trigger recursive traversal or inferred membership.
+    const featureId = node.spec.type === "feature" ? node.spec.id
+      : node.spec.type === "story" ? parent?.node?.spec.id
+      : node.spec.type === "task" && parent?.node ? parentOf(parent.node)?.node?.spec.id
+      : undefined;
+    const group = node.spec.type === "epic" ? epics : features.get(featureId ?? "") ?? unresolved;
+    if (!filters.showDoneInCompletedFeatures
+      && node.overlay?.planningStatus === "done"
+      && group.feature?.overlay?.planningStatus === "done") continue;
+    const status = toBoardStatus(node.overlay?.planningStatus);
+    const laneIndex = PLANNING_STATUS_LANE_ORDER.indexOf(status);
+    group.lanes[laneIndex].cards.push({
+      node, parent, progress: node.spec.type === "story" ? childProgress(node.spec.id) : undefined,
+    });
+    lanes[laneIndex].count += 1;
+  }
+  return {
+    lanes,
+    groups: [epics, ...[...features.values()].sort((a, b) => a.id.localeCompare(b.id)), unresolved]
+      .filter((group) => group.lanes.some((lane) => lane.cards.length > 0)),
+  };
 }
 
 export interface TriageBadge {
@@ -200,6 +312,9 @@ export function getBoardLanes(composeResult?: ComposeRepositoryResult): BoardLan
 
 export function filterBoardNodes(nodes: ComposedNode[], filters: BoardFilters): ComposedNode[] {
   return nodes.filter((node) => {
+    if (filters.selectedTypes && !filters.selectedTypes.includes(node.spec.type)) {
+      return false;
+    }
     if (filters.blockedOnly && !node.overlay?.blocked) {
       return false;
     }

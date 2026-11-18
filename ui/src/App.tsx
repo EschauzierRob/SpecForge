@@ -679,10 +679,11 @@ export default function App(): JSX.Element {
             <div className="panel-header">
               <div>
                 <h2>Planning board</h2>
-                <p>Lanes show planning status only; blocked remains a card-level urgency flag in every lane.</p>
+                <p>Features group related Stories across status columns. Progress includes all direct children.</p>
               </div>
             </div>
             <Board
+              key={state.composeResult?.discovery.repoRoot}
               composeResult={state.composeResult}
               selectedItemId={state.selectedItemId}
               onSelect={(specId) => {

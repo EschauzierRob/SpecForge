@@ -33,6 +33,7 @@ Epics, Features, Stories, and Tasks currently appear as nearly identical cards i
 - [ ] R5: Show Epic ID and title on Feature cards and in row context when Feature cards are filtered out.
 - [ ] R6: Support optional Epic and Task cards, missing-parent fallback groups, and existing detail navigation without duplicating cards.
 - [ ] R7: Preserve existing status mapping, blocked and dependency indicators, selection, and quick filters; count only visible cards in each status column.
+- [ ] R8: Hide done cards within done Feature rows by default, with a Show done in completed Features checkbox to include them. Keep open children of done Features and done children of ongoing Features eligible for display, as specified by S-0207.
 
 ## Acceptance Criteria
 - [ ] AC1: Opening the Board shows Feature and Story cards grouped by Feature; Epic and Task cards appear only after their types are enabled.
@@ -40,6 +41,7 @@ Epics, Features, Stories, and Tasks currently appear as nearly identical cards i
 - [ ] AC3: A Story with five direct Tasks, three with overlay status done, displays Tasks: 3/5 complete even when those Tasks are hidden or excluded by quick filters.
 - [ ] AC4: Users can identify a Feature's Epic and a visible Task's Story and open available referenced items in the existing detail drawer.
 - [ ] AC5: Missing parents, empty selections, keyboard navigation, and narrow screens remain usable under the child Story criteria.
+- [ ] AC6: With Show done in completed Features disabled, a done Feature and its done children are hidden, while its open children retain the row context. Done cards under ongoing Features remain eligible for display; the Done column and unfiltered child-progress calculations are preserved.
 
 ## Dependencies
 - F-0008

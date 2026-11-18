@@ -3,83 +3,99 @@
   "repositoryId": "specforge-local",
   "entries": [
     {
+      "specId": "S-0207",
+      "planningStatus": "in_progress",
+      "blocked": false,
+      "dependencies": ["S-0204", "S-0205"],
+      "notes": "Specified default hiding of done cards only within done Feature rows, retaining open children and completed work under ongoing Features. Implementation has not started; use a new execution slice rather than reopening SL-0004.",
+      "tags": ["ui", "board", "filtering"]
+    },
+    {
+      "specId": "T-0208",
+      "planningStatus": "in_progress",
+      "blocked": false,
+      "dependencies": ["T-0204", "T-0205"],
+      "notes": "Implement the completed-Feature work checkbox and hierarchy-aware card predicate with regression coverage. Specs only; no implementation evidence collected.",
+      "tags": ["ui", "board", "filtering"]
+    },
+    {
       "specId": "F-0028",
-      "planningStatus": "ready",
+      "planningStatus": "in_progress",
       "blocked": false,
       "dependencies": ["F-0008", "F-0009"],
-      "notes": "Implementation-ready Board hierarchy specs authored; UI implementation and its execution slice have not started.",
+      "notes": "Original Board hierarchy delivered and validated in SL-0004; see docs/reports/board-hierarchy/validation.md. Reopened as ready for the additional S-0207 completed-Feature work filter, whose implementation is pending. SL-0004 and its evidence remain unchanged.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
       "specId": "S-0203",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": [],
-      "notes": "Specified type selection defaults, accessible card distinctions, and filter lifetime; implementation pending.",
+      "notes": "SL-0004: type controls default to Feature/Story, combine with quick filters, preserve state during refresh/details, and reset on Board re-entry/repository switch. Accessible card variants reviewed.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
       "specId": "S-0204",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["S-0203"],
-      "notes": "Specified Feature rows, status placement, fallback groups, and visible-card counts; implementation pending.",
+      "notes": "SL-0004: deterministic cross-status Feature rows, visible-card counts, unresolved groups, and responsive layout validated by selector tests and desktop/mobile browser review.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
       "specId": "S-0205",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["S-0204"],
-      "notes": "Specified direct-child progress independent of display filters; implementation pending.",
+      "notes": "SL-0004: direct-child done/total progress uses unfiltered data, handles zero/missing statuses, refreshes without changing parent status, and passes automated/browser checks.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
       "specId": "S-0206",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["S-0204"],
-      "notes": "Specified Epic and Story references, optional item placement, and detail navigation; implementation pending.",
+      "notes": "SL-0004: Epic and Story context, optional Epic/Task placement, and separate mouse/keyboard detail actions validated without nested buttons or filter changes.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
       "specId": "T-0203",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": [],
-      "notes": "Implement Board-local type filters and accessible type-specific card styling.",
+      "notes": "Delivered in SL-0004. Five Board regression tests include all 64 type/quick-filter combinations; browser checks confirm filter lifecycle and non-color card variants.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
       "specId": "T-0204",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["T-0203"],
-      "notes": "Implement Feature-row view model and rendering without changing status semantics or shared overview counts.",
+      "notes": "Delivered in SL-0004. Pure Board projection preserves shared Overview counts and status semantics. Mobile row context is above cards to prevent overlap while horizontally scrolling.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
       "specId": "T-0205",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["T-0204"],
-      "notes": "Implement progress from unfiltered direct-child relationships and overlay done status.",
+      "notes": "Delivered in SL-0004. Unfiltered direct-child counts and done-status completion validated, including missing overlays, blocked metadata, zero children, and refresh.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
       "specId": "T-0206",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["T-0204"],
-      "notes": "Implement optional Epic and Task cards, parent references, and accessible detail actions.",
+      "notes": "Delivered in SL-0004. Optional Epic/Task cards and parent actions reuse selection/drawer/URL behavior; mouse and keyboard review passed.",
       "tags": ["ui", "board", "hierarchy"]
     },
     {
       "specId": "T-0207",
-      "planningStatus": "ready",
+      "planningStatus": "done",
       "blocked": false,
       "dependencies": ["T-0203", "T-0204", "T-0205", "T-0206"],
-      "notes": "Validate combined Board behavior with meaningful selector regressions and browser review; no implementation evidence collected yet.",
+      "notes": "SL-0004 validation complete: 5 Board tests and 24 browser checks pass; build/typecheck and SpecForge checks pass. Full suite: 127/128, sole pre-existing document-title expectation failure recorded in the validation report.",
       "tags": ["ui", "board", "hierarchy", "validation"]
     },
     {
@@ -1132,7 +1148,7 @@
         "F-0006",
         "F-0007"
       ],
-      "notes": "Existing Board navigation remains implemented. Revised default type selection and visible-card counts are specified with F-0028 and await implementation; prior done status no longer covers all requirements.",
+      "notes": "Board hierarchy, default type filtering, and visible-card counts delivered in SL-0004. Remains ready because the pre-existing tag-filter requirement is outside this slice and not yet implemented.",
       "tags": [
         "ui",
         "board"
@@ -1714,6 +1730,267 @@
       ],
       "blockers": [],
       "nextAction": "Use a bookmark URL to resume a local workspace."
+    },
+    {
+      "sliceId": "SL-0004",
+      "title": "Board hierarchy and child progress",
+      "planningStatus": "done",
+      "linkedSpecIds": [
+        "F-0008",
+        "F-0028",
+        "S-0203",
+        "S-0204",
+        "S-0205",
+        "S-0206",
+        "T-0203",
+        "T-0204",
+        "T-0205",
+        "T-0206",
+        "T-0207"
+      ],
+      "objective": "Make related planning work readable across status columns while keeping Features and Stories central.",
+      "hypothesis": "Feature rows and direct-child summaries provide useful hierarchy context without changing canonical data or planning statuses.",
+      "entryCriteria": [
+        {
+          "criterionId": "EC-001",
+          "description": "Canonical Board hierarchy specs and per-spec overlay entries are available.",
+          "met": true
+        }
+      ],
+      "scope": {
+        "included": [
+          "Board type selection and accessible card variants",
+          "Feature rows and unresolved hierarchy context",
+          "Direct-child progress and parent navigation",
+          "Regression tests and desktop/mobile browser review"
+        ],
+        "excluded": [
+          "Drag-and-drop and status editing",
+          "Persisted filters and API changes",
+          "Hierarchy inference changes",
+          "New tag filter"
+        ]
+      },
+      "work": [
+        {
+          "workId": "PW-001",
+          "specId": "T-0203",
+          "type": "implementation",
+          "description": "Implement Board type filters and card variants."
+        },
+        {
+          "workId": "PW-002",
+          "specId": "T-0204",
+          "type": "implementation",
+          "description": "Implement the Feature-row Board projection."
+        },
+        {
+          "workId": "PW-003",
+          "specId": "T-0205",
+          "type": "implementation",
+          "description": "Implement direct-child completion summaries."
+        },
+        {
+          "workId": "PW-004",
+          "specId": "T-0206",
+          "type": "implementation",
+          "description": "Implement optional types and parent detail actions."
+        },
+        {
+          "workId": "PW-005",
+          "specId": "T-0207",
+          "type": "validation",
+          "description": "Validate combined behavior and repository integration."
+        }
+      ],
+      "exitCriteria": [
+        {
+          "criterionId": "XC-001",
+          "description": "Derived Board behavior is covered by automated regression checks.",
+          "met": true,
+          "evidenceIds": [
+            "OE-001"
+          ]
+        },
+        {
+          "criterionId": "XC-002",
+          "description": "Rendered interactions and responsive layout have browser evidence.",
+          "met": true,
+          "evidenceIds": [
+            "OE-002"
+          ]
+        },
+        {
+          "criterionId": "XC-003",
+          "description": "Integration checks have recorded results and no introduced failures.",
+          "met": true,
+          "evidenceIds": [
+            "OE-003"
+          ]
+        }
+      ],
+      "requiredEvidence": [
+        {
+          "evidenceId": "RE-001",
+          "description": "Automated Board regressions cover type and quick-filter combinations, hierarchy fallbacks, progress, counts, and source immutability."
+        },
+        {
+          "evidenceId": "RE-002",
+          "description": "Desktop and 375px browser review checks card and parent actions, keyboard controls, type cues, overflow, and filter lifecycle."
+        },
+        {
+          "evidenceId": "RE-003",
+          "description": "Full repository tests, UI build, and SpecForge parse/compose/validate results, with any proven pre-existing failures identified."
+        }
+      ],
+      "observedEvidence": [
+        {
+          "evidenceId": "OE-001",
+          "description": "All five Board tests pass, covering all 64 filter combinations, cross-status hierarchy, unresolved/cyclic references, exact counts, direct-child progress, refresh, ordering, and immutability.",
+          "satisfies": [
+            "RE-001"
+          ],
+          "assessment": "passed",
+          "command": "node --experimental-strip-types --experimental-test-isolation=none --test --test-name-pattern=Board tests/ui-state.test.ts",
+          "artifactPath": "docs/reports/board-hierarchy/validation.md",
+          "observedAt": "2026-11-18T15:43:23.411Z"
+        },
+        {
+          "evidenceId": "OE-002",
+          "description": "24 Chrome CDP browser checks pass at 1440x1000 and 375x900; mouse/keyboard actions, filter lifecycle, progress refresh, unresolved references, and local horizontal overflow verified. Visual review and additional geometry check confirmed mobile cards are fully visible without context overlap.",
+          "satisfies": [
+            "RE-002"
+          ],
+          "assessment": "passed",
+          "command": "Chrome headless CDP review against local Vite UI; session harness node_modules/.cache/review-board.mjs",
+          "artifactPath": "docs/reports/board-hierarchy/validation.md",
+          "observedAt": "2026-11-18T15:43:23.411Z"
+        },
+        {
+          "evidenceId": "OE-003",
+          "description": "Integration results recorded with no introduced failures: build and UI TypeScript check pass; parse/compose/validate clean. Full npm test result is 127/128 passing, with the unchanged pre-existing document-title assertion mismatch verified against HEAD and documented. This is not a claim that the full suite passed.",
+          "satisfies": [
+            "RE-003"
+          ],
+          "assessment": "passed",
+          "command": "npm test; npm --prefix ui run build; ui/node_modules/.bin/tsc --noEmit -p ui/tsconfig.json; node --experimental-strip-types src/cli.ts parse|compose|validate .",
+          "artifactPath": "docs/reports/board-hierarchy/validation.md",
+          "observedAt": "2026-11-18T15:43:23.411Z"
+        }
+      ],
+      "killCriteria": [
+        "Hierarchy display requires mutating canonical relationships or changing explicit planning statuses."
+      ],
+      "dependencySliceIds": [],
+      "decisions": [
+        {
+          "decisionId": "D-001",
+          "decision": "Use a client-side Feature-row projection and Board-local filters.",
+          "reason": "Implements the agreed specs without changing API or URL contracts."
+        },
+        {
+          "decisionId": "D-002",
+          "decision": "Place mobile Feature row context above the status cells while retaining desktop side context.",
+          "reason": "Visual inspection showed a sticky side header obscuring part of the Done card at 375px. Separate rows remove overlap and retain horizontal context.",
+          "decidedAt": "2026-11-18T15:43:23.411Z"
+        }
+      ],
+      "blockers": [],
+      "nextAction": "Review the completed Board hierarchy change; the existing document-title test mismatch and F-0008 tag filtering remain outside this slice.",
+      "resolution": "validated"
+    },
+    {
+      "sliceId": "SL-0005",
+      "title": "Completed Feature work filter",
+      "planningStatus": "in_progress",
+      "linkedSpecIds": [
+        "F-0028",
+        "S-0207",
+        "T-0208"
+      ],
+      "objective": "Reduce completed Feature clutter while retaining open children and completed work under ongoing Features.",
+      "hypothesis": "A Feature-scoped visibility predicate can hide finished cards without disrupting progress or filter lifecycle.",
+      "entryCriteria": [
+        {
+          "criterionId": "EC-001",
+          "description": "S-0207 and T-0208 are specified and the existing Board projection resolves owning Features.",
+          "met": true
+        }
+      ],
+      "scope": {
+        "included": [
+          "Default-off completed-Feature work checkbox",
+          "Hierarchy-aware visibility predicate",
+          "Filter combination regressions and browser lifecycle review"
+        ],
+        "excluded": [
+          "Global hide-done filtering",
+          "API or URL changes",
+          "Reopening SL-0004",
+          "Unrelated document-title test repair"
+        ]
+      },
+      "work": [
+        {
+          "workId": "PW-001",
+          "specId": "T-0208",
+          "type": "implementation",
+          "description": "Extend Board-local filters and apply the Feature-scoped visibility predicate."
+        },
+        {
+          "workId": "PW-002",
+          "specId": "T-0208",
+          "type": "validation",
+          "description": "Validate filter combinations, child retention, progress, browser lifecycle, and repository checks."
+        }
+      ],
+      "exitCriteria": [
+        {
+          "criterionId": "XC-001",
+          "description": "Automated regressions establish visibility and progress across filter combinations.",
+          "met": false
+        },
+        {
+          "criterionId": "XC-002",
+          "description": "Browser review establishes checkbox behavior and lifecycle.",
+          "met": false
+        },
+        {
+          "criterionId": "XC-003",
+          "description": "Integration results are recorded with no introduced failures.",
+          "met": false
+        }
+      ],
+      "requiredEvidence": [
+        {
+          "evidenceId": "RE-001",
+          "description": "Automated regressions cover both checkbox states across type/quick-filter combinations, open children of hidden parents, progress, unresolved references, and source immutability."
+        },
+        {
+          "evidenceId": "RE-002",
+          "description": "Browser checks verify default state, mouse/keyboard toggling, stable Done column, retained selection/details, refresh retention, and reset on Board re-entry, repository switch, and reload."
+        },
+        {
+          "evidenceId": "RE-003",
+          "description": "Full tests, UI build/typecheck, and SpecForge parse/compose/validate results are recorded; any proven pre-existing failure is explicitly identified."
+        }
+      ],
+      "observedEvidence": [],
+      "killCriteria": [
+        "Correct visibility requires mutating canonical hierarchy or explicit planning statuses."
+      ],
+      "dependencySliceIds": [
+        "SL-0004"
+      ],
+      "decisions": [
+        {
+          "decisionId": "D-001",
+          "decision": "Filter cards only when both card and owning Feature are explicitly done.",
+          "reason": "Preserves open descendants and completed children of ongoing Features, as selected by the user."
+        }
+      ],
+      "blockers": [],
+      "nextAction": "Implement the checkbox and predicate, then validate the new behavior."
     }
   ]
 }

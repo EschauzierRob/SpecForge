@@ -4,6 +4,9 @@ import test from "node:test";
 import {
   filterValidationFindings,
   filterBoardNodes,
+  BOARD_ITEM_TYPES,
+  createBoardFilters,
+  getBoardModel,
   getFindingNavigationSpecId,
   getWarningsEmptyState,
   getBlockedReason,
@@ -16,6 +19,9 @@ import {
 } from "../ui/src/lib/selectors.ts";
 import type {
   ComposeRepositoryResult,
+  ComposedNode,
+  PlanningStatus,
+  SpecNodeType,
   RecommendationResult,
   UiWorkspaceState,
   ValidationResult,
@@ -617,4 +623,264 @@ test("finding selection helper enables spec navigation only for known composed n
     specId: validSpecId,
   });
   assert.equal(navigatedState.selectedItemId, "epic-0001");
+});
+
+function boardNode(
+  id: string, type: SpecNodeType, parentId?: string, status?: PlanningStatus,
+  blocked = false, dependencies: string[] = [],
+): ComposedNode {
+  return {
+    spec: { id, type, parentId, title: `Title ${id}`, summary: '', sourcePath: `${id}.md`, childrenIds: [] },
+    ...(status ? { overlay: { specId: id, planningStatus: status, blocked, dependencies,
+      sourcePath: 'test.overlay.json', repositoryId: 'board-test' } } : {}),
+  };
+}
+
+function hierarchyBoardFixture(): ComposeRepositoryResult {
+  return {
+    ...composeFixture,
+    composedNodes: [
+      boardNode('E-0002', 'epic', undefined, 'backlog'),
+      boardNode('E-0001', 'epic', undefined, 'done'),
+      boardNode('F-0002', 'feature', 'E-0002', 'backlog'),
+      boardNode('F-0001', 'feature', 'E-0001', 'ready'),
+      boardNode('F-0003', 'feature', 'E-missing'),
+      boardNode('S-0003', 'story', 'F-0001', 'done', true, ['F-0002']),
+      boardNode('S-0001', 'story', 'F-0001', 'backlog', false, ['F-0002']),
+      boardNode('S-0002', 'story', 'F-0001', 'blocked', true),
+      boardNode('S-0004', 'story', 'F-0003'),
+      boardNode('T-0001', 'task', 'S-0001', 'done'),
+      boardNode('T-0002', 'task', 'S-0001', 'done', true, ['T-0001']),
+      boardNode('T-0003', 'task', 'S-0001', 'done'),
+      boardNode('T-0004', 'task', 'S-0001'),
+      boardNode('T-0005', 'task', 'S-0001', 'blocked', true),
+      boardNode('S-missing', 'story', 'F-missing', 'ready'),
+      boardNode('S-wrong', 'story', 'E-0001', 'ready'),
+      boardNode('S-cycle', 'story', 'T-cycle', 'ready'),
+      boardNode('T-cycle', 'task', 'S-cycle', 'ready'),
+      boardNode('T-no-parent', 'task'),
+      boardNode('T-wrong', 'task', 'F-0001', 'backlog'),
+      boardNode('T-missing', 'task', 'S-absent', 'backlog'),
+    ],
+  };
+}
+
+const allBoardCards = (model: ReturnType<typeof getBoardModel>) =>
+  model.groups.flatMap((group) => group.lanes.flatMap((lane) => lane.cards));
+
+test('Board defaults focus on Features and Stories without sharing mutable filter state', () => {
+  const filters = createBoardFilters();
+  assert.deepEqual(filters, {
+    selectedTypes: ['feature', 'story'], blockedOnly: false, hasDependencies: false, showDoneInCompletedFeatures: false,
+  });
+  assert.notEqual(filters.selectedTypes, createBoardFilters().selectedTypes);
+  const fixture = hierarchyBoardFixture();
+  const model = getBoardModel(fixture);
+  assert.deepEqual(model.groups.map((group) => group.id), ['F-0001', 'F-0002', 'F-0003', 'unresolved']);
+  assert.ok(allBoardCards(model).every(({ node }) => ['feature', 'story'].includes(node.spec.type)));
+  assert.deepEqual(getBoardModel().groups, []);
+});
+
+test('Board keeps cross-status siblings together and preserves hidden Feature context', () => {
+  const fixture = hierarchyBoardFixture();
+  const model = getBoardModel(fixture);
+  const row = model.groups[0];
+  assert.deepEqual(row.lanes.map((lane) => [lane.status, lane.cards.map(({ node }) => node.spec.id)]), [
+    ['unplanned', []], ['backlog', ['S-0001']], ['ready', ['F-0001']],
+    ['in_progress', ['S-0002']], ['done', ['S-0003']],
+  ]);
+  assert.equal(row.parent?.node?.spec.id, 'E-0001');
+  assert.deepEqual(row.progress, { completed: 1, total: 3 });
+  const stories = getBoardModel(fixture, { ...createBoardFilters(), selectedTypes: ['story'] });
+  assert.deepEqual(stories.groups.map((group) => group.id), ['F-0001', 'F-0003', 'unresolved']);
+  assert.equal(stories.groups[0].feature?.spec.id, 'F-0001');
+  assert.equal(stories.groups[0].parent?.node?.spec.title, 'Title E-0001');
+  assert.deepEqual(model.groups.find((group) => group.id === 'F-0002')?.progress, { completed: 0, total: 0 });
+});
+
+test('Board all type and quick-filter combinations produce exact counts and immutable progress', () => {
+  const fixture = hierarchyBoardFixture();
+  const before = structuredClone(fixture);
+  const overviewCounts = getPlanningStatusCounts(fixture);
+  for (let mask = 0; mask < 16; mask++) {
+    const selectedTypes = BOARD_ITEM_TYPES.filter((_, index) => mask & (1 << index));
+    for (const blockedOnly of [false, true]) {
+      for (const hasDependencies of [false, true]) {
+        const model = getBoardModel(fixture, { selectedTypes, blockedOnly, hasDependencies });
+        const expected = fixture.composedNodes.filter((node) => selectedTypes.includes(node.spec.type)
+          && (!blockedOnly || node.overlay?.blocked)
+          && (!hasDependencies || (node.overlay?.dependencies?.length ?? 0) > 0));
+        const cards = allBoardCards(model);
+        assert.deepEqual(cards.map(({ node }) => node.spec.id).sort(), expected.map((node) => node.spec.id).sort());
+        assert.equal(new Set(cards.map(({ node }) => node.spec.id)).size, cards.length);
+        for (const lane of model.lanes) {
+          const count = expected.filter((node) => {
+            const status = node.overlay?.planningStatus;
+            return (status === 'blocked' ? 'in_progress' : status ?? 'unplanned') === lane.status;
+          }).length;
+          assert.equal(lane.count, count);
+        }
+        assert.ok(model.groups.every((group) => group.lanes.some((lane) => lane.cards.length)));
+        const row = model.groups.find((group) => group.id === 'F-0001');
+        if (row) assert.deepEqual(row.progress, { completed: 1, total: 3 });
+        const story = cards.find(({ node }) => node.spec.id === 'S-0001');
+        if (story) assert.deepEqual(story.progress, { completed: 3, total: 5 });
+      }
+    }
+  }
+  assert.deepEqual(getPlanningStatusCounts(fixture), overviewCounts);
+  assert.deepEqual(fixture, before);
+});
+
+test('Board places optional Epics and Tasks once and retains invalid chains with parent references', () => {
+  const model = getBoardModel(hierarchyBoardFixture(), { ...createBoardFilters(), selectedTypes: BOARD_ITEM_TYPES });
+  assert.equal(model.groups[0].id, 'epics');
+  assert.equal(model.groups.at(-1)?.id, 'unresolved');
+  const feature = model.groups.find((group) => group.id === 'F-0001')!;
+  const task = feature.lanes.flatMap((lane) => lane.cards).find(({ node }) => node.spec.id === 'T-0001')!;
+  assert.equal(task.parent?.node?.spec.id, 'S-0001');
+  const unresolved = model.groups.at(-1)!.lanes.flatMap((lane) => lane.cards);
+  assert.deepEqual(unresolved.map(({ node }) => node.spec.id).sort(), [
+    'S-cycle', 'S-missing', 'S-wrong', 'T-cycle', 'T-missing', 'T-no-parent', 'T-wrong',
+  ]);
+  assert.equal(unresolved.find(({ node }) => node.spec.id === 'S-missing')?.parent?.id, 'F-missing');
+  assert.equal(unresolved.find(({ node }) => node.spec.id === 'S-wrong')?.parent?.node, undefined);
+  assert.equal(unresolved.find(({ node }) => node.spec.id === 'T-no-parent')?.parent?.id, undefined);
+  assert.equal(unresolved.find(({ node }) => node.spec.id === 'T-cycle')?.parent?.node?.spec.id, 'S-cycle');
+  const missingEpic = model.groups.find((group) => group.id === 'F-0003')!;
+  assert.equal(missingEpic.parent?.id, 'E-missing');
+  assert.equal(missingEpic.parent?.node, undefined);
+  assert.ok(missingEpic.lanes.flatMap((lane) => lane.cards).some(({ node }) => node.spec.id === 'S-0004'));
+});
+
+test('Board progress refreshes from direct children without rolling up parent status', () => {
+  const fixture = hierarchyBoardFixture();
+  const story = () => allBoardCards(getBoardModel(fixture)).find(({ node }) => node.spec.id === 'S-0001')!;
+  assert.deepEqual(story().progress, { completed: 3, total: 5 });
+  fixture.composedNodes.find((node) => node.spec.id === 'T-0005')!.overlay!.planningStatus = 'done';
+  assert.deepEqual(story().progress, { completed: 4, total: 5 });
+  assert.equal(story().node.overlay?.planningStatus, 'backlog');
+  assert.deepEqual(allBoardCards(getBoardModel(fixture)).find(({ node }) => node.spec.id === 'S-0004')!.progress,
+    { completed: 0, total: 0 });
+  const reversed = { ...fixture, composedNodes: [...fixture.composedNodes].reverse() };
+  assert.deepEqual(getBoardModel(reversed), getBoardModel(fixture));
+});
+
+function completedFeatureBoardFixture(): ComposeRepositoryResult {
+  const fixture = hierarchyBoardFixture();
+  fixture.composedNodes.push(
+    boardNode('F-done', 'feature', 'E-0001', 'done', true, ['F-0001']),
+    boardNode('S-done-child', 'story', 'F-done', 'done', true, ['S-0001']),
+    boardNode('S-open-child', 'story', 'F-done', 'in_progress', true, ['S-0001']),
+    boardNode('T-open-under-done', 'task', 'S-done-child', 'ready', true, ['T-0001']),
+    boardNode('T-done-child', 'task', 'S-done-child', 'done', true, ['T-0001']),
+    boardNode('T-done-under-open', 'task', 'S-open-child', 'done', true, ['T-0001']),
+    boardNode('T-unplanned-child', 'task', 'S-open-child'),
+    boardNode('F-complete', 'feature', 'E-0001', 'done'),
+    boardNode('S-complete', 'story', 'F-complete', 'done'),
+    boardNode('T-complete', 'task', 'S-complete', 'done'),
+  );
+  // These done items have no valid Feature membership and must remain eligible.
+  for (const node of fixture.composedNodes) {
+    if (['S-missing', 'S-wrong', 'S-cycle', 'T-cycle', 'T-wrong', 'T-missing'].includes(node.spec.id)) {
+      node.overlay!.planningStatus = 'done';
+    }
+  }
+  return fixture;
+}
+
+const hiddenCompletedFeatureIds = new Set([
+  'F-done', 'S-done-child', 'T-done-child', 'T-done-under-open', 'F-complete', 'S-complete', 'T-complete',
+]);
+
+test('Board hides done cards only in done Features, retaining open children and complete row context', () => {
+  const fixture = completedFeatureBoardFixture();
+  const filters = { blockedOnly: false, hasDependencies: false, selectedTypes: BOARD_ITEM_TYPES };
+  const model = getBoardModel(fixture, filters); // Omitted flag must use the false default.
+  const cards = allBoardCards(model);
+  assert.deepEqual(cards.map(({ node }) => node.spec.id).sort(), fixture.composedNodes
+    .filter((node) => !hiddenCompletedFeatureIds.has(node.spec.id)).map((node) => node.spec.id).sort());
+  const row = model.groups.find((group) => group.id === 'F-done')!;
+  assert.equal(row.feature?.spec.id, 'F-done');
+  assert.equal(row.parent?.node?.spec.id, 'E-0001');
+  assert.deepEqual(row.progress, { completed: 1, total: 2 });
+  assert.deepEqual(allBoardCards({ ...model, groups: [row] }).map(({ node }) => node.spec.id).sort(),
+    ['S-open-child', 'T-open-under-done', 'T-unplanned-child']);
+  assert.deepEqual(cards.find(({ node }) => node.spec.id === 'S-open-child')?.progress, { completed: 1, total: 2 });
+  assert.ok(!model.groups.some((group) => group.id === 'F-complete'));
+  assert.ok(cards.some(({ node }) => node.spec.id === 'S-0003')); // Done child of ongoing Feature.
+  assert.ok(cards.some(({ node }) => node.spec.id === 'E-0001')); // Done Epic.
+  const expanded = getBoardModel(fixture, { ...filters, showDoneInCompletedFeatures: true });
+  assert.equal(allBoardCards(expanded).length, fixture.composedNodes.length);
+  assert.ok(expanded.groups.some((group) => group.id === 'F-complete'));
+});
+
+test('Board completed-Feature checkbox composes with all 64 type and quick-filter selections', () => {
+  const fixture = completedFeatureBoardFixture();
+  const before = structuredClone(fixture);
+  const overviewCounts = getPlanningStatusCounts(fixture);
+  const full = getBoardModel(fixture, {
+    ...createBoardFilters(), selectedTypes: BOARD_ITEM_TYPES, showDoneInCompletedFeatures: true,
+  });
+  const rowProgress = new Map(full.groups.map((group) => [group.id, group.progress]));
+  const cardProgress = new Map(allBoardCards(full).map((card) => [card.node.spec.id, card.progress]));
+  for (const showDoneInCompletedFeatures of [false, true]) {
+    for (let mask = 0; mask < 16; mask++) {
+      const selectedTypes = BOARD_ITEM_TYPES.filter((_, index) => mask & (1 << index));
+      for (const blockedOnly of [false, true]) {
+        for (const hasDependencies of [false, true]) {
+          const model = getBoardModel(fixture, { selectedTypes, blockedOnly, hasDependencies, showDoneInCompletedFeatures });
+          const expected = fixture.composedNodes.filter((node) => selectedTypes.includes(node.spec.type)
+            && (!blockedOnly || node.overlay?.blocked)
+            && (!hasDependencies || (node.overlay?.dependencies?.length ?? 0) > 0)
+            && (showDoneInCompletedFeatures || !hiddenCompletedFeatureIds.has(node.spec.id)));
+          const cards = allBoardCards(model);
+          assert.deepEqual(cards.map(({ node }) => node.spec.id).sort(), expected.map((node) => node.spec.id).sort());
+          assert.equal(new Set(cards.map(({ node }) => node.spec.id)).size, cards.length);
+          for (const lane of model.lanes) {
+            assert.equal(lane.count, expected.filter((node) => {
+              const status = node.overlay?.planningStatus;
+              return (status === 'blocked' ? 'in_progress' : status ?? 'unplanned') === lane.status;
+            }).length);
+          }
+          assert.equal(model.lanes.at(-1)?.status, 'done');
+          for (const group of model.groups) {
+            assert.ok(group.lanes.some((lane) => lane.cards.length));
+            assert.deepEqual(group.progress, rowProgress.get(group.id));
+          }
+          for (const card of cards) assert.deepEqual(card.progress, cardProgress.get(card.node.spec.id));
+        }
+      }
+    }
+  }
+  assert.deepEqual(getPlanningStatusCounts(fixture), overviewCounts);
+  assert.deepEqual(fixture, before);
+});
+
+test('Board completed filtering uses only explicit done Feature status and refreshes from the full model', () => {
+  const fixture = completedFeatureBoardFixture();
+  const filters = { ...createBoardFilters(), selectedTypes: BOARD_ITEM_TYPES };
+  const feature = fixture.composedNodes.find((node) => node.spec.id === 'F-done')!;
+  for (const status of ['backlog', 'ready', 'in_progress', 'blocked', undefined] as const) {
+    feature.overlay!.planningStatus = status;
+    const ids = allBoardCards(getBoardModel(fixture, filters)).map(({ node }) => node.spec.id);
+    for (const id of ['F-done', 'S-done-child', 'T-done-child', 'T-done-under-open']) assert.ok(ids.includes(id));
+  }
+  delete feature.overlay;
+  assert.ok(allBoardCards(getBoardModel(fixture, filters)).some(({ node }) => node.spec.id === 'S-done-child'));
+  feature.overlay = { specId: 'F-done', planningStatus: 'done', blocked: false, sourcePath: 'test.json', repositoryId: 'test' };
+  assert.ok(!allBoardCards(getBoardModel(fixture, filters)).some(({ node }) => node.spec.id === 'S-done-child'));
+  assert.equal(filters.showDoneInCompletedFeatures, false);
+});
+
+test('Board keeps Done column with zero visible items when every Feature card is done', () => {
+  const fixture = completedFeatureBoardFixture();
+  fixture.composedNodes = fixture.composedNodes.filter((node) => ['F-complete', 'S-complete', 'T-complete'].includes(node.spec.id));
+  const model = getBoardModel(fixture, { ...createBoardFilters(), selectedTypes: BOARD_ITEM_TYPES });
+  assert.deepEqual(model.groups, []);
+  assert.equal(model.lanes.length, 5);
+  assert.deepEqual(model.lanes.at(-1), { status: 'done', count: 0 });
+  assert.equal(allBoardCards(getBoardModel(fixture, {
+    ...createBoardFilters(), selectedTypes: BOARD_ITEM_TYPES, showDoneInCompletedFeatures: true,
+  })).length, 3);
 });
