@@ -3,6 +3,86 @@
   "repositoryId": "specforge-local",
   "entries": [
     {
+      "specId": "F-0028",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": ["F-0008", "F-0009"],
+      "notes": "Implementation-ready Board hierarchy specs authored; UI implementation and its execution slice have not started.",
+      "tags": ["ui", "board", "hierarchy"]
+    },
+    {
+      "specId": "S-0203",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": [],
+      "notes": "Specified type selection defaults, accessible card distinctions, and filter lifetime; implementation pending.",
+      "tags": ["ui", "board", "hierarchy"]
+    },
+    {
+      "specId": "S-0204",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": ["S-0203"],
+      "notes": "Specified Feature rows, status placement, fallback groups, and visible-card counts; implementation pending.",
+      "tags": ["ui", "board", "hierarchy"]
+    },
+    {
+      "specId": "S-0205",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": ["S-0204"],
+      "notes": "Specified direct-child progress independent of display filters; implementation pending.",
+      "tags": ["ui", "board", "hierarchy"]
+    },
+    {
+      "specId": "S-0206",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": ["S-0204"],
+      "notes": "Specified Epic and Story references, optional item placement, and detail navigation; implementation pending.",
+      "tags": ["ui", "board", "hierarchy"]
+    },
+    {
+      "specId": "T-0203",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": [],
+      "notes": "Implement Board-local type filters and accessible type-specific card styling.",
+      "tags": ["ui", "board", "hierarchy"]
+    },
+    {
+      "specId": "T-0204",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": ["T-0203"],
+      "notes": "Implement Feature-row view model and rendering without changing status semantics or shared overview counts.",
+      "tags": ["ui", "board", "hierarchy"]
+    },
+    {
+      "specId": "T-0205",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": ["T-0204"],
+      "notes": "Implement progress from unfiltered direct-child relationships and overlay done status.",
+      "tags": ["ui", "board", "hierarchy"]
+    },
+    {
+      "specId": "T-0206",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": ["T-0204"],
+      "notes": "Implement optional Epic and Task cards, parent references, and accessible detail actions.",
+      "tags": ["ui", "board", "hierarchy"]
+    },
+    {
+      "specId": "T-0207",
+      "planningStatus": "ready",
+      "blocked": false,
+      "dependencies": ["T-0203", "T-0204", "T-0205", "T-0206"],
+      "notes": "Validate combined Board behavior with meaningful selector regressions and browser review; no implementation evidence collected yet.",
+      "tags": ["ui", "board", "hierarchy", "validation"]
+    },
+    {
       "specId": "E-0001",
       "planningStatus": "done",
       "blocked": false,
@@ -1046,13 +1126,13 @@
     },
     {
       "specId": "F-0008",
-      "planningStatus": "done",
+      "planningStatus": "ready",
       "blocked": false,
       "dependencies": [
         "F-0006",
         "F-0007"
       ],
-      "notes": "Board navigation remains accessible from the compact sticky workspace header.",
+      "notes": "Existing Board navigation remains implemented. Revised default type selection and visible-card counts are specified with F-0028 and await implementation; prior done status no longer covers all requirements.",
       "tags": [
         "ui",
         "board"
