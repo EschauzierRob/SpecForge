@@ -25,6 +25,7 @@ Partially initialized repositories fail during ingestion when required SpecForge
 - Overwriting existing valid user-managed files.
 - Introducing optional scaffolding unrelated to ingestion readiness.
 - Overwriting repository-specific agent instructions.
+- Mutating a read-only Git-backed working copy.
 
 ## Requirements
 - [ ] R1: Workspace load includes a bootstrap phase that runs before parse/compose.
@@ -33,6 +34,7 @@ Partially initialized repositories fail during ingestion when required SpecForge
 - [ ] R4: CLI/API output summarizes bootstrap actions taken.
 - [ ] R5: Bootstrap phase seeds AI-facing SpecForge workflow instructions when missing.
 - [ ] R6: Bootstrap phase does not overwrite existing root `AGENTS.md`.
+- [ ] R7: Bootstrap runs only for project sources that permit repository mutation; a read-only Git-backed project reports missing essentials through the existing discovery and validation diagnostics without creating or changing repository files.
 
 ## Acceptance Criteria
 - [ ] AC1: Loading a repository with no `specforge/overlay` succeeds and creates required artifacts.
@@ -40,6 +42,7 @@ Partially initialized repositories fail during ingestion when required SpecForge
 - [ ] AC3: User-facing output includes a list/count of created artifacts.
 - [ ] AC4: Bootstrapped repositories include instructions that tell AI coders to use `/specs` for product intent and `specforge/overlay/local-dev.overlay.json` for execution metadata.
 - [ ] AC5: Existing repository-specific AI instructions are preserved.
+- [ ] AC6: Loading a Git-backed project with missing essentials leaves its checked-out content unchanged and reports that bootstrap was skipped because the source is read-only.
 
 ## Dependencies
 - F-0004
@@ -49,4 +52,4 @@ Partially initialized repositories fail during ingestion when required SpecForge
 - Should bootstrap run by default in all environments or be gated by a flag in strict mode?
 
 ## Notes
-Bootstrap must be idempotent and safe for repeated workspace loads.
+Bootstrap must be idempotent and safe for repeated workspace loads. Source capabilities, rather than an assumption that every project is an arbitrary writable absolute path, determine whether bootstrap may run.
