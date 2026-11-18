@@ -45,6 +45,9 @@ Keeping overlay separate preserves spec integrity and enables multiple planning 
   - lower numbers indicate higher priority
 - `blocked` (boolean)
   - quick explicit block marker
+- `blockedReason` (string)
+  - omit when there is no reason; blank strings are normalized to absence for entries where `blocked` is not true and `planningStatus` is not `blocked`
+  - blocked entries reject blank reasons; non-string values are invalid in every state
 - `dependencies` (string[])
   - execution dependencies by spec ID
 - `notes` (string)
@@ -70,6 +73,8 @@ Suggested top-level structure:
 2. Missing overlay entries are allowed.
 3. Overlay entries with unknown `specId` create warnings.
 4. Multiple overlay files may be merged with deterministic precedence (future extension).
+
+The generated local CLI and API share overlay loading and composition rules. Rejected entries do not contribute metadata and produce validation findings (V-105 for field/file errors without a more specific rule).
 
 ## Future Extensions
 

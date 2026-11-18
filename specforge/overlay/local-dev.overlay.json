@@ -42,10 +42,11 @@
       "dependencies": [
         "F-0005"
       ],
-      "notes": "Composition follows parser stabilization.",
+      "notes": "Incidental fix validated: unblocked blank reasons preserve metadata; generated CLI 0.2.1 shares API overlay loading/composition and diagnostic mapping. All 55 overlay/discovery/API/validation tests pass; parse, compose and both validators report zero findings. Full suite: 122/123 pass, with an unrelated existing document-title expectation failure in tests/ui-state.test.ts.",
       "tags": [
         "mvp",
-        "composition"
+        "composition",
+        "incidental"
       ]
     },
     {
@@ -301,11 +302,12 @@
         "F-0006",
         "F-0010"
       ],
-      "notes": "Workspace bootstrap now seeds local SpecForge CLI launchers/runtime and discovery reports CLI tooling availability.",
+      "notes": "Incidental fix validated: unblocked blank reasons preserve metadata; generated CLI 0.2.1 shares API overlay loading/composition and diagnostic mapping. All 55 overlay/discovery/API/validation tests pass; parse, compose and both validators report zero findings. Full suite: 122/123 pass, with an unrelated existing document-title expectation failure in tests/ui-state.test.ts.",
       "tags": [
         "bootstrap",
         "cli",
-        "tooling"
+        "tooling",
+        "incidental"
       ]
     },
     {
@@ -1127,7 +1129,12 @@
     },
     {
       "specId": "F-0010",
-      "planningStatus": "done"
+      "planningStatus": "done",
+      "blocked": false,
+      "tags": [
+        "incidental"
+      ],
+      "notes": "Incidental fix validated: unblocked blank reasons preserve metadata; generated CLI 0.2.1 shares API overlay loading/composition and diagnostic mapping. All 55 overlay/discovery/API/validation tests pass; parse, compose and both validators report zero findings. Full suite: 122/123 pass, with an unrelated existing document-title expectation failure in tests/ui-state.test.ts."
     },
     {
       "specId": "F-0011",

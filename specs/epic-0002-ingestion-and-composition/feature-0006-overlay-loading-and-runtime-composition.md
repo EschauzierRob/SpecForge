@@ -28,10 +28,14 @@ Planning signals must be available at runtime without mutating source specs.
 - [ ] R2: Composer attaches overlay facets non-destructively.
 - [ ] R3: Unknown spec IDs are surfaced as warnings.
 
+- [ ] R4: Treat blank blockedReason strings as absent when neither blocked nor planningStatus marks the entry blocked.
+
 ## Acceptance Criteria
 - [ ] AC1: Composed node exposes both spec fields and overlay fields.
 - [ ] AC2: Missing overlay entries do not block composition.
 - [ ] AC3: Composition report includes unresolved overlay reference count.
+
+- [ ] AC4: An unblocked entry with a blank blockedReason retains its status, tags, notes, and blocked flag; blocked entries with blank reasons remain invalid.
 
 ## Dependencies
 - F-0002

@@ -316,3 +316,30 @@ test("composeNodes attaches overlay facets and warns about unknown specIds", () 
   assert.equal(result.composedNodes[0]?.overlay?.sourcePath, "specforge/overlay/local-dev.overlay.json");
   assert.ok(result.diagnostics.some((diagnostic) => diagnostic.code === "unknown-overlay-specid"));
 });
+
+
+test("blank blockedReason is absent only when the entry is not blocked", async () => {
+  const root = await createTempRepo();
+  const filePath = path.join(root, "specforge", "overlay", "local-dev.overlay.json");
+  for (const version of ["0.1", "0.2"]) {
+    for (const reason of ["", "  \t "]) {
+      for (const state of [{}, { blocked: false }, { blocked: true }, { planningStatus: "blocked" }]) {
+        const entry = { specId: "F-0003", planningStatus: "done", tags: ["regression"], notes: "Retain me", ...state, blockedReason: reason };
+        await writeFile(filePath, JSON.stringify({ version, repositoryId: "test", entries: [entry] }));
+        const result = await loadOverlayFile(filePath, root);
+        if (state.blocked === true || state.planningStatus === "blocked") {
+          assert.equal(result.overlayFile?.entries.length, 0);
+          assert.equal(result.diagnostics[0]?.sectionName, "blockedReason");
+        } else {
+          const loaded = result.overlayFile?.entries[0];
+          assert.equal(loaded?.planningStatus, "done");
+          assert.equal(loaded?.blocked, state.blocked);
+          assert.equal(loaded?.blockedReason, undefined);
+          assert.deepEqual(loaded?.tags, ["regression"]);
+          assert.equal(loaded?.notes, "Retain me");
+          assert.deepEqual(result.diagnostics, []);
+        }
+      }
+    }
+  }
+});

@@ -76,6 +76,13 @@ Detect structural, semantic, and convention issues across specs and overlay to p
 - Condition: overlay dependency references unknown ID
 - Severity: Warning
 
+### V-105 Invalid Overlay Data
+
+- Condition: an overlay entry or file fails loading or field validation without a more specific rule
+- Severity: Error
+- Impact: rejected entries contribute no planning metadata; the finding identifies the source and spec ID when available
+- Remediation: repair the reported field; omit `blockedReason` when no reason exists. Blank strings are accepted as absent only on entries not marked blocked.
+
 ## Execution Slice Rules
 
 ### V-200 Invalid Execution Slice Shape

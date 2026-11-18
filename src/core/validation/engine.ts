@@ -1,3 +1,4 @@
+import { overlayDiagnosticToFinding } from "../overlay/diagnostics.ts";
 import { ingestRepository } from "../ingest/ingest.ts";
 import type {
   CanonicalNode,
@@ -449,51 +450,8 @@ function mapCompositionDiagnosticsToFindings(
   findings: ValidationFinding[],
 ): void {
   for (const diagnostic of diagnostics) {
-    if (diagnostic.code === "unknown-overlay-specid") {
-      addFinding(findings, {
-        ruleId: "V-101",
-        severity: "warning",
-        message: diagnostic.message,
-        specId: diagnostic.specId,
-        sourcePaths: [diagnostic.sourcePath],
-        remediationHint: "Update the overlay entry to point at an existing spec ID.",
-      });
-      continue;
-    }
-
-    if (diagnostic.code === "invalid-overlay-entry" && diagnostic.sectionName === "planningStatus") {
-      addFinding(findings, {
-        ruleId: "V-102",
-        severity: "error",
-        message: diagnostic.message,
-        specId: diagnostic.specId,
-        sourcePaths: [diagnostic.sourcePath],
-        remediationHint: "Use one of the supported planningStatus values.",
-      });
-      continue;
-    }
-
-    if (diagnostic.code === "invalid-overlay-entry" && diagnostic.sectionName === "rank") {
-      addFinding(findings, {
-        ruleId: "V-103",
-        severity: "warning",
-        message: diagnostic.message,
-        specId: diagnostic.specId,
-        sourcePaths: [diagnostic.sourcePath],
-        remediationHint: "Set rank to a positive integer.",
-      });
-      continue;
-    }
-
-    if (diagnostic.code === "invalid-execution-slice") {
-      addFinding(findings, {
-        ruleId: "V-200",
-        severity: "error",
-        message: diagnostic.message,
-        sourcePaths: [diagnostic.sourcePath],
-        remediationHint: "Repair the execution slice so every field matches the version 0.2 overlay contract.",
-      });
-    }
+    const finding = overlayDiagnosticToFinding(diagnostic);
+    if (finding) addFinding(findings, finding);
   }
 }
 

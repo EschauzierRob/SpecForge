@@ -50,7 +50,7 @@
         "planningStatus": { "$ref": "#/$defs/planningStatus" },
         "rank": { "type": "integer", "minimum": 1 },
         "blocked": { "type": "boolean" },
-        "blockedReason": { "$ref": "#/$defs/nonEmptyString" },
+        "blockedReason": { "type": "string" },
         "dependencies": {
           "type": "array",
           "items": { "$ref": "#/$defs/specId" },
@@ -63,6 +63,13 @@
           "uniqueItems": true
         }
       },
+      "allOf": [{
+        "if": { "anyOf": [
+          { "required": ["blocked"], "properties": { "blocked": { "const": true } } },
+          { "required": ["planningStatus"], "properties": { "planningStatus": { "const": "blocked" } } }
+        ] },
+        "then": { "properties": { "blockedReason": { "type": "string", "pattern": "\\S" } } }
+      }],
       "additionalProperties": false
     },
     "criterion": {

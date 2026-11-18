@@ -27,10 +27,14 @@ Malformed specs or overlays can silently degrade trust in board and recommendati
 - [ ] R2: Emit finding objects with severity, ruleId, message, and source.
 - [ ] R3: Support aggregate summary counts by severity.
 
+- [ ] R4: Surface rejected overlay entries and malformed overlay files as actionable validation findings.
+
 ## Acceptance Criteria
 - [ ] AC1: Rule execution is deterministic and repeatable.
 - [ ] AC2: Invalid overlay references produce findings without aborting run.
 - [ ] AC3: Findings include enough context for users to locate source issues.
+
+- [ ] AC4: Invalid blockedReason types and blank reasons on blocked entries produce errors containing the spec ID and source path.
 
 ## Dependencies
 - F-0005

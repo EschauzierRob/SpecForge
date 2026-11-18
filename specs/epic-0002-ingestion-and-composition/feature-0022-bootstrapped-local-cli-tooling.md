@@ -31,11 +31,15 @@ Repositories that have SpecForge specs and workflow instructions can still lack 
 - [ ] R3: Bootstrapped CLI tooling supports parse, compose, ingest, and validate commands.
 - [ ] R4: Node repositories receive safe npm script aliases only when no script conflict exists.
 
+- [ ] R5: Use the API overlay loader, composition rules, and diagnostic mapping in the generated local CLI.
+
 ## Acceptance Criteria
 - [ ] AC1: A partially initialized repository becomes runnable through `specforge/bin/specforge`.
 - [ ] AC2: Repeated discovery does not rewrite existing CLI tooling files.
 - [ ] AC3: Discovery output exposes launcher paths, runtime path, manifest path, and version.
 - [ ] AC4: Package scripts are additive and preserve existing conflicting script names.
+
+- [ ] AC5: Generated CLI compose and validate agree with the API on blank blockedReason normalization and rejected entry diagnostics; managed older CLI artifacts upgrade safely.
 
 ## Dependencies
 - F-0014

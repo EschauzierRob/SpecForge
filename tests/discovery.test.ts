@@ -5,7 +5,7 @@ import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 
-import { discoverRepository } from "../src/index.ts";
+import { composeRepository, validateRepository, discoverRepository } from "../src/index.ts";
 import { runCli } from "../src/cli.ts";
 import { createCliToolingFileContents } from "../src/core/ingest/cli-tooling.ts";
 import { createRepositoryEdgeFixture } from "./fixtures/repository-edge-fixtures.ts";
@@ -48,7 +48,7 @@ Bootstrap coverage epic.
   return root;
 }
 
-async function installGeneratedCli(root: string, version: "0.1.0" | "0.2.0"): Promise<void> {
+async function installGeneratedCli(root: string, version: "0.1.0" | "0.2.0" | "0.2.1"): Promise<void> {
   for (const [relativePath, content] of createCliToolingFileContents(version)) {
     const targetPath = path.join(root, relativePath);
     await mkdir(path.dirname(targetPath), { recursive: true });
@@ -213,7 +213,7 @@ test("discoverRepository bootstraps the overlay directory and seeded local overl
   ]);
   assert.equal(discovery.cliTooling.runtimePath, "specforge/tools/specforge-cli.mjs");
   assert.equal(discovery.cliTooling.manifestPath, "specforge/tools/specforge-cli.manifest.json");
-  assert.equal(discovery.cliTooling.version, "0.2.0");
+  assert.equal(discovery.cliTooling.version, "0.2.1");
 
   const overlayPayload = JSON.parse(
     await readFile(path.join(root, "specforge", "overlay", "local-dev.overlay.json"), "utf8"),
@@ -353,7 +353,7 @@ test("discoverRepository upgrades an untouched v0.1 consumer to v0.2 idempotentl
   assert.equal(migratedOverlay.repositoryId, "legacy-consumer");
   assert.deepEqual(migratedOverlay.entries, legacyEntries);
   assert.deepEqual(migratedOverlay.executionSlices, []);
-  assert.equal(migratedManifest.version, "0.2.0");
+  assert.equal(migratedManifest.version, "0.2.1");
   assert.deepEqual(
     Object.keys(migratedManifest.managedFiles).sort(),
     [
@@ -365,7 +365,7 @@ test("discoverRepository upgrades an untouched v0.1 consumer to v0.2 idempotentl
     ],
   );
   assert.equal(first.cliTooling.status, "available");
-  assert.equal(first.cliTooling.version, "0.2.0");
+  assert.equal(first.cliTooling.version, "0.2.1");
   assert.ok(first.bootstrap.actions.some(
     (action) => action.path === "specforge/overlay/local-dev.overlay.json" && action.operation === "updated",
   ));
@@ -377,9 +377,14 @@ test("discoverRepository upgrades an untouched v0.1 consumer to v0.2 idempotentl
   assert.equal(compose.exitCode, 0, compose.stderr);
   assert.deepEqual(JSON.parse(compose.stdout).overlayFiles[0].executionSlices, []);
 
+  const slice = {
+    title: "WIP coverage", linkedSpecIds: ["E-0001"], objective: "Check WIP",
+    entryCriteria: [], scope: { included: [], excluded: [] }, work: [], exitCriteria: [],
+    requiredEvidence: [], observedEvidence: [], killCriteria: [], dependencySliceIds: [], decisions: [], blockers: [], nextAction: "Verify",
+  };
   migratedOverlay.executionSlices = [
-    { sliceId: "SL-0001", planningStatus: "in_progress" },
-    { sliceId: "SL-0002", planningStatus: "blocked" },
+    { ...slice, sliceId: "SL-0001", planningStatus: "in_progress" },
+    { ...slice, sliceId: "SL-0002", planningStatus: "blocked" },
   ];
   await writeFile(overlayPath, `${JSON.stringify(migratedOverlay, null, 2)}\n`);
   const validate = await executeLocalCli(root, "validate");
@@ -526,4 +531,42 @@ test("discoverRepository includes extensionless and slice artifacts for tolerant
   assert.ok(discovery.discoveredSpecFiles.includes("specs/epic-1000-edge-cases/plan.md"));
   assert.ok(discovery.adapterIncludedSpecFiles.includes("specs/epic-1000-edge-cases/feature-1002-payment-ledger"));
   assert.ok(discovery.adapterIncludedSpecFiles.includes("specs/epic-1000-edge-cases/plan.md"));
+});
+
+
+test("generated CLI and API agree on overlay normalization and rejected data", async () => {
+  const root = await createBootstrapCandidate(false);
+  await discoverRepository(root);
+  const overlayPath = path.join(root, "specforge", "overlay", "local-dev.overlay.json");
+  for (const blockedReason of ["", "  ", null, 42, "Waiting"]) {
+    for (const blocked of [false, true]) {
+      await writeFile(overlayPath, JSON.stringify({ version: "0.2", repositoryId: "test", entries: [
+        { specId: "E-0001", planningStatus: "done", blocked, blockedReason, tags: ["kept"], notes: "Retain me" },
+      ] }));
+      const direct = await composeRepository(root);
+      const composed = await executeLocalCli(root, "compose");
+      assert.equal(composed.exitCode, 0, composed.stderr);
+      const payload = JSON.parse(composed.stdout);
+      assert.deepEqual(payload.overlayFiles, JSON.parse(JSON.stringify(direct.overlayFiles)));
+      assert.deepEqual(payload.compositionDiagnostics, direct.compositionDiagnostics);
+      assert.deepEqual(payload.composedNodes[0].overlay, JSON.parse(JSON.stringify(direct.composedNodes[0].overlay ?? null)) ?? undefined);
+      const validation = await executeLocalCli(root, "validate");
+      const findings = JSON.parse(validation.stdout).findings;
+      const expected = (await validateRepository(root)).findings.filter((finding) => finding.ruleId === "V-105");
+      assert.deepEqual(findings.filter((finding) => finding.ruleId === "V-105"), JSON.parse(JSON.stringify(expected)));
+      assert.equal(validation.exitCode, expected.length ? 1 : 0, validation.stderr);
+    }
+  }
+  await writeFile(overlayPath, "{");
+  const invalidJson = await executeLocalCli(root, "validate");
+  assert.equal(invalidJson.exitCode, 1, invalidJson.stderr);
+  assert.ok(JSON.parse(invalidJson.stdout).findings.some((finding) => finding.ruleId === "V-105"));
+});
+
+test("managed v0.2.0 CLI upgrades to the shared overlay validator", async () => {
+  const root = await createBootstrapCandidate(true);
+  await installGeneratedCli(root, "0.2.0");
+  const discovery = await discoverRepository(root);
+  assert.equal(discovery.cliTooling.version, "0.2.1");
+  assert.ok(discovery.bootstrap.actions.some((action) => action.path === "specforge/tools/specforge-cli.mjs" && action.operation === "updated"));
 });

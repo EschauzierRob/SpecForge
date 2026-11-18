@@ -279,3 +279,31 @@ Loaded through API adapter option.
   assert.equal(payload.discovery.specDiscoveryProfile, "bitbetmatic2");
   assert.equal(payload.canonicalNodes[0]?.id, "E-0001");
 });
+
+
+test("API preserves unblocked metadata with a blank reason and reports invalid reasons", async (t) => {
+  const root = await createBootstrapCandidate();
+  await mkdir(path.join(root, "specforge", "overlay"), { recursive: true });
+  const overlayPath = path.join(root, "specforge", "overlay", "local-dev.overlay.json");
+  const handle = await withApiServer(t);
+  for (const blockedReason of ["", null]) {
+    await writeFile(overlayPath, JSON.stringify({ version: "0.2", repositoryId: "test", entries: [
+      { specId: "E-0001", planningStatus: "done", blocked: false, blockedReason, tags: ["kept"], notes: "Retain me" },
+    ] }));
+    const response = await fetch(handle.url + "/api/compose", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ repoPath: root }) });
+    assert.equal(response.status, 200);
+    const payload = await response.json();
+    if (blockedReason === "") {
+      assert.equal(payload.composedNodes[0].overlay.planningStatus, "done");
+      assert.equal(payload.composedNodes[0].overlay.blocked, false);
+      assert.equal(payload.composedNodes[0].overlay.blockedReason, undefined);
+      assert.deepEqual(payload.composedNodes[0].overlay.tags, ["kept"]);
+      assert.equal(payload.composedNodes[0].overlay.notes, "Retain me");
+    } else {
+      assert.equal(payload.composedNodes[0].overlay, undefined);
+      const validation = await fetch(handle.url + "/api/validate", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ repoPath: root }) });
+      const result = await validation.json();
+      assert.ok(result.findings.some((finding) => finding.ruleId === "V-105" && finding.specId === "E-0001" && finding.sourcePaths.includes("specforge/overlay/local-dev.overlay.json")));
+    }
+  }
+});
