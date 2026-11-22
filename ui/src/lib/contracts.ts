@@ -79,6 +79,7 @@ export interface CanonicalNode {
   nonGoals?: string[];
   requirements?: string[];
   acceptanceCriteria?: string[];
+  acceptanceCriteriaChecked?: boolean[];
   dependencies?: string[];
   openQuestions?: string[];
   notes?: string;

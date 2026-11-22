@@ -27,11 +27,13 @@ Users need a single inspection pane to understand context before taking action.
 - [ ] R1: Detail panel displays canonical fields from selected node.
 - [ ] R2: Detail panel displays overlay fields if present.
 - [ ] R3: Navigation controls jump to linked items.
+- [ ] R4: Acceptance criteria in item details show read-only checkboxes reflecting the source spec completion state. Board cards do not display these checkboxes.
 
 ## Acceptance Criteria
 - [ ] AC1: Selecting any node updates detail panel in under expected UI threshold.
 - [ ] AC2: Missing overlay fields are represented as “not set,” not errors.
 - [ ] AC3: Dependency links are clickable and resolve if targets exist.
+- [ ] AC4: Item details show checked boxes for `[x]` or `[X]` criteria and empty boxes for `[ ]` or unmarked criteria, preserving criterion text and order without editing the spec.
 
 ## Dependencies
 - F-0007

@@ -3,14 +3,21 @@ import { useMemo } from "react";
 import type { ComposeRepositoryResult, ComposedNode } from "./lib/contracts";
 import { getTriageBadges } from "./lib/selectors";
 
-function FieldList(props: { title: string; items: string[] }): JSX.Element {
+function FieldList(props: { title: string; items: string[]; checked?: boolean[] }): JSX.Element {
   return (
     <section className="detail-section">
       <h3>{props.title}</h3>
       {props.items.length > 0 ? (
-        <ul>
-          {props.items.map((item) => (
-            <li key={item}>{item}</li>
+        <ul className={props.checked ? "detail-checklist" : undefined}>
+          {props.items.map((item, index) => (
+            <li key={`${index}-${item}`}>
+              {props.checked ? (
+                <label>
+                  <input type="checkbox" checked={props.checked[index] ?? false} disabled />
+                  <span>{item}</span>
+                </label>
+              ) : item}
+            </li>
           ))}
         </ul>
       ) : (
@@ -128,7 +135,11 @@ export function Detail(props: {
 
       <FieldList title="Goals" items={selectedNode.spec.goals ?? []} />
       <FieldList title="Requirements" items={selectedNode.spec.requirements ?? []} />
-      <FieldList title="Acceptance criteria" items={selectedNode.spec.acceptanceCriteria ?? []} />
+      <FieldList
+        title="Acceptance criteria"
+        items={selectedNode.spec.acceptanceCriteria ?? []}
+        checked={selectedNode.spec.acceptanceCriteriaChecked ?? []}
+      />
       <LinkGroup
         title="Dependencies"
         specIds={selectedNode.spec.dependencies ?? []}

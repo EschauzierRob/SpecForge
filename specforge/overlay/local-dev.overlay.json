@@ -3,6 +3,14 @@
   "repositoryId": "specforge-local",
   "entries": [
     {
+      "specId": "F-0029",
+      "planningStatus": "backlog",
+      "blocked": false,
+      "dependencies": ["F-0001", "F-0002", "F-0005", "F-0006"],
+      "notes": "Feature specified for item lifecycle dates: explicit metadata/text precedence, per-field Git history recovery, provenance and history limitations, and maintenance during authorized creation/edit flows. Implementation has not started; date-label aliases and persistence representation remain design questions.",
+      "tags": ["ingestion", "metadata", "lifecycle-dates", "git-history"]
+    },
+    {
       "specId": "S-0207",
       "planningStatus": "done",
       "blocked": false,
@@ -126,10 +134,11 @@
       "dependencies": [
         "F-0004"
       ],
-      "notes": "Parser extraction is MVP critical.",
+      "notes": "Parser extraction is MVP critical. Incidental acceptance-criteria fix preserves source checkbox completion alongside existing text. All 8 parser tests pass, including mixed completion states and composition preservation; parse, compose and validate pass with zero findings. Full suite: 132/133 pass, with the known unrelated document-title expectation failure.",
       "tags": [
         "mvp",
-        "ingestion"
+        "ingestion",
+        "incidental"
       ]
     },
     {
@@ -1162,7 +1171,7 @@
         "F-0007",
         "F-0008"
       ],
-      "notes": "Workspace navigation controls use a compact left-aligned tab row with repository loading controls on the right; the main UI header carries branded assets, and the browser title appends the loaded repository's final path segment.",
+      "notes": "Workspace navigation controls use a compact left-aligned tab row with repository loading controls on the right; the main UI header carries branded assets, and the browser title appends the loaded repository's final path segment. Incidental acceptance-criteria fix displays read-only source checkboxes in details, leaving Board cards unchanged. UI build/typecheck and rendered checks for checked, unchecked, legacy and empty criteria pass. SpecForge checks are clean; full suite 132/133 with the known unrelated document-title expectation failure.",
       "tags": [
         "branding",
         "ui",

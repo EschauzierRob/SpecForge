@@ -3,8 +3,42 @@ import assert from "node:assert/strict";
 
 import path from "node:path";
 
-import { mapSectionsToCanonical, parseSpecFile, tokenizeSections } from "../src/index.ts";
+import { composeNodes, mapSectionsToCanonical, parseSpecFile, tokenizeSections } from "../src/index.ts";
 import { createRepositoryEdgeFixture } from "./fixtures/repository-edge-fixtures.ts";
+
+test("acceptance criteria preserve checkbox completion through parsing and composition", () => {
+  const parsed = mapSectionsToCanonical({
+    title: "Checkbox states",
+    sourcePath: "specs/story.md",
+    sectionMap: tokenizeSections(`## ID
+S-0001
+## Type
+Story
+## Parent
+F-0001
+## Summary
+Preserve completion.
+## Acceptance Criteria
+- [x] AC1: Complete
+- [ ] AC2: Pending
+
+- None
+* [X] AC3: Also complete
+- AC4: Unmarked
+1. AC5: Numbered
+- [x] AC6: Complete
+- [ ] AC6: Complete`),
+  });
+
+  assert.ok(parsed.node);
+  assert.deepEqual(parsed.node.acceptanceCriteria, [
+    "AC1: Complete", "AC2: Pending", "AC3: Also complete", "AC4: Unmarked",
+    "AC5: Numbered", "AC6: Complete", "AC6: Complete",
+  ]);
+  assert.deepEqual(parsed.node.acceptanceCriteriaChecked, [true, false, true, false, false, true, false]);
+  const composed = composeNodes([parsed.node], new Map());
+  assert.deepEqual(composed.composedNodes[0].spec.acceptanceCriteriaChecked, parsed.node.acceptanceCriteriaChecked);
+});
 
 test("tokenizeSections parses the current markdown section format", () => {
   const markdown = `# Example

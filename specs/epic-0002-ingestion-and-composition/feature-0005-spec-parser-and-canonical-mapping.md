@@ -27,11 +27,13 @@ Raw markdown cannot be consumed directly by views and planning logic.
 - [ ] R1: Parse ID, type, parent, summary, requirements, acceptance criteria.
 - [ ] R2: Support tolerant parsing with diagnostics for missing sections.
 - [ ] R3: Build canonical graph links.
+- [ ] R4: Preserve acceptance criterion checkbox completion alongside the existing criterion text and order; `[x]` and `[X]` are complete, while `[ ]` and unmarked criteria are incomplete.
 
 ## Acceptance Criteria
 - [ ] AC1: Parser successfully ingests all specs under this scaffold.
 - [ ] AC2: Missing required fields are reported for validation layer.
 - [ ] AC3: Canonical output contains sourcePath for every node.
+- [ ] AC4: Mixed checked, unchecked, and unmarked acceptance criteria retain their text, order, and completion flags after parsing and composition.
 
 ## Dependencies
 - F-0001

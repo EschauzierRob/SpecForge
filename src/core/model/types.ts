@@ -129,6 +129,8 @@ export interface CanonicalNode {
   nonGoals?: string[];
   requirements?: string[];
   acceptanceCriteria?: string[];
+  /** Completion flags in the same order as acceptanceCriteria; unmarked items are false. */
+  acceptanceCriteriaChecked?: boolean[];
   dependencies?: string[];
   openQuestions?: string[];
   notes?: string;

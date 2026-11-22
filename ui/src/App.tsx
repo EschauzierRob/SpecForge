@@ -780,7 +780,6 @@ export default function App(): JSX.Element {
         <div>
           <h1>Inspect your local spec repository in a stable, read-only workspace.</h1>
           <p className="hero-copy">
-            Slice 5 wires the existing TypeScript pipeline into a lightweight browser shell so later feature slices can focus on views instead of plumbing.
           </p>
         </div>
       </header>

@@ -378,6 +378,10 @@ export function mapSectionsToCanonical(parsedFile: ParsedSpecFile): ParseSpecFil
     nonGoals: parseList(sectionMap.sections["non-goals"]),
     requirements: parseList(sectionMap.sections.requirements),
     acceptanceCriteria: parseList(sectionMap.sections["acceptance criteria"]),
+    acceptanceCriteriaChecked: sectionMap.sections["acceptance criteria"]
+      ?.split(/\r?\n/)
+      .filter((line) => parseList(line)?.length)
+      .map((line) => /^\s*[-*]\s+\[[xX]\]/.test(line)),
     dependencies: parseDependencies(sectionMap.sections.dependencies),
     openQuestions: parseList(sectionMap.sections["open questions"]),
     notes: parseFreeText(sectionMap.sections.notes),

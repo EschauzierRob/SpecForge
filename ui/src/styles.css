@@ -1152,6 +1152,29 @@ button {
   font-style: italic;
 }
 
+.detail-checklist {
+  list-style: none;
+  padding: 0;
+}
+
+.detail-checklist li + li {
+  margin-top: 8px;
+}
+
+.detail-checklist label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.detail-checklist input[type="checkbox"] {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  margin: 4px 0 0;
+  accent-color: var(--primary);
+}
+
 .detail-overlay-grid {
   margin: 0;
   display: grid;
